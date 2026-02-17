@@ -34,13 +34,8 @@ function App() {
   const [input, setInput] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showResults, setShowResults] = useState(false);
-  const [currentChat, setCurrentChat] = useState({ 
-    user: null, 
-    ai: 'Sistema activo. Describe tu proyecto para asignar equipo.' 
-  });
+  const [currentChat, setCurrentChat] = useState({ user: null, ai: 'Sistema activo. Describe tu proyecto para asignar equipo.' });
   const [isTyping, setIsTyping] = useState(false);
-  
-  // Estado para controlar el hover del carrusel
   const [isHovered, setIsHovered] = useState(false);
 
   const handleSendMessage = () => {
@@ -49,7 +44,6 @@ function App() {
     setInput('');
     setIsTyping(true);
     setShowResults(false);
-
     setTimeout(() => {
       setIsTyping(false);
       setCurrentChat(prev => ({ ...prev, ai: 'He encontrado casos que coinciden con tu búsqueda.' }));
@@ -61,7 +55,7 @@ function App() {
     <div className="flex min-h-screen w-full flex-col items-center pt-10 text-white relative pb-20 px-6 overflow-x-hidden" 
          style={{ background: `linear-gradient(to top right, #110929 0%, #0A0A0A 50%, #0A0A0A 100%)` }}>
       
-      {/* 1. HERO BANNER */}
+      {/* 1. TITULO */}
       <motion.header className="w-full max-w-5xl text-center mb-10">
         <h1 className="text-[100px] leading-none tracking-[-0.05em] mrm-bold text-white uppercase select-none">MRM</h1>
         <p className="text-[10px] uppercase tracking-[0.9em] text-gray-600 mt-4 inter-light">Creative Credentials</p>
@@ -124,11 +118,11 @@ function App() {
         </div>
 
         <div className="w-full flex justify-center pt-6">
-          <div className="w-full max-w-xl flex items-center bg-white/[0.04] border border-white/10 rounded-full px-6 py-3 focus-within:border-[#6040F1]/50 transition-all backdrop-blur-md">
+          <div className="w-full max-w-xl flex items-center bg-white/[0.04] border border-white/10 rounded-full px-6 py-3 focus-within:border-[#6040F1]/50 transition-all backdrop-blur-md shadow-2xl">
             <input 
               value={input} onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-              placeholder="Escribe tu consulta aquí..."
+              placeholder="Describe tu consulta aquí..."
               className="bg-transparent flex-1 outline-none text-[13px] text-white/70 py-1"
             />
             <button onClick={handleSendMessage} className="ml-3 w-9 h-9 rounded-full flex items-center justify-center bg-[#6040F1] hover:scale-105 transition-transform">
@@ -138,41 +132,61 @@ function App() {
         </div>
       </div>
 
-      {/* 3. SKILLS CAROUSEL CON HOVER EFECTO */}
-      <div className="mt-20 flex flex-col items-center min-h-[160px]">
+      {/* 3. CARRUSEL CON PROYECTOS DINÁMICOS */}
+      <div className="mt-24 flex flex-col items-center">
         <p className="text-[8px] uppercase tracking-[0.5em] opacity-30 inter-light mb-6">Global Skill Network</p>
         
-        <div className="flex items-center gap-6 mb-8">
-          <ChevronLeft onClick={() => setCurrentIndex(prev => (prev - 1 + SKILLS_DATA.length) % SKILLS_DATA.length)} className="opacity-20 hover:opacity-100 cursor-pointer" />
+        <div className="flex items-center gap-8 mb-10">
+          <ChevronLeft 
+            onClick={() => { setCurrentIndex(prev => (prev - 1 + SKILLS_DATA.length) % SKILLS_DATA.length); }} 
+            className="opacity-20 hover:opacity-100 cursor-pointer transition-all hover:scale-110" 
+          />
           
-          {/* Tarjeta con detección de Mouse */}
-          <div 
+          <motion.div 
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
-            className="w-64 p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center gap-4 transition-all hover:border-[#6040F1]/40 cursor-default"
+            whileHover={{ scale: 1.02 }}
+            className="w-72 p-5 rounded-3xl bg-white/[0.03] border border-white/10 flex items-center gap-5 transition-all hover:border-[#6040F1]/50 cursor-default shadow-xl"
           >
-            <div className="w-10 h-10 rounded-lg bg-[#6040F1]/10 flex items-center justify-center text-[#6040F1]">{SKILLS_DATA[currentIndex].icon}</div>
-            <div className="text-left leading-tight">
-              <p className="text-[10px] uppercase text-white/80 mrm-bold">{SKILLS_DATA[currentIndex].name}</p>
-              <p className="text-[9px] text-gray-600 inter-light uppercase">{SKILLS_DATA[currentIndex].role}</p>
+            <div className="w-12 h-12 rounded-xl bg-[#6040F1]/10 flex items-center justify-center text-[#6040F1] border border-[#6040F1]/20">
+              {SKILLS_DATA[currentIndex].icon}
             </div>
-          </div>
+            <div className="text-left">
+              <p className="text-[12px] uppercase text-white/90 mrm-bold tracking-tight">{SKILLS_DATA[currentIndex].name}</p>
+              <p className="text-[10px] text-gray-500 inter-light uppercase mt-0.5">{SKILLS_DATA[currentIndex].role}</p>
+            </div>
+          </motion.div>
           
-          <ChevronRight onClick={() => setCurrentIndex(prev => (prev + 1) % SKILLS_DATA.length)} className="opacity-20 hover:opacity-100 cursor-pointer" />
+          <ChevronRight 
+            onClick={() => { setCurrentIndex(prev => (prev + 1) % SKILLS_DATA.length); }} 
+            className="opacity-20 hover:opacity-100 cursor-pointer transition-all hover:scale-110" 
+          />
         </div>
 
-        {/* PANEL DE PROYECTOS REFERENCIADOS (SMOOTH REVEAL) */}
-        <div className="h-10"> {/* Espacio reservado para evitar saltos de layout */}
-          {isHovered && (
-            <div className="flex gap-4 fade-in-smooth">
-              {SKILLS_DATA[currentIndex].projects.map((p, i) => (
-                <div key={i} className="px-4 py-1.5 rounded-full border border-white/10 bg-white/5 flex items-center gap-2">
-                   <div className="w-1.5 h-1.5 rounded-full bg-[#6040F1]" />
-                   <span className="text-[9px] uppercase mrm-bold text-gray-400 tracking-wider">{p}</span>
-                </div>
-              ))}
-            </div>
-          )}
+        {/* LISTA DE PROYECTOS REFERENCIADOS CON ANIMACION SMOOTH */}
+        <div className="flex justify-center h-12 overflow-visible">
+          <AnimatePresence mode="wait">
+            {isHovered && (
+              <motion.div 
+                key={currentIndex} // Importante para que detecte el cambio de categoría
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+                className="flex gap-4"
+              >
+                {SKILLS_DATA[currentIndex].projects.map((proj, idx) => (
+                  <div 
+                    key={idx}
+                    className="px-5 py-2 rounded-full border border-white/5 bg-white/[0.03] flex items-center gap-2.5 backdrop-blur-sm shadow-lg"
+                  >
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#6040F1] shadow-[0_0_8px_#6040F1]" />
+                    <span className="text-[10px] uppercase mrm-bold text-gray-400 tracking-widest">{proj}</span>
+                  </div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>
