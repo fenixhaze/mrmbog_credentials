@@ -18,6 +18,7 @@
   font-weight: 300; font-style: normal;
 }
 
+/* PROHIBIR ITALICAS */
 * { font-style: normal !important; }
 
 body {

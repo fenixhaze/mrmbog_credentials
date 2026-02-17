@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, History, X, Globe, Zap, Cpu, Palette, BarChart3, ChevronLeft, ChevronRight, UserPlus, Layers, Bot } from 'lucide-react';
+import { Send, History, X, Globe, Zap, Cpu, Palette, BarChart3, ChevronLeft, ChevronRight, ArrowUpRight, Layers, Bot } from 'lucide-react';
 
 const LILA_REAL = "#6040F1"; 
 
@@ -23,7 +23,10 @@ function App() {
   const [showHistory, setShowHistory] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showResults, setShowResults] = useState(false);
-  const [currentChat, setCurrentChat] = useState({ user: null, ai: 'Sistema activo. Describe tu proyecto para asignar equipo.' });
+  const [currentChat, setCurrentChat] = useState({ 
+    user: null, 
+    ai: 'Sistema activo. Describe tu proyecto para asignar equipo.' 
+  });
   const [history, setHistory] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
 
@@ -37,7 +40,7 @@ function App() {
 
     setTimeout(() => {
       setIsTyping(false);
-      setCurrentChat(prev => ({ ...prev, ai: 'Mira resultados y agrega talentos a tu equipo.' }));
+      setCurrentChat(prev => ({ ...prev, ai: 'He encontrado casos que coinciden con tu búsqueda.' }));
       setShowResults(true);
     }, 1500);
   };
@@ -53,9 +56,9 @@ function App() {
       </motion.header>
 
       {/* 2. CHAT AREA */}
-      <div className="w-full max-w-4xl flex flex-col space-y-6 z-20">
+      <div className="w-full max-w-5xl flex flex-col space-y-6 z-20 px-4">
         
-        {/* BURBUJA USUARIO (A LA DERECHA - LILA) */}
+        {/* BURBUJA USUARIO (Derecha - Lila sólido) */}
         <AnimatePresence>
           {currentChat.user && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
@@ -65,7 +68,7 @@ function App() {
           )}
         </AnimatePresence>
 
-        {/* BURBUJA IA (A LA IZQUIERDA - COMPOSICIÓN TIPO RESULTADO) */}
+        {/* CONTENEDOR IA (Izquierda) */}
         <div className="w-full flex justify-start">
           <AnimatePresence mode="wait">
             {isTyping ? (
@@ -75,34 +78,35 @@ function App() {
               </div>
             ) : (
               <motion.div 
-                className={`flex gap-6 rounded-[2.5rem] border backdrop-blur-md transition-all duration-500 ${showResults ? 'w-full p-8' : 'w-auto max-w-lg p-5'}`}
+                className={`flex gap-6 rounded-[2.5rem] border backdrop-blur-md transition-all duration-500 overflow-hidden ${showResults ? 'w-full p-8' : 'w-auto max-w-lg p-5'}`}
                 style={{ borderColor: `${LILA_REAL}33`, backgroundColor: `rgba(255, 255, 255, 0.02)` }}
               >
-                {/* ICONO / IMAGEN IZQUIERDA (Igual que en resultados) */}
+                {/* ICONO SISTEMA */}
                 <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#6040F1]/40 to-transparent flex-shrink-0 flex items-center justify-center border border-white/10">
                   <Bot size={28} className="text-[#6040F1]" />
                 </div>
 
-                {/* CONTENIDO TEXTO */}
+                {/* CONTENIDO TEXTO / RESULTADOS */}
                 <div className="flex flex-col justify-center flex-1">
                   <h2 className={`mrm-bold text-white uppercase tracking-tight ${showResults ? 'text-xl mb-6' : 'text-[14px]'}`}>
                     {currentChat.ai}
                   </h2>
 
-                  {/* GRID DE RESULTADOS (Dentro de la misma composición) */}
+                  {/* GRID DE RESULTADOS */}
                   <AnimatePresence>
                     {showResults && (
-                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         {PROJECTS_DATA.map((proj) => (
                           <div key={proj.id} className="flex gap-4 p-4 rounded-2xl bg-black/40 border border-white/5 hover:border-[#6040F1]/50 transition-all group">
                             <div className={`w-16 h-16 rounded-xl flex-shrink-0 bg-gradient-to-br ${proj.color} to-transparent border border-white/5 flex items-center justify-center`}>
-                              <Layers size={18} className="text-white/20 group-hover:text-[#6040F1]" />
+                              <Layers size={18} className="text-white/20 group-hover:text-[#6040F1] transition-colors" />
                             </div>
-                            <div className="flex flex-col justify-center">
-                              <h3 className="text-[11px] mrm-bold uppercase leading-none">{proj.title}</h3>
-                              <p className="text-[10px] text-gray-500 inter-light mt-1 leading-tight">{proj.desc}</p>
-                              <button className="text-[8px] uppercase text-[#6040F1] mrm-bold mt-2 flex items-center gap-1">
-                                <UserPlus size={10} /> Agregar
+                            <div className="flex flex-col justify-center flex-1">
+                              <h3 className="text-[11px] mrm-bold uppercase leading-none tracking-tight">{proj.title}</h3>
+                              <p className="text-[10px] text-gray-500 inter-light mt-1.5 leading-tight">{proj.desc}</p>
+                              {/* BOTON VER DETALLES */}
+                              <button className="text-[9px] uppercase text-[#6040F1] mrm-bold mt-3 flex items-center gap-1.5 hover:text-white transition-colors">
+                                Ver Detalles <ArrowUpRight size={12} />
                               </button>
                             </div>
                           </div>
@@ -116,16 +120,16 @@ function App() {
           </AnimatePresence>
         </div>
 
-        {/* INPUT ALARGADO */}
+        {/* INPUT */}
         <div className="w-full flex justify-center pt-6">
-          <div className="w-full max-w-xl flex items-center bg-white/[0.04] border border-white/10 rounded-full px-6 py-3 focus-within:border-[#6040F1]/50 transition-all backdrop-blur-md">
+          <div className="w-full max-w-xl flex items-center bg-white/[0.04] border border-white/10 rounded-full px-6 py-3 focus-within:border-[#6040F1]/50 transition-all backdrop-blur-md shadow-2xl">
             <input 
               value={input} onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-              placeholder="Describe tu necesidad de talento..."
+              placeholder="Escribe tu consulta aquí..."
               className="bg-transparent flex-1 outline-none text-[13px] text-white/70 py-1"
             />
-            <button onClick={handleSendMessage} className="ml-3 w-9 h-9 rounded-full flex items-center justify-center bg-[#6040F1] hover:scale-110 transition-transform">
+            <button onClick={handleSendMessage} className="ml-3 w-9 h-9 rounded-full flex items-center justify-center bg-[#6040F1] hover:scale-105 transition-transform shadow-lg shadow-[#6040F1]/30">
               <Send size={14} className="text-white" />
             </button>
           </div>
