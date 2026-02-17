@@ -11,7 +11,7 @@ const MAIN_LILA = "#7D68F6";
 const TALENTS_DATA = [
   { 
     id: 1, name: "Alex Rivera", role: "Cloud Architect", tags: ["AWS", "Terraform", "Docker"], img: "https://i.pravatar.cc/150?u=1", 
-    bio: "Alex Rivera es un arquitecto de sistemas de nivel senior con más de una década de experiencia en el diseño de infraestructuras críticas para el sector financiero y tecnológico. Especializado en la filosofía de infraestructura como código (IaC), ha liderado la transición a la nube de múltiples empresas Fortune 500.", 
+    bio: "Alex Rivera es un arquitecto de sistemas de nivel senior con más de una década de experiencia en el diseño de infraestructuras críticas para el sector financiero y tecnológico.", 
     projects: [{name: "Cloud Core", year: "2024", task: "Infra"}] 
   },
   { 
@@ -35,15 +35,15 @@ for(let i=5; i<=26; i++) {
   if(!TALENTS_DATA[i-1]) {
     TALENTS_DATA.push({
       id: i, name: `Talento Experto ${i}`, role: "Senior Specialist", tags: ["Expertise", "Innovation"], img: `https://i.pravatar.cc/150?u=${i}`,
-      bio: "Este especialista senior cuenta con una trayectoria impecable en la ejecución de proyectos de transformación digital de alto impacto. Su enfoque combina una sólida base técnica con una visión estratégica."
+      bio: "Este especialista senior cuenta con una trayectoria impecable en la ejecución de proyectos de transformación digital de alto impacto."
     });
   }
 }
 
 const SKILLS_DATA = [
-  { id: 1, name: "Estratégico", role: "Consultoría Senior", icon: <Globe size={26}/>, projects: [{ title: "Digital Roadmap 2030", desc: "Transformación digital maestra.", img: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400" }] },
-  { id: 2, name: "Desarrollo", role: "Arquitectura Cloud", icon: <Cpu size={26}/>, projects: [{ title: "Microservices", desc: "Ecosistema AWS escalable.", img: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400" }] },
-  { id: 3, name: "Creativo", role: "Branding & Design", icon: <Palette size={26}/>, projects: [{ title: "Visual System", desc: "Diseño de identidad modular.", img: "https://images.unsplash.com/photo-1558655146-d09347e92766?w=400" }] }
+  { id: 1, name: "Estratégico", role: "Consultoría Senior", icon: <Globe size={26}/>, projects: [{ title: "Digital Roadmap 2030", desc: "Transformación digital.", img: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400" }] },
+  { id: 2, name: "Desarrollo", role: "Arquitectura Cloud", icon: <Cpu size={26}/>, projects: [{ title: "Microservices", desc: "Ecosistema AWS.", img: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400" }] },
+  { id: 3, name: "Creativo", role: "Branding & Design", icon: <Palette size={26}/>, projects: [{ title: "Visual System", desc: "Identidad modular.", img: "https://images.unsplash.com/photo-1558655146-d09347e92766?w=400" }] }
 ];
 
 function App() {
@@ -74,10 +74,10 @@ function App() {
         type: 'ai', 
         text: "He diseñado un ecosistema de 4 soluciones clave para tu requerimiento:",
         suggestions: [
-          { id: 101, title: "Fintech Core v2", type: "Asset", img: "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=400", desc: "Infraestructura transaccional distribuida." },
-          { id: 102, title: "Global Marketplace", type: "Asset", img: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400", desc: "Motor de comercio con gestión multi-país." },
-          { id: 103, title: "Zero-Trust Security", type: "Security", img: "https://images.unsplash.com/photo-1558494949-ef010cbdcc48?w=400", desc: "Malla de seguridad perimetral." },
-          { id: 104, title: "AI Analytics Hub", type: "AI", img: "https://images.unsplash.com/photo-1551288049-bbbda536339a?w=400", desc: "Dashboard predictivo basado en comportamiento." }
+          { id: 101, title: "Fintech Core v2", type: "Asset", img: "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=400", desc: "Infraestructura transaccional." },
+          { id: 102, title: "Global Marketplace", type: "Asset", img: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400", desc: "Motor de comercio." },
+          { id: 103, title: "Zero-Trust Security", type: "Security", img: "https://images.unsplash.com/photo-1558494949-ef010cbdcc48?w=400", desc: "Protección perimetral." },
+          { id: 104, title: "AI Analytics Hub", type: "AI", img: "https://images.unsplash.com/photo-1551288049-bbbda536339a?w=400", desc: "Dashboard predictivo." }
         ] 
       }]);
       setShowResults(true);
@@ -90,33 +90,33 @@ function App() {
     <div className="flex min-h-screen w-full flex-col items-center text-white relative pb-40 px-6 overflow-x-hidden" 
          style={{ background: `radial-gradient(circle at 50% 0%, #1a0b3d 0%, #0A0A0A 60%)` }}>
       
-      {/* HEADER - FIJO */}
+      {/* HEADER - BOGOTA CREATIVE CREDENTIALS */}
       <header className="w-full max-w-5xl text-center pt-16 mb-12 z-10">
         <h1 className="text-[100px] leading-none tracking-[-0.05em] mrm-bold uppercase">MRM</h1>
         <p className="text-[10px] mrm-bold uppercase tracking-[0.8em] text-[#7D68F6] mt-2">BOGOTA CREATIVE CREDENTIALS</p>
       </header>
 
-      {/* CHAT AREA - SCROLL DISOLVENTE */}
+      {/* CHAT AREA - CON FADE OUT HACIA ARRIBA */}
       <div className="w-full max-w-2xl flex flex-col mb-16 z-20">
         <div 
-          className="relative h-[280px] flex flex-col justify-end overflow-hidden mb-4 px-2"
+          className="relative h-[300px] flex flex-col justify-end overflow-hidden mb-4 px-2"
           style={{ 
-            maskImage: 'linear-gradient(to bottom, transparent 0%, black 60%)',
-            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 60%)' 
+            maskImage: 'linear-gradient(to bottom, transparent 0%, black 45%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 45%)' 
           }}
         >
-          <div className="flex flex-col space-y-6">
+          <div className="flex flex-col space-y-6 pb-4">
             <AnimatePresence mode="popLayout" initial={false}>
               {visibleMessages.map((msg, idx) => (
                 <motion.div 
                   key={`${msg.text}-${idx}`} 
-                  initial={{ opacity: 0, y: 50 }} 
+                  initial={{ opacity: 0, y: 20 }} 
                   animate={{ opacity: 1, y: 0 }} 
-                  exit={{ opacity: 0, y: -80 }}
-                  transition={{ duration: 0.7, ease: [0.23, 1, 0.32, 1] }}
+                  exit={{ opacity: 0, y: -50 }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
                   className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}
                 >
-                  <div className={`max-w-[90%] p-6 rounded-3xl text-[13px] shadow-2xl ${msg.type === 'user' ? 'bg-[#7D68F6] mrm-bold rounded-tr-none' : 'bg-white/5 border border-white/10 rounded-tl-none inter-light'}`}>
+                  <div className={`max-w-[90%] p-6 rounded-3xl text-[13px] ${msg.type === 'user' ? 'bg-[#7D68F6] mrm-bold rounded-tr-none' : 'bg-white/5 border border-white/10 rounded-tl-none inter-light'}`}>
                     {msg.text}
                     {msg.suggestions && (
                       <div className="mt-6 flex flex-col gap-3">
@@ -138,7 +138,6 @@ function App() {
           </div>
         </div>
 
-        {/* INPUT */}
         <div className="flex items-center bg-white/[0.04] border border-white/10 rounded-full px-6 py-4 backdrop-blur-md">
           <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
             placeholder="Describe tu proyecto" className="bg-transparent flex-1 outline-none text-[13px] text-white/70" />
@@ -146,9 +145,9 @@ function App() {
         </div>
       </div>
 
-      {/* RESULTADOS Y TALENTOS (MANTENIDO IGUAL) */}
+      {/* RESULTADOS Y TALENTOS */}
       {showResults && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full flex flex-col items-center">
+        <div className="w-full flex flex-col items-center">
           <div className="flex flex-col items-center mb-28 w-full">
             <p className="text-[8px] uppercase tracking-[0.5em] opacity-30 mb-8">Capabilities</p>
             <div className="flex items-center gap-8 mb-12">
@@ -163,20 +162,19 @@ function App() {
 
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 w-full max-w-7xl px-4">
             {TALENTS_DATA.map((talent) => (
-              <motion.div key={talent.id} 
-                whileHover={{ y: -5, backgroundColor: "rgba(125, 104, 246, 0.15)", borderColor: "#7D68F6" }} 
+              <div key={talent.id} 
                 onClick={() => setSelectedTalent(talent)} 
-                className="p-6 rounded-[2.5rem] border border-white/5 bg-white/[0.03] transition-all cursor-pointer flex flex-col items-center">
-                <img src={talent.img} className="w-14 h-14 rounded-full border-2 border-white/10 mb-4 grayscale hover:grayscale-0 transition-all" />
+                className="p-6 rounded-[2.5rem] border border-white/5 bg-white/[0.03] hover:border-[#7D68F6] transition-all cursor-pointer flex flex-col items-center">
+                <img src={talent.img} className="w-14 h-14 rounded-full border-2 border-white/10 mb-4 grayscale" />
                 <h3 className="text-[11px] mrm-bold uppercase text-center">{talent.name}</h3>
                 <p className="text-[9px] text-gray-500 uppercase text-center">{talent.role}</p>
-              </motion.div>
+              </div>
             ))}
           </div>
-        </motion.div>
+        </div>
       )}
 
-      {/* CHATLOG */}
+      {/* CHATLOG ABAJO IZQUIERDA */}
       <div className="fixed bottom-10 left-10 z-[100] flex flex-col items-start gap-2 max-w-[280px]">
         <div className="flex items-center gap-2 text-[8px] uppercase tracking-[0.4em] text-gray-500 mb-2"><MessageSquare size={12}/> Chatlog</div>
         <div className="flex flex-col-reverse gap-2 overflow-y-auto max-h-[160px] pr-2 hide-scrollbar">
