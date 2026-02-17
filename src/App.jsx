@@ -25,6 +25,18 @@ const SKILLS_DATA = [
       { id: 'p1', title: "Digital Roadmap 2030", desc: "Transformación digital maestra para el sector bancario global.", img: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800", team: [TALENTS_DATA[0], TALENTS_DATA[1], TALENTS_DATA[4]] },
       { id: 'p2', title: "Market Entry", desc: "Expansión en LATAM basada en análisis de datos masivos.", img: "https://images.unsplash.com/photo-1553729459-efe14ef6055d?w=800", team: [TALENTS_DATA[2], TALENTS_DATA[3]] }
     ] 
+  },
+  { 
+    id: 2, name: "Desarrollo", role: "Arquitectura Cloud", icon: <Cpu size={26}/>, 
+    projects: [
+      { id: 'p3', title: "Cloud Scale", desc: "Migración masiva de datos a entornos híbridos.", img: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800", team: [TALENTS_DATA[5], TALENTS_DATA[6]] }
+    ] 
+  },
+  { 
+    id: 3, name: "Diseño", role: "Experiencia de Usuario", icon: <Palette size={26}/>, 
+    projects: [
+      { id: 'p4', title: "Design System v2", desc: "Creación de librerías escalables para productos fintech.", img: "https://images.unsplash.com/photo-1558655146-d09347e92766?w=800", team: [TALENTS_DATA[1], TALENTS_DATA[7]] }
+    ] 
   }
 ];
 
@@ -48,7 +60,6 @@ function App() {
     setChatHistory(prev => [...prev, { type: 'user', text: input }]);
     setInput('');
     setIsTyping(true);
-
     setTimeout(() => {
       setIsTyping(false);
       setChatHistory(prev => [...prev, { 
@@ -77,6 +88,15 @@ function App() {
     }
   };
 
+  // HANDLERS DE NAVEGACIÓN RESTAURADOS
+  const nextCapability = () => {
+    setCurrentIndex((prev) => (prev + 1) % SKILLS_DATA.length);
+  };
+
+  const prevCapability = () => {
+    setCurrentIndex((prev) => (prev - 1 + SKILLS_DATA.length) % SKILLS_DATA.length);
+  };
+
   return (
     <div className="flex min-h-screen w-full flex-col items-center text-white relative pb-40 px-6" 
          style={{ background: `radial-gradient(circle at 50% 0%, #1a0b3d 0%, #0A0A0A 60%)` }}>
@@ -86,7 +106,7 @@ function App() {
         <p className="text-[10px] mrm-bold uppercase tracking-[0.8em] text-[#7D68F6] mt-2">BOGOTA CREATIVE CREDENTIALS</p>
       </header>
 
-      {/* CHATBOX CON SCROLL Y DESVANECIMIENTO SUPERIOR */}
+      {/* CHATBOX */}
       <div className="w-full max-w-2xl flex flex-col mb-12 z-20">
         <div className="relative h-[350px] overflow-hidden mb-4" 
              style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 20%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 20%)' }}>
@@ -125,12 +145,16 @@ function App() {
         <div className="w-full max-w-2xl flex flex-col items-center mb-28">
           <p className="text-[8px] uppercase tracking-[0.5em] opacity-30 mb-8">Capabilities</p>
           <div className="w-full flex items-center justify-between mb-8">
-            <ChevronLeft onClick={() => setCurrentIndex(prev => (prev - 1 + SKILLS_DATA.length) % SKILLS_DATA.length)} className="cursor-pointer opacity-20 hover:opacity-100" />
+            <button onClick={prevCapability} className="p-2 hover:text-[#7D68F6] transition-colors">
+              <ChevronLeft className="cursor-pointer opacity-40 hover:opacity-100" />
+            </button>
             <div className="flex-1 mx-8 p-6 rounded-3xl bg-white/[0.03] border border-white/10 flex items-center gap-5">
               <div className="text-[#7D68F6]">{SKILLS_DATA[currentIndex]?.icon}</div>
               <div className="text-left"><p className="text-[14px] uppercase mrm-bold">{SKILLS_DATA[currentIndex]?.name}</p></div>
             </div>
-            <ChevronRight onClick={() => setCurrentIndex(prev => (prev + 1) % SKILLS_DATA.length)} className="cursor-pointer opacity-20 hover:opacity-100" />
+            <button onClick={nextCapability} className="p-2 hover:text-[#7D68F6] transition-colors">
+              <ChevronRight className="cursor-pointer opacity-40 hover:opacity-100" />
+            </button>
           </div>
           <div className="flex flex-wrap justify-center gap-3">
             {SKILLS_DATA[currentIndex]?.projects?.map((proj, idx) => (
@@ -152,9 +176,6 @@ function App() {
               <img src={talent.img} className="w-14 h-14 rounded-full border-2 border-white/10 mb-4 grayscale group-hover:grayscale-0" />
               <h3 className="text-[11px] mrm-bold uppercase text-center">{talent.name}</h3>
               <p className="text-[9px] text-gray-500 uppercase text-center mb-3">{talent.role}</p>
-              <div className="flex gap-1">
-                {talent.tags.slice(0, 2).map(t => <span key={t} className="text-[6px] border border-white/10 px-1 rounded uppercase text-gray-400">{t}</span>)}
-              </div>
             </div>
           ))}
         </div>
@@ -174,7 +195,6 @@ function App() {
                 </button>
               </div>
               <div className="flex-1">
-                <p className="text-[9px] uppercase tracking-[0.4em] text-gray-500 mb-4">Professional Bio</p>
                 <p className="text-[15px] text-gray-400 leading-relaxed inter-light">{selectedTalent.bio}</p>
               </div>
               <button onClick={() => setSelectedTalent(null)} className="absolute top-8 right-8 text-white/40"><X /></button>
@@ -193,7 +213,7 @@ function App() {
                 <img src={selectedProject.img} className="w-full h-full object-cover opacity-40" />
                 <div className="absolute bottom-10 left-10"><h2 className="text-3xl mrm-bold uppercase">{selectedProject.title}</h2></div>
               </div>
-              <div className="w-1/2 p-12 flex flex-col">
+              <div className="w-1/2 p-12 flex flex-col bg-[#0A0A0A]">
                 <p className="text-sm text-gray-400 mb-8">{selectedProject.desc}</p>
                 <div className="flex-1 overflow-y-auto space-y-4 hide-scrollbar">
                   {selectedProject.team?.map(m => (
