@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+/* FUENTES PERSONALIZADAS */
 @font-face {
   font-family: 'MWSans-Bold-Custom';
   src: url('./assets/fonts/MWSans-Bold_4153471986.ttf') format('truetype');
@@ -18,36 +19,81 @@
   font-weight: 300; font-style: normal;
 }
 
-/* RESET TOTAL PARA EVITAR ITALICAS */
-* { font-style: normal !important; }
+/* RESET GENERAL: EVITAR ITALICAS Y SUAVIZADO */
+* { 
+  font-style: normal !important; 
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 
 body {
   margin: 0;
   background-color: #0A0A0A;
   color: white;
   font-family: 'MWSans-Regular-Custom', sans-serif;
-  -webkit-font-smoothing: antialiased;
 }
 
+/* CLASES AUXILIARES DE FUENTE */
 .mrm-bold { font-family: 'MWSans-Bold-Custom', sans-serif !important; }
 .inter-light { font-family: 'Inter-Light-Custom', sans-serif !important; }
 
-/* Animación de entrada para tooltips y cards */
-.fade-in-up {
-  animation: fadeInUp 0.4s ease-out forwards;
+/* OCULTAR SCROLLBARS (Para el contenido del Modal) */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Tooltip triangular */
+/* ANIMACIÓN TOOLTIP (Proyectos del Carrusel) */
 .tooltip-fade {
   animation: tooltipEntry 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes tooltipEntry {
-  from { opacity: 0; transform: translate(-50%, 10px); }
-  to { opacity: 1; transform: translate(-50%, 0); }
+  from { 
+    opacity: 0; 
+    transform: translate(-50%, 10px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translate(-50%, 0); 
+  }
+}
+
+/* EFECTOS DE SELECCIÓN Y HOVER PARA TALENTOS */
+.talent-card-shadow {
+  transition: box-shadow 0.3s ease;
+}
+
+.talent-card-shadow:hover {
+  box-shadow: 0 0 30px rgba(125, 104, 246, 0.1);
+}
+
+/* ESTILOS PARA EL MODAL OVERLAY */
+.modal-backdrop {
+  backdrop-filter: blur(12px) saturate(180%);
+  background-color: rgba(0, 0, 0, 0.75);
+}
+
+/* PERSONALIZACIÓN DE INPUTS */
+input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+  font-family: 'Inter-Light-Custom', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 11px;
+}
+
+/* BOTÓN MY TEAM PULSE EFFECT */
+.pulse-lila {
+  box-shadow: 0 0 0 0 rgba(125, 104, 246, 0.4);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(125, 104, 246, 0.4); }
+  70% { transform: scale(1.02); box-shadow: 0 0 0 15px rgba(125, 104, 246, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(125, 104, 246, 0); }
 }
