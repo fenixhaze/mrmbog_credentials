@@ -1,16 +1,63 @@
+/* Importación de fuentes locales */
+@font-face {
+  font-family: 'MWSans';
+  src: url('./assets/fonts/MWSans-Regular_3093588806.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'MWSans';
+  src: url('./assets/fonts/MWSans-Bold_4153471986.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'InterLight';
+  src: url('./assets/fonts/Inter-Light_2797819442.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Configuración Base */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  color-scheme: dark;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  background-color: #0A0A0A;
+  color: white;
+  /* Aplicamos MW Sans Regular por defecto a todo el sitio */
+  font-family: 'MWSans', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-* {
-  box-sizing: border-box;
+/* Utilidades personalizadas para facilitar el uso en App.jsx */
+.font-mwsans-bold {
+  font-family: 'MWSans', sans-serif;
+  font-weight: bold;
+}
+
+.font-inter-light {
+  font-family: 'InterLight', sans-serif;
+  font-weight: 300;
+}
+
+/* Ocultar scrollbar en el historial y otros contenedores */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
