@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Sparkles, MessageSquare, Mic, PenTool, Image as ImageIcon, Book } from 'lucide-react';
+import { Send, Sparkles, History, MessageCircle } from 'lucide-react';
 
-const LILA_MAIN = "rgb(96, 64, 241)";
-const LILA_TRANSPARENT = "rgba(96, 64, 241, 0.2)";
-const DARK_BG = "#0D0D0D";
+const LILA_HEX = "#6040F1";
+const LILA_RGBA = "rgba(96, 64, 241, 0.1)"; // Opacidad lila suave
+const DARK_BG = "#0A0A0A"; // Negro más profundo
 
 function App() {
   const [input, setInput] = useState('');
   const [currentChat, setCurrentChat] = useState({ 
     user: null, 
-    ai: 'Bienvenido. Describe tu proyecto y los skills para iniciar el análisis corporativo.' 
+    ai: 'Sistema activo. Describe el proyecto y skills para iniciar el análisis.' 
   });
   const [history, setHistory] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
@@ -18,7 +18,7 @@ function App() {
   const handleSendMessage = () => {
     if (!input.trim()) return;
     if (currentChat.user) {
-      setHistory(prev => [{ ...currentChat, id: Date.now() }, ...prev].slice(0, 8));
+      setHistory(prev => [{ ...currentChat, id: Date.now() }, ...prev].slice(0, 5));
     }
     const userText = input;
     setCurrentChat({ user: userText, ai: null });
@@ -29,123 +29,96 @@ function App() {
       setIsTyping(false);
       setCurrentChat(prev => ({ 
         ...prev, 
-        ai: `Análisis estratégico finalizado. Para "${userText.substring(0, 15)}..." se han mapeado las credenciales de ejecución interna.` 
+        ai: `Análisis para "${userText.substring(0, 12)}..." completado con éxito.` 
       }));
-    }, 1500);
+    }, 1200);
   };
 
   return (
-    <div className="flex h-screen w-full overflow-hidden font-sans" style={{ backgroundColor: DARK_BG, color: 'white' }}>
+    <div className="flex h-screen w-full overflow-hidden" style={{ backgroundColor: DARK_BG, color: 'white' }}>
       
-      {/* SECCIÓN CENTRAL: CHAT Y BRANDING */}
-      <main className="flex-1 flex flex-col items-center justify-between py-10 px-6 relative">
+      {/* CUERPO CENTRAL (TODO CENTRADO) */}
+      <main className="flex-1 flex flex-col items-center justify-center p-6 relative">
         
-        {/* BRANDING */}
-        <header className="text-center mt-4">
-          <h1 className="text-7xl font-black tracking-tighter text-white m-0 opacity-90">MRM</h1>
-          <p className="text-[10px] font-bold uppercase tracking-[0.6em] text-gray-500">Creative Credentials</p>
-        </header>
-
-        {/* CONTENEDOR DE BURBUJAS (GLASSMORFISMO) */}
-        <div className="w-full max-w-2xl flex flex-col gap-4 mb-auto mt-12 overflow-y-auto scrollbar-hide">
+        <div className="w-full max-w-lg flex flex-col items-center space-y-12">
           
-          {/* SUGERENCIAS RÁPIDAS (ESTILO IMAGEN) */}
-          <div className="flex flex-wrap justify-center gap-2 mb-6">
-            {[ 
-              { icon: <ImageIcon size={14}/>, label: 'Generate image' },
-              { icon: <PenTool size={14}/>, label: 'Creative Illustrations' },
-              { icon: <Book size={14}/>, label: 'Inspiring stories' }
-            ].map((btn, i) => (
-              <button key={i} className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-[11px] text-gray-400 hover:bg-white/10 transition-all">
-                {btn.icon} {btn.label}
-              </button>
-            ))}
+          {/* BRANDING (REDUCIDO Y CENTRADO) */}
+          <header className="text-center">
+            <motion.h1 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              className="text-6xl font-black tracking-tighter text-white m-0"
+            >
+              MRM
+            </motion.h1>
+            <p className="text-[9px] font-bold uppercase tracking-[0.6em] text-gray-600 mt-1">Creative Credentials</p>
+          </header>
+
+          {/* BURBUJA DE COMUNICACIÓN (GLASS + LILA STROKE) */}
+          <div className="w-full min-h-[120px] flex flex-col items-center justify-center">
+            <AnimatePresence mode="wait">
+              {isTyping ? (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-2">
+                  <div className="w-1 h-1 bg-indigo-500 rounded-full animate-pulse" />
+                  <div className="w-1 h-1 bg-indigo-500 rounded-full animate-pulse delay-75" />
+                  <div className="w-1 h-1 bg-indigo-500 rounded-full animate-pulse delay-150" />
+                </motion.div>
+              ) : (
+                <motion.div 
+                  key={currentChat.ai}
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="w-full p-6 rounded-[2rem] text-center backdrop-blur-xl border border-[#6040F1]/30 shadow-[0_0_30px_rgba(96,64,241,0.05)]"
+                  style={{ backgroundColor: LILA_RGBA }}
+                >
+                  <p className="text-sm leading-relaxed font-light text-white/80 tracking-tight italic">
+                    {currentChat.ai}
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
-          <AnimatePresence mode="wait">
-            {currentChat.user && (
-              <motion.div 
-                initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
-                className="self-start max-w-[80%] py-3 px-6 rounded-3xl rounded-bl-none bg-white/5 border border-white/10 text-sm font-light text-gray-300"
-              >
-                {currentChat.user}
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <AnimatePresence mode="wait">
-            {isTyping ? (
-              <div className="flex gap-1 ml-4 py-2">
-                <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1 }} className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-                <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-                <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-              </div>
-            ) : (
-              <motion.div 
-                key={currentChat.ai}
-                initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-                className="w-full p-8 rounded-[2.5rem] bg-gradient-to-b from-white/[0.04] to-transparent border border-white/10 backdrop-blur-md relative"
-              >
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="p-2 rounded-full bg-indigo-500/20 text-indigo-400">
-                    <Sparkles size={16} />
-                  </div>
-                  <div className="flex gap-1">
-                    <div className="w-1 h-1 rounded-full bg-indigo-500" />
-                    <div className="w-1 h-1 rounded-full bg-indigo-500/40" />
-                    <div className="w-1 h-1 rounded-full bg-indigo-500/20" />
-                  </div>
-                </div>
-                <p className="text-lg leading-relaxed font-light text-white/80 tracking-tight">
-                  {currentChat.ai}
-                </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* INPUT CENTRADO (ESTILO IMAGEN) */}
-        <div className="w-full max-w-xl flex flex-col items-center gap-4">
-          <div className="w-full relative flex items-center p-1.5 rounded-full border-2 border-indigo-500/30 bg-[#1A1A1A] focus-within:border-indigo-500 transition-all shadow-[0_0_20px_rgba(96,64,241,0.1)]">
+          {/* INPUT (PEQUEÑO Y CENTRADO) */}
+          <div className="w-full max-w-sm relative flex items-center p-1 rounded-full border border-white/10 bg-white/5 focus-within:border-[#6040F1]/50 transition-all shadow-2xl">
             <input 
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-              placeholder="¿En qué puedo asistirte hoy?"
-              className="bg-transparent flex-1 outline-none px-6 py-3 text-sm text-white/80 placeholder:text-gray-600 font-light"
+              placeholder="Proyecto / Skills..."
+              className="bg-transparent flex-1 outline-none px-5 py-2 text-xs text-white/70 placeholder:text-gray-700"
             />
             <button 
               onClick={handleSendMessage}
-              className="w-11 h-11 rounded-full flex items-center justify-center transition-transform active:scale-95"
-              style={{ backgroundColor: LILA_MAIN }}
+              className="w-8 h-8 rounded-full flex items-center justify-center transition-transform active:scale-90"
+              style={{ backgroundColor: LILA_HEX }}
             >
-              <Send size={18} className="text-white ml-0.5" />
+              <Send size={12} className="text-white" />
             </button>
           </div>
+
         </div>
       </main>
 
-      {/* HISTORIAL LATERAL (ULTRA SLIM) */}
-      <aside className="w-64 p-8 flex flex-col border-l border-white/5 bg-black/40 backdrop-blur-2xl">
-        <div className="flex items-center gap-3 opacity-30 mb-8 border-b border-white/5 pb-4">
-          <MessageSquare size={14} />
-          <span className="text-[9px] font-black uppercase tracking-[0.3em]">History</span>
+      {/* SIDEBAR HISTORIAL (ULTRA SLIM) */}
+      <aside className="w-48 p-8 flex flex-col border-l border-white/5 bg-black/40">
+        <div className="flex items-center gap-2 opacity-20 mb-10">
+          <MessageCircle size={12} />
+          <span className="text-[8px] font-black uppercase tracking-widest">Logs</span>
         </div>
         
-        <div className="flex-1 overflow-y-auto space-y-6 scrollbar-hide">
+        <div className="space-y-8 overflow-y-auto scrollbar-hide">
           {history.map((item) => (
             <motion.div 
               key={item.id}
-              initial={{ opacity: 0 }} animate={{ opacity: 0.25 }} whileHover={{ opacity: 0.8 }}
-              className="group cursor-pointer"
+              initial={{ opacity: 0 }} animate={{ opacity: 0.2 }} whileHover={{ opacity: 1 }}
+              className="group cursor-default"
             >
-              <p className="text-[10px] text-indigo-400 mb-1">● AI Response</p>
-              <p className="text-[11px] text-white/50 leading-relaxed font-light line-clamp-2 italic border-l border-white/10 pl-3">
+              <p className="text-[10px] text-white/40 leading-relaxed font-light line-clamp-2 italic border-l border-[#6040F1]/20 pl-3">
                 {item.ai}
               </p>
             </motion.div>
           ))}
-          {history.length === 0 && <div className="text-[9px] text-gray-800 tracking-widest uppercase">No logs</div>}
+          {history.length === 0 && <div className="h-20 border-l border-white/5 ml-1 opacity-5"></div>}
         </div>
       </aside>
     </div>
