@@ -115,7 +115,6 @@ function App() {
               className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
               <div className={`max-w-[90%] p-6 rounded-3xl text-[13px] ${msg.type === 'user' ? 'bg-[#7D68F6] mrm-bold rounded-tr-none' : 'bg-white/5 border border-white/10 rounded-tl-none inter-light'}`}>
                 {msg.text}
-                {/* BURBUJA RICA (PROYECTOS) */}
                 {msg.suggestions && (
                   <div className="mt-6 flex flex-col gap-3">
                     {msg.suggestions.map(p => (
@@ -189,8 +188,16 @@ function App() {
             {TALENTS_DATA.map((talent) => {
               const isAdded = myTeam.find(m => m.id === talent.id);
               return (
-                <motion.div key={talent.id} whileHover={{ y: -5 }} onClick={() => setSelectedTalent(talent)} 
-                  className={`p-6 rounded-[2.5rem] border transition-all cursor-pointer flex flex-col items-center ${isAdded ? 'bg-white/[0.08] border-[#7D68F6]' : 'bg-white/[0.03] border-white/5'}`}>
+                <motion.div 
+                  key={talent.id} 
+                  whileHover={{ 
+                    y: -5, 
+                    backgroundColor: "rgba(125, 104, 246, 0.15)", // Color de fondo lila suave al hover
+                    borderColor: "#7D68F6" // Stroke lila al hover
+                  }} 
+                  onClick={() => setSelectedTalent(talent)} 
+                  className={`p-6 rounded-[2.5rem] border transition-all duration-300 cursor-pointer flex flex-col items-center ${isAdded ? 'bg-[#7D68F6]/20 border-[#7D68F6]' : 'bg-white/[0.03] border-white/5'}`}
+                >
                   <img src={talent.img} className={`w-14 h-14 rounded-full border-2 mb-4 transition-all ${isAdded ? 'grayscale-0 border-[#7D68F6]' : 'grayscale border-white/10'}`} />
                   <h3 className="text-[11px] mrm-bold uppercase text-center">{talent.name}</h3>
                   <p className="text-[9px] text-gray-500 uppercase mb-4 text-center">{talent.role}</p>
