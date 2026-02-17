@@ -97,20 +97,20 @@ function App() {
         <p className="text-[10px] mrm-bold uppercase tracking-[0.8em] text-[#7D68F6] mt-2">BOGOTA CREATIVE CREDENTIALS</p>
       </header>
 
-      {/* CHAT AREA CON ANIMACIÓN HACIA ARRIBA */}
+      {/* CHAT AREA CON ANIMACIÓN DE DESVANECIMIENTO HACIA ARRIBA */}
       <div className="w-full max-w-2xl flex flex-col space-y-6 mb-16 z-20 min-h-[140px] justify-end">
         <AnimatePresence mode="popLayout" initial={false}>
           {visibleMessages.map((msg, idx) => (
             <motion.div 
               key={idx} 
               layout
-              initial={{ opacity: 0, y: 30, scale: 0.9 }} 
-              animate={{ opacity: 1, y: 0, scale: 1 }} 
-              exit={{ opacity: 0, y: -30, scale: 0.9 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              initial={{ opacity: 0, y: 20 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              exit={{ opacity: 0, y: -40 }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
               className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}
             >
-              <div className={`max-w-[90%] p-6 rounded-3xl text-[13px] ${msg.type === 'user' ? 'bg-[#7D68F6] mrm-bold rounded-tr-none shadow-lg' : 'bg-white/5 border border-white/10 rounded-tl-none inter-light'}`}>
+              <div className={`max-w-[90%] p-6 rounded-3xl text-[13px] ${msg.type === 'user' ? 'bg-[#7D68F6] mrm-bold rounded-tr-none' : 'bg-white/5 border border-white/10 rounded-tl-none inter-light'}`}>
                 {msg.text}
                 {msg.suggestions && (
                   <div className="mt-6 flex flex-col gap-3">
