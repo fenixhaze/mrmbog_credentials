@@ -5,28 +5,20 @@
 @font-face {
   font-family: 'MWSans-Bold-Custom';
   src: url('./assets/fonts/MWSans-Bold_4153471986.ttf') format('truetype');
-  font-weight: bold;
-  font-style: normal;
+  font-weight: bold; font-style: normal;
 }
-
 @font-face {
   font-family: 'MWSans-Regular-Custom';
   src: url('./assets/fonts/MWSans-Regular_3093588806.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
+  font-weight: normal; font-style: normal;
 }
-
 @font-face {
   font-family: 'Inter-Light-Custom';
   src: url('./assets/fonts/Inter-Light_2797819442.ttf') format('truetype');
-  font-weight: 300;
-  font-style: normal;
+  font-weight: 300; font-style: normal;
 }
 
-/* RESET TOTAL DE ITALICAS */
-* {
-  font-style: normal !important;
-}
+* { font-style: normal !important; }
 
 body {
   margin: 0;
@@ -38,5 +30,3 @@ body {
 
 .mrm-bold { font-family: 'MWSans-Bold-Custom', sans-serif !important; }
 .inter-light { font-family: 'Inter-Light-Custom', sans-serif !important; }
-
-.scrollbar-hide::-webkit-scrollbar { display: none; }
