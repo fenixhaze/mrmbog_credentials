@@ -1,15 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, History, ShieldCheck, Sparkles } from 'lucide-react';
+import { Send, Sparkles, MessageSquare } from 'lucide-react';
 
-const LILA_SOFT = "rgba(96, 64, 241, 0.7)"; // Lila suavizado para mejor lectura
-const BG_COLOR = "#1D1D1D";
+const LILA_MAIN = "rgba(96, 64, 241, 1)";
+const LILA_GLOW = "rgba(96, 64, 241, 0.15)";
+const DARK_BG = "#0D0D0D"; // Fondo más oscuro para mayor contraste suave
 
 function App() {
   const [input, setInput] = useState('');
   const [currentChat, setCurrentChat] = useState({ 
     user: null, 
-    ai: 'Bienvenido al sistema interno. Describa su proyecto y los skills que planea integrar para comenzar el análisis.' 
+    ai: 'Bienvenido. Describe tu proyecto y los skills para iniciar el análisis corporativo.' 
   });
   const [history, setHistory] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
@@ -17,137 +18,135 @@ function App() {
   const handleSendMessage = () => {
     if (!input.trim()) return;
 
-    // Antes de cambiar, si ya había un par de mensajes, los mandamos al historial
     if (currentChat.user) {
-      setHistory(prev => [{ ...currentChat, id: Date.now() }, ...prev]);
+      setHistory(prev => [{ ...currentChat, id: Date.now() }, ...prev].slice(0, 5));
     }
 
     const userText = input;
-    // Limpiamos el centro para las nuevas burbujas
     setCurrentChat({ user: userText, ai: null });
     setInput('');
     setIsTyping(true);
 
-    // Simulación de respuesta IA con delay para la animación
     setTimeout(() => {
       setIsTyping(false);
       setCurrentChat(prev => ({ 
         ...prev, 
-        ai: `Análisis de "${userText.substring(0, 20)}..." completado. El sistema ha mapeado las credenciales óptimas para los skills descritos. ¿Desea ajustar algún detalle?` 
+        ai: `Análisis estratégico finalizado. Para "${userText.substring(0, 15)}..." se han mapeado las credenciales de ejecución interna. ¿Algún requerimiento adicional?` 
       }));
-    }, 1500);
+    }, 1200);
   };
 
   return (
-    <div className="flex h-screen w-full font-sans overflow-hidden" style={{ backgroundColor: BG_COLOR, color: 'white' }}>
+    <div className="flex h-screen w-full overflow-hidden font-sans" style={{ backgroundColor: DARK_BG, color: 'white' }}>
       
-      {/* SECCIÓN PRINCIPAL: INTERACCIÓN */}
-      <main className="relative flex-1 flex flex-col items-center p-12 border-r border-white/5">
+      {/* CUERPO CENTRAL */}
+      <div className="flex-1 flex flex-col items-center justify-between py-12 px-10 relative">
         
-        {/* TÍTULO CENTRALIZADO */}
-        <header className="mb-16 text-center animate-in fade-in zoom-in duration-700">
-          <h1 className="text-4xl font-black tracking-tighter italic opacity-80 uppercase">MRM</h1>
-          <p className="text-[10px] font-bold uppercase tracking-[0.5em] opacity-40">Bogota Credentials</p>
-        </header>
+        {/* BRANDING HERO */}
+        <motion.header 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          <h1 className="text-[100px] font-black leading-none tracking-tighter text-white m-0 opacity-90">MRM</h1>
+          <p className="text-[10px] font-bold uppercase tracking-[0.8em] text-gray-600 mt-[-5px]">Creative Credentials</p>
+        </motion.header>
 
-        {/* BARRA DE BÚSQUEDA ALTA */}
-        <div className="w-full max-w-2xl z-20">
-          <motion.div 
-            initial={{ y: -20, opacity: 0 }} 
-            animate={{ y: 0, opacity: 1 }}
-            className="relative group"
-          >
-            <input 
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-              placeholder="Describa el proyecto y los skills necesarios..."
-              className="w-full bg-white/5 border border-white/10 rounded-2xl py-5 px-8 outline-none focus:border-white/20 transition-all text-base placeholder:text-gray-600 shadow-2xl"
-            />
-            <button 
-              onClick={handleSendMessage}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-3 rounded-xl transition-all active:scale-90 hover:opacity-90"
-              style={{ backgroundColor: LILA_SOFT }}
-            >
-              <Send size={20} />
-            </button>
-          </motion.div>
-        </div>
-
-        {/* ÁREA DE MENSAJES (MÁXIMO 2 BURBUJAS CON FADE) */}
-        <div className="mt-24 w-full max-w-2xl flex flex-col gap-10">
+        {/* ÁREA DE MENSAJES (BURBUJAS LARGAS Y SUAVES) */}
+        <div className="w-full max-w-4xl flex flex-col gap-8 items-center mb-10">
           <AnimatePresence mode="wait">
             {currentChat.user && (
               <motion.div 
-                key={`user-${currentChat.user}`}
-                initial={{ opacity: 0, x: -10, filter: 'blur(5px)' }}
-                animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-                exit={{ opacity: 0, y: 10, filter: 'blur(10px)' }}
-                className="p-6 rounded-[2rem] bg-white/5 border border-white/10 text-gray-300 self-start max-w-[85%] shadow-lg"
+                key={currentChat.user}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="w-full py-5 px-10 rounded-3xl border border-white/5 bg-white/[0.02] text-gray-400 text-sm font-light tracking-wide text-center"
               >
-                <p className="text-[9px] uppercase tracking-widest opacity-30 mb-2 font-bold italic">User Input</p>
-                <span className="text-base leading-relaxed">{currentChat.user}</span>
+                <span className="opacity-40 text-[9px] uppercase tracking-widest block mb-1">Tu solicitud</span>
+                "{currentChat.user}"
               </motion.div>
             )}
           </AnimatePresence>
 
           <AnimatePresence mode="wait">
             {isTyping ? (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-2 p-4">
-                <span className="w-1.5 h-1.5 bg-gray-600 rounded-full animate-bounce"></span>
-                <span className="w-1.5 h-1.5 bg-gray-600 rounded-full animate-bounce [animation-delay:0.2s]"></span>
-                <span className="w-1.5 h-1.5 bg-gray-600 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-2">
+                {[0, 0.2, 0.4].map((d) => (
+                  <motion.div 
+                    key={d}
+                    animate={{ y: [0, -5, 0] }}
+                    transition={{ repeat: Infinity, duration: 0.6, delay: d }}
+                    className="w-1 h-1 rounded-full bg-indigo-500"
+                  />
+                ))}
               </motion.div>
-            ) : currentChat.ai && (
+            ) : (
               <motion.div 
-                key={`ai-${currentChat.ai}`}
-                initial={{ opacity: 0, y: 20, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, filter: 'blur(8px)' }}
-                transition={{ duration: 0.6, ease: "easeOut" }}
-                className="p-8 rounded-[2.5rem] shadow-2xl self-start max-w-[95%] relative group border border-white/5"
-                style={{ backgroundColor: LILA_SOFT }}
+                key={currentChat.ai}
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="w-full p-10 rounded-[2.5rem] text-center relative overflow-hidden group border border-white/10"
+                style={{ background: `linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 100%)` }}
               >
-                <div className="absolute -top-3 -right-3 p-4 opacity-30 text-white animate-pulse"><Sparkles size={20}/></div>
-                <p className="text-[9px] uppercase tracking-[0.4em] text-white/50 mb-3 font-black">AI Response</p>
-                <span className="text-lg leading-relaxed font-medium text-white shadow-sm">{currentChat.ai}</span>
+                {/* Brillo suave de fondo estilo iOS */}
+                <div className="absolute inset-0 bg-indigo-500/5 blur-3xl -z-10 group-hover:bg-indigo-500/10 transition-colors duration-700" />
+                
+                <Sparkles className="mx-auto mb-4 opacity-30" size={20} style={{ color: LILA_MAIN }} />
+                <span className="text-2xl leading-relaxed font-extralight text-white/80 tracking-tight italic">
+                   {currentChat.ai}
+                </span>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
-      </main>
 
-      {/* SIDEBAR DERECHO: HISTORIAL */}
-      <aside className="w-72 bg-black/20 backdrop-blur-3xl p-8 flex flex-col border-l border-white/5">
-        <div className="flex items-center gap-3 mb-10 opacity-30 group">
-          <History size={16} className="group-hover:rotate-[-45deg] transition-transform" />
-          <h2 className="text-[9px] font-black uppercase tracking-[0.3em]">Sesión Activa</h2>
+        {/* BARRA DE COMUNICACIÓN (CENTRO ABAJO) */}
+        <div className="w-full max-w-2xl">
+          <div className="relative flex items-center bg-white/[0.03] border border-white/10 rounded-full px-6 py-2 backdrop-blur-md focus-within:border-white/20 transition-all">
+            <input 
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+              placeholder="¿En qué puedo asistirte hoy?"
+              className="bg-transparent flex-1 outline-none py-3 text-sm text-white/70 placeholder:text-gray-700 font-light"
+            />
+            <button 
+              onClick={handleSendMessage}
+              className="p-2 ml-2 rounded-full hover:bg-white/5 transition-colors group"
+            >
+              <Send size={18} className="text-gray-500 group-hover:text-indigo-400 transition-colors" />
+            </button>
+          </div>
         </div>
+      </div>
 
-        <div className="flex-1 overflow-y-auto space-y-8 pr-2 scrollbar-hide">
+      {/* HISTORIAL (DERECHA - ESTÉTICA SUAVE) */}
+      <aside className="w-80 p-10 flex flex-col justify-center border-l border-white/5 bg-black/20">
+        <div className="flex items-center gap-2 opacity-20 mb-10">
+          <MessageSquare size={14} />
+          <span className="text-[9px] font-bold uppercase tracking-[0.4em]">History</span>
+        </div>
+        
+        <div className="space-y-12 overflow-y-auto scrollbar-hide pr-2">
           <AnimatePresence>
             {history.map((item) => (
               <motion.div 
                 key={item.id}
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 0.25 }}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 0.2 }}
                 whileHover={{ opacity: 1, scale: 1.02 }}
-                className="space-y-2 cursor-pointer transition-all duration-300"
+                className="group cursor-pointer transition-all duration-700"
               >
-                <p className="text-[10px] text-gray-400 line-clamp-1 italic font-light">"{item.user}"</p>
-                <div className="h-[1px] w-6 bg-white/10"></div>
-                <p className="text-[10px] text-indigo-300/80 line-clamp-2 leading-snug">{item.ai}</p>
+                <div className="h-px w-4 bg-indigo-500/30 mb-4 group-hover:w-full transition-all duration-700" />
+                <p className="text-[11px] text-white/50 leading-relaxed font-light line-clamp-3 italic">
+                  {item.ai}
+                </p>
               </motion.div>
             ))}
           </AnimatePresence>
           {history.length === 0 && (
-            <p className="text-[9px] text-gray-700 uppercase tracking-tighter">Esperando actividad...</p>
+            <div className="text-[10px] text-gray-800 uppercase tracking-widest italic">Standby...</div>
           )}
-        </div>
-        
-        <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between opacity-10 grayscale">
-           <ShieldCheck size={14} />
-           <span className="text-[8px] font-bold uppercase tracking-widest">Confidential OS</span>
         </div>
       </aside>
     </div>
