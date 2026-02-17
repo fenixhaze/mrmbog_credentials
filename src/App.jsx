@@ -97,44 +97,52 @@ function App() {
         <p className="text-[10px] mrm-bold uppercase tracking-[0.8em] text-[#7D68F6] mt-2">BOGOTA CREATIVE CREDENTIALS</p>
       </header>
 
-      {/* CHAT AREA CON ANIMACIÓN DE DESVANECIMIENTO HACIA ARRIBA */}
-      <div className="w-full max-w-2xl flex flex-col space-y-6 mb-16 z-20 min-h-[140px] justify-end">
-        <AnimatePresence mode="popLayout" initial={false}>
-          {visibleMessages.map((msg, idx) => (
-            <motion.div 
-              key={idx} 
-              layout
-              initial={{ opacity: 0, y: 20 }} 
-              animate={{ opacity: 1, y: 0 }} 
-              exit={{ opacity: 0, y: -40 }}
-              transition={{ duration: 0.5, ease: "easeInOut" }}
-              className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}
-            >
-              <div className={`max-w-[90%] p-6 rounded-3xl text-[13px] ${msg.type === 'user' ? 'bg-[#7D68F6] mrm-bold rounded-tr-none' : 'bg-white/5 border border-white/10 rounded-tl-none inter-light'}`}>
-                {msg.text}
-                {msg.suggestions && (
-                  <div className="mt-6 flex flex-col gap-3">
-                    {msg.suggestions.map(p => (
-                      <div key={p.id} className="flex gap-4 p-4 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-[#7D68F6]/40 transition-all group">
-                        <img src={p.img} className="w-20 h-20 rounded-xl object-cover grayscale group-hover:grayscale-0" />
-                        <div className="flex-1">
-                          <div className="flex justify-between items-start">
-                            <h4 className="text-[10px] mrm-bold uppercase">{p.title}</h4>
-                            <ArrowRight size={12} className="text-[#7D68F6] opacity-0 group-hover:opacity-100" />
+      {/* CHAT AREA CON MÁSCARA DE DISOLUCIÓN SUPERIOR */}
+      <div className="w-full max-w-2xl flex flex-col mb-16 z-20">
+        <div 
+          className="flex flex-col space-y-6 min-h-[160px] justify-end pb-8"
+          style={{ 
+            maskImage: 'linear-gradient(to bottom, transparent 0%, black 40%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 40%)' 
+          }}
+        >
+          <AnimatePresence mode="popLayout" initial={false}>
+            {visibleMessages.map((msg, idx) => (
+              <motion.div 
+                key={idx} 
+                layout
+                initial={{ opacity: 0, y: 40 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                exit={{ opacity: 0, y: -60 }}
+                transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}
+              >
+                <div className={`max-w-[90%] p-6 rounded-3xl text-[13px] ${msg.type === 'user' ? 'bg-[#7D68F6] mrm-bold rounded-tr-none' : 'bg-white/5 border border-white/10 rounded-tl-none inter-light'}`}>
+                  {msg.text}
+                  {msg.suggestions && (
+                    <div className="mt-6 flex flex-col gap-3">
+                      {msg.suggestions.map(p => (
+                        <div key={p.id} className="flex gap-4 p-4 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-[#7D68F6]/40 transition-all group">
+                          <img src={p.img} className="w-20 h-20 rounded-xl object-cover grayscale group-hover:grayscale-0" />
+                          <div className="flex-1">
+                            <div className="flex justify-between items-start">
+                              <h4 className="text-[10px] mrm-bold uppercase">{p.title}</h4>
+                              <ArrowRight size={12} className="text-[#7D68F6] opacity-0 group-hover:opacity-100" />
+                            </div>
+                            <p className="text-[10px] text-gray-400 mt-2 leading-snug">{p.desc}</p>
                           </div>
-                          <p className="text-[10px] text-gray-400 mt-2 leading-snug">{p.desc}</p>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          ))}
-          {isTyping && (
-            <motion.div layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="self-start bg-white/5 p-4 rounded-2xl animate-pulse">...</motion.div>
-          )}
-        </AnimatePresence>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            ))}
+            {isTyping && (
+              <motion.div layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="self-start bg-white/5 p-4 rounded-2xl animate-pulse">...</motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
         <div className="flex items-center bg-white/[0.04] border border-white/10 rounded-full px-6 py-4 backdrop-blur-md">
           <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
@@ -143,7 +151,7 @@ function App() {
         </div>
       </div>
 
-      {/* RESULTADOS */}
+      {/* RESTO DEL CÓDIGO SIN CAMBIOS */}
       {showResults && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full flex flex-col items-center">
           <div className="flex flex-col items-center mb-28 w-full">
