@@ -2,10 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Send, Globe, Cpu, Palette, ChevronLeft, ChevronRight, 
-  X, MessageSquare, ArrowRight, ExternalLink 
+  X, ArrowRight, ExternalLink 
 } from 'lucide-react';
 
-// --- DATA: 26 TALENTOS (Chips y bios detalladas) ---
+// --- DATA: 26 TALENTOS ---
 const TALENTS_DATA = [];
 for(let i=1; i<=26; i++) {
   TALENTS_DATA.push({
@@ -48,14 +48,13 @@ function App() {
     setChatHistory(prev => [...prev, { type: 'user', text: input }]);
     setInput('');
     setIsTyping(true);
+
     setTimeout(() => {
       setIsTyping(false);
       setChatHistory(prev => [...prev, { 
         type: 'ai', 
         text: "He diseñado un ecosistema de soluciones clave para tu requerimiento:",
-        suggestions: [
-          { ...SKILLS_DATA[0].projects[0], type: "Asset", icon: <ExternalLink size={12}/> }
-        ] 
+        suggestions: [SKILLS_DATA[0].projects[0]] 
       }]);
       setShowResults(true);
     }, 1000);
@@ -87,10 +86,11 @@ function App() {
         <p className="text-[10px] mrm-bold uppercase tracking-[0.8em] text-[#7D68F6] mt-2">BOGOTA CREATIVE CREDENTIALS</p>
       </header>
 
-      {/* CHATBOX */}
+      {/* CHATBOX CON SCROLL Y DESVANECIMIENTO SUPERIOR */}
       <div className="w-full max-w-2xl flex flex-col mb-12 z-20">
-        <div className="relative h-[300px] overflow-hidden mb-4" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 25%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 25%)' }}>
-          <div ref={chatScrollRef} className="h-full overflow-y-auto pt-20 pb-4 px-2 space-y-6 hide-scrollbar scroll-smooth">
+        <div className="relative h-[350px] overflow-hidden mb-4" 
+             style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 20%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 20%)' }}>
+          <div ref={chatScrollRef} className="h-full overflow-y-auto pt-24 pb-4 px-2 space-y-6 hide-scrollbar scroll-smooth">
             {chatHistory.map((msg, idx) => (
               <div key={idx} className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
                 <div className={`max-w-[85%] p-6 rounded-3xl text-[13px] ${msg.type === 'user' ? 'bg-[#7D68F6] mrm-bold rounded-tr-none' : 'bg-white/5 border border-white/10 rounded-tl-none inter-light'}`}>
@@ -98,11 +98,11 @@ function App() {
                   {msg.suggestions && (
                     <div className="mt-6 flex flex-col gap-3">
                       {msg.suggestions.map((p, i) => (
-                        <div key={i} onClick={() => setSelectedProject(p)} className="flex gap-4 p-4 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-[#7D68F6] cursor-pointer transition-all group">
+                        <div key={i} onClick={() => setSelectedProject(p)} className="flex gap-4 p-4 rounded-2xl bg-white/[0.05] border border-white/10 hover:border-[#7D68F6] cursor-pointer transition-all group">
                           <img src={p.img} className="w-16 h-16 rounded-xl object-cover grayscale group-hover:grayscale-0" />
                           <div className="flex-1">
                             <h4 className="text-[10px] mrm-bold uppercase flex items-center justify-between">{p.title} <ArrowRight size={12}/></h4>
-                            <p className="text-[10px] text-gray-400 mt-1 leading-snug">{p.desc}</p>
+                            <p className="text-[10px] text-gray-400 mt-1">Click to view project details</p>
                           </div>
                         </div>
                       ))}
@@ -120,7 +120,7 @@ function App() {
         </div>
       </div>
 
-      {/* CAPABILITIES (Igualado a max-w-2xl) */}
+      {/* CAPABILITIES CAROUSEL */}
       {showResults && (
         <div className="w-full max-w-2xl flex flex-col items-center mb-28">
           <p className="text-[8px] uppercase tracking-[0.5em] opacity-30 mb-8">Capabilities</p>
@@ -144,40 +144,40 @@ function App() {
         </div>
       )}
 
-      {/* PERSON GRID */}
+      {/* TALENTS GRID */}
       {showResults && (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 w-full max-w-7xl px-4">
           {TALENTS_DATA.map((talent) => (
-            <motion.div key={talent.id} whileHover={{ y: -5 }} onClick={() => setSelectedTalent(talent)} className="p-6 rounded-[2.5rem] border border-white/5 bg-white/[0.03] cursor-pointer flex flex-col items-center group">
+            <div key={talent.id} onClick={() => setSelectedTalent(talent)} className="p-6 rounded-[2.5rem] border border-white/5 bg-white/[0.03] cursor-pointer flex flex-col items-center group hover:border-[#7D68F6]/50 transition-all">
               <img src={talent.img} className="w-14 h-14 rounded-full border-2 border-white/10 mb-4 grayscale group-hover:grayscale-0" />
               <h3 className="text-[11px] mrm-bold uppercase text-center">{talent.name}</h3>
               <p className="text-[9px] text-gray-500 uppercase text-center mb-3">{talent.role}</p>
               <div className="flex gap-1">
                 {talent.tags.slice(0, 2).map(t => <span key={t} className="text-[6px] border border-white/10 px-1 rounded uppercase text-gray-400">{t}</span>)}
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       )}
 
-      {/* MODAL PERSONA (RESTAURADO) */}
+      {/* MODAL PERSONA */}
       <AnimatePresence>
         {selectedTalent && (
           <div className="fixed inset-0 z-[1000] flex items-center justify-center px-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={() => setSelectedTalent(null)} className="absolute inset-0 bg-black/90 backdrop-blur-xl" />
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="relative w-full max-w-4xl bg-[#0A0A0A] border border-white/10 rounded-[3rem] p-12 flex flex-col md:flex-row gap-12 overflow-hidden text-left">
-              <div className="w-full md:w-1/3 flex flex-col items-center border-r border-white/5 pr-12">
-                <img src={selectedTalent.img} className="w-32 h-32 rounded-full border-2 border-[#7D68F6]/40 mb-8 object-cover" />
+            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="relative w-full max-w-4xl bg-[#0A0A0A] border border-white/10 rounded-[3rem] p-12 flex flex-col md:flex-row gap-12 text-left">
+              <div className="w-full md:w-1/3 flex flex-col items-center">
+                <img src={selectedTalent.img} className="w-32 h-32 rounded-full mb-8 object-cover" />
                 <h2 className="text-2xl mrm-bold uppercase text-center">{selectedTalent.name}</h2>
                 <button onClick={() => toggleMember(selectedTalent)} className="mt-10 w-full py-5 rounded-2xl text-[11px] mrm-bold uppercase bg-[#7D68F6]">
-                  {myTeam.find(m => m.id === selectedTalent.id) ? "Remove" : "Add to Team"}
+                  {myTeam.find(m => m.id === selectedTalent.id) ? "Remove Member" : "Add to Team"}
                 </button>
               </div>
-              <div className="flex-1 py-2">
-                <p className="text-[9px] uppercase tracking-[0.4em] text-gray-500 mb-5">Bio</p>
-                <p className="text-[15px] text-gray-400 inter-light leading-relaxed">{selectedTalent.bio}</p>
+              <div className="flex-1">
+                <p className="text-[9px] uppercase tracking-[0.4em] text-gray-500 mb-4">Professional Bio</p>
+                <p className="text-[15px] text-gray-400 leading-relaxed inter-light">{selectedTalent.bio}</p>
               </div>
-              <button onClick={() => setSelectedTalent(null)} className="absolute top-8 right-8 text-white/20"><X size={28}/></button>
+              <button onClick={() => setSelectedTalent(null)} className="absolute top-8 right-8 text-white/40"><X /></button>
             </motion.div>
           </div>
         )}
@@ -188,50 +188,36 @@ function App() {
         {selectedProject && (
           <div className="fixed inset-0 z-[1000] flex items-center justify-center px-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={() => setSelectedProject(null)} className="absolute inset-0 bg-black/95 backdrop-blur-md" />
-            <motion.div initial={{ y: 20 }} animate={{ y: 0 }} className="relative w-full max-w-5xl bg-[#0A0A0A] border border-white/10 rounded-[3rem] overflow-hidden flex flex-col md:flex-row h-[70vh]">
+            <motion.div initial={{ y: 20 }} animate={{ y: 0 }} className="relative w-full max-w-5xl bg-[#0A0A0A] border border-white/10 rounded-[3rem] overflow-hidden flex h-[70vh]">
               <div className="w-1/2 h-full relative">
                 <img src={selectedProject.img} className="w-full h-full object-cover opacity-40" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] to-transparent" />
-                <div className="absolute bottom-10 left-10 p-2">
-                  <h2 className="text-3xl mrm-bold uppercase mb-2">{selectedProject.title}</h2>
-                  <p className="text-sm text-gray-400">{selectedProject.desc}</p>
-                </div>
+                <div className="absolute bottom-10 left-10"><h2 className="text-3xl mrm-bold uppercase">{selectedProject.title}</h2></div>
               </div>
-              <div className="w-1/2 p-12 flex flex-col bg-[#0A0A0A]">
-                <p className="text-[9px] mrm-bold uppercase tracking-[0.4em] text-[#7D68F6] mb-8">Project Team</p>
-                <div className="flex-1 overflow-y-auto space-y-4 pr-2 hide-scrollbar">
+              <div className="w-1/2 p-12 flex flex-col">
+                <p className="text-sm text-gray-400 mb-8">{selectedProject.desc}</p>
+                <div className="flex-1 overflow-y-auto space-y-4 hide-scrollbar">
                   {selectedProject.team?.map(m => (
-                    <div key={m.id} className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl">
+                    <div key={m.id} className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl border border-white/5">
                       <img src={m.img} className="w-10 h-10 rounded-full" />
-                      <div><p className="text-[10px] mrm-bold uppercase">{m.name}</p></div>
+                      <p className="text-[10px] mrm-bold uppercase">{m.name}</p>
                     </div>
                   ))}
                 </div>
-                <button onClick={() => addWholeTeam(selectedProject.team)} className="mt-8 w-full py-5 bg-[#7D68F6] mrm-bold uppercase text-[10px] rounded-2xl">Add Whole Team</button>
+                <button onClick={() => addWholeTeam(selectedProject.team)} className="mt-8 w-full py-5 bg-[#7D68F6] mrm-bold uppercase text-[10px] rounded-2xl tracking-[0.2em]">Add Whole Team</button>
               </div>
-              <button onClick={() => setSelectedProject(null)} className="absolute top-8 right-8"><X size={28}/></button>
+              <button onClick={() => setSelectedProject(null)} className="absolute top-8 right-8"><X /></button>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
 
       {/* BOTÓN PERMANENTE MY TEAM */}
-      <AnimatePresence>
-        {myTeam.length > 0 && (
-          <motion.div initial={{ y: 100 }} animate={{ y: 0 }} className="fixed bottom-10 right-10 z-[100] bg-black/80 border border-white/10 p-2 pl-6 rounded-full flex items-center gap-6 backdrop-blur-xl">
-            <span className="text-[10px] mrm-bold uppercase tracking-widest text-[#7D68F6]">Team ({myTeam.length})</span>
-            <button className="px-8 py-3 rounded-full bg-[#7D68F6] text-[10px] mrm-bold uppercase">View Build</button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* CHATLOG */}
-      <div className="fixed bottom-10 left-10 z-[100] flex flex-col items-start gap-2">
-        <div className="flex items-center gap-2 text-[8px] uppercase tracking-[0.4em] text-gray-500 mb-2"><MessageSquare size={12}/> Chatlog</div>
-        <div className="flex flex-col-reverse gap-2 overflow-y-auto max-h-[160px] text-[9px] text-white/40 italic">
-          {chatHistory.map((msg, idx) => <div key={idx}>{msg.text.substring(0, 30)}...</div>)}
+      {myTeam.length > 0 && (
+        <div className="fixed bottom-10 right-10 z-[100] bg-black/80 border border-white/10 p-2 pl-6 rounded-full flex items-center gap-6 backdrop-blur-xl">
+          <span className="text-[10px] mrm-bold uppercase text-[#7D68F6]">Team ({myTeam.length})</span>
+          <button className="px-8 py-3 rounded-full bg-[#7D68F6] text-[10px] mrm-bold uppercase">View Build</button>
         </div>
-      </div>
+      )}
     </div>
   );
 }
