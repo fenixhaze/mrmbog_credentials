@@ -1,18 +1,20 @@
-/* Importación de fuentes locales */
-@font-face {
-  font-family: 'MWSans';
-  src: url('./assets/fonts/MWSans-Regular_3093588806.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
+/* Registro de Fuentes */
 @font-face {
-  font-family: 'MWSans';
+  font-family: 'MWSansBold';
   src: url('./assets/fonts/MWSans-Bold_4153471986.ttf') format('truetype');
   font-weight: bold;
   font-style: normal;
-  font-display: swap;
+}
+
+@font-face {
+  font-family: 'MWSansRegular';
+  src: url('./assets/fonts/MWSans-Regular_3093588806.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
 }
 
 @font-face {
@@ -20,32 +22,13 @@
   src: url('./assets/fonts/Inter-Light_2797819442.ttf') format('truetype');
   font-weight: 300;
   font-style: normal;
-  font-display: swap;
 }
 
-/* Configuración Base */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-:root {
-  color-scheme: dark;
-}
-
-body {
-  margin: 0;
-  background-color: #0A0A0A;
-  color: white;
-  /* Aplicamos MW Sans Regular por defecto a todo el sitio */
-  font-family: 'MWSans', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* Utilidades personalizadas para facilitar el uso en App.jsx */
-.font-mwsans-bold {
-  font-family: 'MWSans', sans-serif;
-  font-weight: bold;
+/* Clases de Utilidad */
+.font-mrm-title {
+  font-family: 'MWSansBold', sans-serif !important;
+  font-style: normal !important; /* Fuerza a que no sea itálica */
+  text-transform: uppercase;
 }
 
 .font-inter-light {
@@ -53,11 +36,12 @@ body {
   font-weight: 300;
 }
 
-/* Ocultar scrollbar en el historial y otros contenedores */
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
+body {
+  margin: 0;
+  background-color: #0A0A0A;
+  color: white;
+  font-family: 'MWSansRegular', sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
+
+.scrollbar-hide::-webkit-scrollbar { display: none; }
