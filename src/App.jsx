@@ -31,12 +31,11 @@ const TALENTS_DATA = [
   }
 ];
 
-// Llenado de los 26 talentos con bios extensas
 for(let i=5; i<=26; i++) {
   if(!TALENTS_DATA[i-1]) {
     TALENTS_DATA.push({
       id: i, name: `Talento Experto ${i}`, role: "Senior Specialist", tags: ["Expertise", "Innovation"], img: `https://i.pravatar.cc/150?u=${i}`,
-      bio: "Este especialista senior cuenta con una trayectoria impecable en la ejecución de proyectos de transformación digital de alto impacto. Su enfoque combina una sólida base técnica con una visión estratégica orientada a resultados, permitiendo escalar soluciones complejas de manera eficiente. Ha trabajado en entornos globales liderando células de innovación y garantizando que cada entregable cumpla con los más altos estándares de excelencia operativa y diseño vanguardista. Es reconocido por su capacidad de mentoría y liderazgo en equipos de alto rendimiento."
+      bio: "Este especialista senior cuenta con una trayectoria impecable en la ejecución de proyectos de transformación digital de alto impacto. Su enfoque combina una sólida base técnica con una visión estratégica orientada a resultados, permitiendo escalar soluciones complejas de manera eficiente. Ha trabajado en entornos globales liderando células de innovación y garantizando que cada entregable cumpla con los más altos estándares de excelencia operativa y diseño vanguardista."
     });
   }
 }
@@ -92,19 +91,26 @@ function App() {
     <div className="flex min-h-screen w-full flex-col items-center text-white relative pb-40 px-6 overflow-x-hidden" 
          style={{ background: `radial-gradient(circle at 50% 0%, #1a0b3d 0%, #0A0A0A 60%)` }}>
       
-      {/* HEADER - NO TOCAR NI BORRAR EL SUBTÍTULO */}
+      {/* HEADER - BOGOTA CREATIVE CREDENTIALS */}
       <header className="w-full max-w-5xl text-center pt-16 mb-12 z-10">
         <h1 className="text-[100px] leading-none tracking-[-0.05em] mrm-bold uppercase">MRM</h1>
         <p className="text-[10px] mrm-bold uppercase tracking-[0.8em] text-[#7D68F6] mt-2">BOGOTA CREATIVE CREDENTIALS</p>
       </header>
 
-      {/* 1. CHAT AREA (2 BURBUJAS) */}
+      {/* CHAT AREA CON ANIMACIÓN HACIA ARRIBA */}
       <div className="w-full max-w-2xl flex flex-col space-y-6 mb-16 z-20 min-h-[140px] justify-end">
-        <AnimatePresence mode="popLayout">
+        <AnimatePresence mode="popLayout" initial={false}>
           {visibleMessages.map((msg, idx) => (
-            <motion.div key={idx} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
-              className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
-              <div className={`max-w-[90%] p-6 rounded-3xl text-[13px] ${msg.type === 'user' ? 'bg-[#7D68F6] mrm-bold rounded-tr-none' : 'bg-white/5 border border-white/10 rounded-tl-none inter-light'}`}>
+            <motion.div 
+              key={idx} 
+              layout
+              initial={{ opacity: 0, y: 30, scale: 0.9 }} 
+              animate={{ opacity: 1, y: 0, scale: 1 }} 
+              exit={{ opacity: 0, y: -30, scale: 0.9 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}
+            >
+              <div className={`max-w-[90%] p-6 rounded-3xl text-[13px] ${msg.type === 'user' ? 'bg-[#7D68F6] mrm-bold rounded-tr-none shadow-lg' : 'bg-white/5 border border-white/10 rounded-tl-none inter-light'}`}>
                 {msg.text}
                 {msg.suggestions && (
                   <div className="mt-6 flex flex-col gap-3">
@@ -125,7 +131,9 @@ function App() {
               </div>
             </motion.div>
           ))}
-          {isTyping && <div className="self-start bg-white/5 p-4 rounded-2xl animate-pulse">...</div>}
+          {isTyping && (
+            <motion.div layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="self-start bg-white/5 p-4 rounded-2xl animate-pulse">...</motion.div>
+          )}
         </AnimatePresence>
 
         <div className="flex items-center bg-white/[0.04] border border-white/10 rounded-full px-6 py-4 backdrop-blur-md">
@@ -135,10 +143,9 @@ function App() {
         </div>
       </div>
 
-      {/* 2. RESULTADOS: CARRUSEL + GRID */}
+      {/* RESULTADOS */}
       {showResults && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full flex flex-col items-center">
-          
           <div className="flex flex-col items-center mb-28 w-full">
             <p className="text-[8px] uppercase tracking-[0.5em] opacity-30 mb-8">Capabilities</p>
             <div className="flex items-center gap-8 mb-12">
@@ -152,11 +159,9 @@ function App() {
               </div>
               <ChevronRight onClick={() => setCurrentIndex(prev => (prev + 1) % SKILLS_DATA.length)} className="cursor-pointer opacity-20 hover:opacity-100" />
             </div>
-
             <div className="flex gap-4 h-10">
               {SKILLS_DATA[currentIndex].projects.map((proj, idx) => (
-                <div key={idx} onMouseEnter={() => setHoveredProject(proj)} onMouseLeave={() => setHoveredProject(null)} 
-                  className="relative px-5 py-2 rounded-full border border-white/5 bg-white/[0.03] flex items-center gap-2.5 cursor-help hover:bg-white/10 transition-all">
+                <div key={idx} className="relative px-5 py-2 rounded-full border border-white/5 bg-white/[0.03] flex items-center gap-2.5 cursor-help hover:bg-white/10 transition-all">
                   <div className="w-1.5 h-1.5 rounded-full bg-[#7D68F6]" />
                   <span className="text-[10px] uppercase mrm-bold text-gray-400">{proj.title}</span>
                 </div>
@@ -188,7 +193,7 @@ function App() {
         </motion.div>
       )}
 
-      {/* 3. CHATLOG (ABAJO IZQUIERDA) */}
+      {/* CHATLOG ABAJO IZQUIERDA */}
       <div className="fixed bottom-10 left-10 z-[100] flex flex-col items-start gap-2 max-w-[280px]">
         <div className="flex items-center gap-2 text-[8px] uppercase tracking-[0.4em] text-gray-500 mb-2"><MessageSquare size={12}/> Chatlog</div>
         <div className="flex flex-col-reverse gap-2 overflow-y-auto max-h-[160px] pr-2 hide-scrollbar">
@@ -201,7 +206,7 @@ function App() {
         </div>
       </div>
 
-      {/* 4. TEAM BUTTON */}
+      {/* TEAM BUTTON */}
       <AnimatePresence>
         {myTeam.length > 0 && (
           <motion.div initial={{ y: 100 }} animate={{ y: 0 }} className="fixed bottom-10 right-10 z-[100] flex items-center gap-4 bg-black/80 border border-white/10 p-2 pl-5 rounded-full backdrop-blur-xl shadow-2xl">
@@ -213,7 +218,7 @@ function App() {
         )}
       </AnimatePresence>
 
-      {/* 5. MODAL DE TALENTO (BIO EXTENSA) */}
+      {/* MODAL DE TALENTO */}
       <AnimatePresence>
         {selectedTalent && (
           <div className="fixed inset-0 z-[999] flex items-center justify-center px-4">
