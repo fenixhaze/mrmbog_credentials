@@ -2,46 +2,41 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Registro de Fuentes */
 @font-face {
-  font-family: 'MWSansBold';
+  font-family: 'MWSans-Bold-Custom';
   src: url('./assets/fonts/MWSans-Bold_4153471986.ttf') format('truetype');
   font-weight: bold;
   font-style: normal;
 }
 
 @font-face {
-  font-family: 'MWSansRegular';
+  font-family: 'MWSans-Regular-Custom';
   src: url('./assets/fonts/MWSans-Regular_3093588806.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
 }
 
 @font-face {
-  font-family: 'InterLight';
+  font-family: 'Inter-Light-Custom';
   src: url('./assets/fonts/Inter-Light_2797819442.ttf') format('truetype');
   font-weight: 300;
   font-style: normal;
 }
 
-/* Clases de Utilidad */
-.font-mrm-title {
-  font-family: 'MWSansBold', sans-serif !important;
-  font-style: normal !important; /* Fuerza a que no sea itálica */
-  text-transform: uppercase;
-}
-
-.font-inter-light {
-  font-family: 'InterLight', sans-serif;
-  font-weight: 300;
+/* RESET TOTAL DE ITALICAS */
+* {
+  font-style: normal !important;
 }
 
 body {
   margin: 0;
   background-color: #0A0A0A;
   color: white;
-  font-family: 'MWSansRegular', sans-serif;
+  font-family: 'MWSans-Regular-Custom', sans-serif;
   -webkit-font-smoothing: antialiased;
 }
+
+.mrm-bold { font-family: 'MWSans-Bold-Custom', sans-serif !important; }
+.inter-light { font-family: 'Inter-Light-Custom', sans-serif !important; }
 
 .scrollbar-hide::-webkit-scrollbar { display: none; }
