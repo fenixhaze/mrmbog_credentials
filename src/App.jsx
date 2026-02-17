@@ -1,33 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, ChevronRight, Zap, MessageCircle, Send, X, ShieldCheck, Sparkles } from 'lucide-react';
+import { User, ChevronRight, Zap, MessageCircle, Send, X, ShieldCheck, Sparkles, ChevronLeft } from 'lucide-react';
 
 const LILA_BRAND = "#6040F1"; // RGB(96, 64, 241)
 
 const CORPORATE_DATA = [
-  {
-    id: 1,
-    name: "Perfil Estratégico",
-    role: "Consultoría de Interacción",
-    tags: ["Interacción", "Estrategia", "Análisis", "UX/UI"],
-    color: LILA_BRAND
-  },
-  {
-    id: 2,
-    name: "Perfil de Desarrollo",
-    role: "Arquitectura Digital",
-    tags: ["React", "Tailwind", "Git", "AI Integration"],
-    color: LILA_BRAND
-  }
+  { id: 1, name: "Estratégico", role: "Consultoría", tags: ["Interacción", "Estrategia", "UX/UI"] },
+  { id: 2, name: "Desarrollo", role: "Arquitectura", tags: ["React", "AI", "Node.js"] },
+  { id: 3, name: "Creative", role: "Multimedia", tags: ["Motion", "Design", "Storytelling"] },
+  { id: 4, name: "Data", role: "Analytics", tags: ["Python", "Insights", "BI"] }
 ];
 
 function App() {
   const [showOnboarding, setShowOnboarding] = useState(true);
-  const [isChatOpen, setIsChatOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { role: 'ai', content: 'Asistente corporativo activo. Analizando tags del sistema interno.' }
+    { role: 'ai', content: 'Bienvenido. Para comenzar, por favor describe el proyecto que vas a realizar. Es valioso que agregues detalles específicos sobre las habilidades (skills) que planeas integrar.' }
   ]);
   const [input, setInput] = useState('');
   const chatEndRef = useRef(null);
+
+  // Lógica para el carrusel pequeño
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -38,73 +30,91 @@ function App() {
     setMessages(prev => [...prev, { role: 'user', content: input }]);
     setInput('');
     setTimeout(() => {
-      setMessages(prev => [...prev, { role: 'ai', content: 'Procesando consulta... La integración de IA está operativa para estos perfiles.' }]);
-    }, 800);
+      setMessages(prev => [...prev, { role: 'ai', content: 'Entendido. Procesando descripción del proyecto para mapear las credenciales necesarias...' }]);
+    }, 1000);
   };
+
+  const nextSlide = () => setCurrentIndex((prev) => (prev + 1) % CORPORATE_DATA.length);
+  const prevSlide = () => setCurrentIndex((prev) => (prev - 1 + CORPORATE_DATA.length) % CORPORATE_DATA.length);
 
   if (showOnboarding) {
     return (
       <div className="min-h-screen bg-[#1D1D1D] flex items-center justify-center p-6">
         <div className="bg-[#252525] p-10 rounded-[2.5rem] border border-white/5 text-center shadow-2xl max-w-sm">
-          <div className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-8" style={{ backgroundColor: LILA_BRAND, boxShadow: `0 0 40px ${LILA_BRAND}66` }}>
-            <ShieldCheck className="text-white" size={40} />
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: LILA_BRAND }}>
+            <ShieldCheck className="text-white" size={32} />
           </div>
-          <h1 className="text-3xl font-black text-white mb-2 tracking-tighter italic uppercase">Internal Brief</h1>
-          <p className="text-gray-400 mb-10 text-[10px] uppercase tracking-[0.4em]">Confidential System</p>
-          <button onClick={() => setShowOnboarding(false)} className="w-full bg-white text-[#1D1D1D] py-4 rounded-2xl font-black hover:opacity-90 transition-all">INGRESAR</button>
+          <h1 className="text-2xl font-black text-white mb-2 tracking-tighter">MRM</h1>
+          <p className="text-gray-400 mb-8 text-[10px] uppercase tracking-[0.3em]">Bogota Credentials</p>
+          <button onClick={() => setShowOnboarding(false)} className="w-full bg-white text-[#1D1D1D] py-3 rounded-xl font-black hover:opacity-90 transition-all">ACCEDER</button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#1D1D1D] text-white p-8">
-      <header className="max-w-5xl mx-auto mb-16 flex justify-between items-center bg-[#252525]/50 backdrop-blur-xl p-6 rounded-3xl border border-white/5 shadow-xl">
-        <h1 className="text-2xl font-black tracking-tighter italic uppercase">Corporate <span style={{ color: LILA_BRAND }}>Credentials</span></h1>
-        <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-          <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: LILA_BRAND }}></div> Interno
-        </div>
+    <div className="min-h-screen bg-[#1D1D1D] text-white flex flex-col p-6 overflow-hidden">
+      
+      {/* TÍTULO Y SUBTÍTULO */}
+      <header className="text-center mb-6">
+        <h1 className="text-5xl font-black tracking-[ -0.05em] mb-1">MRM</h1>
+        <p className="text-[10px] font-bold uppercase tracking-[0.5em] opacity-50">Bogota Credentials</p>
       </header>
 
-      <main className="max-w-5xl mx-auto grid gap-10 md:grid-cols-2">
-        {CORPORATE_DATA.map(person => (
-          <div key={person.id} className="bg-[#252525] p-8 rounded-[2rem] border border-white/10">
-            <div className="flex items-center gap-5 mb-8">
-              <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10" style={{ color: LILA_BRAND }}><User size={30} /></div>
-              <div><h3 className="text-2xl font-bold tracking-tight">{person.name}</h3><p className="text-gray-500 text-sm">{person.role}</p></div>
+      {/* CHATBOT CENTRALIZADO */}
+      <div className="flex-1 max-w-2xl mx-auto w-full flex flex-col bg-[#252525]/30 rounded-[2rem] border border-white/5 overflow-hidden mb-8 shadow-2xl backdrop-blur-sm">
+        <div className="flex-1 p-6 overflow-y-auto space-y-4 scrollbar-hide">
+          {messages.map((m, i) => (
+            <div key={i} className={`p-4 rounded-2xl text-[12px] max-w-[85%] border border-white/5 ${m.role === 'ai' ? 'bg-[#333]/50 text-gray-200 self-start' : 'ml-auto text-white'}`}
+              style={m.role === 'user' ? { backgroundColor: LILA_BRAND } : {}}>
+              {m.content}
             </div>
-            <div className="flex flex-wrap gap-2 pt-6 border-t border-white/5">
-              {person.tags.map(tag => (
-                <span key={tag} className="px-4 py-1.5 bg-white/5 backdrop-blur-xl rounded-lg text-[10px] font-bold border border-white/10 uppercase tracking-widest" style={{ color: LILA_BRAND }}>{tag}</span>
-              ))}
-            </div>
-          </div>
-        ))}
-      </main>
-
-      {/* CHATBOT */}
-      <div className="fixed bottom-8 right-8 z-50">
-        {isChatOpen ? (
-          <div className="bg-[#252525]/95 backdrop-blur-2xl w-80 h-[450px] rounded-[2.5rem] border border-white/10 shadow-2xl flex flex-col overflow-hidden">
-            <div className="p-5 flex justify-between items-center border-b border-white/5" style={{ backgroundColor: `${LILA_BRAND}22` }}>
-              <span className="text-[10px] font-black uppercase tracking-widest">AI Assistant</span>
-              <button onClick={() => setIsChatOpen(false)}><X size={18}/></button>
-            </div>
-            <div className="flex-1 p-5 overflow-y-auto space-y-4">
-              {messages.map((m, i) => (
-                <div key={i} className="p-4 rounded-2xl text-[11px] border border-white/5" style={m.role === 'ai' ? { backgroundColor: `${LILA_BRAND}11`, color: '#d1d1d1' } : { backgroundColor: 'rgba(255,255,255,0.05)', color: 'white' }}>{m.content}</div>
-              ))}
-              <div ref={chatEndRef} />
-            </div>
-            <div className="p-4 bg-white/5 border-t border-white/5 flex gap-2">
-              <input value={input} onChange={(e) => setInput(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()} className="bg-transparent flex-1 text-[11px] outline-none text-white px-2" placeholder="Consulta segura..." />
-              <button onClick={handleSendMessage} className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: LILA_BRAND }}><Send size={14}/></button>
-            </div>
-          </div>
-        ) : (
-          <button onClick={() => setIsChatOpen(true)} className="w-16 h-16 rounded-full flex items-center justify-center text-white border-4 border-[#1D1D1D]" style={{ backgroundColor: LILA_BRAND }}><MessageCircle size={28} /></button>
-        )}
+          ))}
+          <div ref={chatEndRef} />
+        </div>
+        
+        <div className="p-4 bg-white/5 flex gap-2 border-t border-white/5">
+          <input 
+            value={input} 
+            onChange={(e) => setInput(e.target.value)} 
+            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+            placeholder="Describe tu proyecto y skills..." 
+            className="bg-transparent flex-1 text-sm outline-none px-2"
+          />
+          <button onClick={handleSendMessage} className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: LILA_BRAND }}>
+            <Send size={18} />
+          </button>
+        </div>
       </div>
+
+      {/* CARRUSEL MINI ABAJO */}
+      <footer className="max-w-2xl mx-auto w-full relative">
+        <div className="flex items-center gap-4 bg-[#252525]/50 p-4 rounded-2xl border border-white/5 backdrop-blur-md">
+          <button onClick={prevSlide} className="opacity-50 hover:opacity-100"><ChevronLeft size={20}/></button>
+          
+          <div className="flex-1 flex items-center justify-between overflow-hidden">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-white/5" style={{ color: LILA_BRAND }}>
+                <User size={20} />
+              </div>
+              <div className="text-left">
+                <h4 className="text-[12px] font-bold leading-none">{CORPORATE_DATA[currentIndex].name}</h4>
+                <p className="text-[10px] opacity-50">{CORPORATE_DATA[currentIndex].role}</p>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              {CORPORATE_DATA[currentIndex].tags.map(tag => (
+                <span key={tag} className="px-2 py-1 bg-white/5 rounded-md text-[9px] font-bold border border-white/10 uppercase tracking-tighter" style={{ color: LILA_BRAND }}>
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <button onClick={nextSlide} className="opacity-50 hover:opacity-100"><ChevronRight size={20}/></button>
+        </div>
+      </footer>
     </div>
   );
 }
