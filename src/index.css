@@ -18,7 +18,7 @@
   font-weight: 300; font-style: normal;
 }
 
-/* RESET PARA EVITAR ITALICAS */
+/* RESET TOTAL PARA EVITAR ITALICAS */
 * { font-style: normal !important; }
 
 body {
@@ -32,7 +32,17 @@ body {
 .mrm-bold { font-family: 'MWSans-Bold-Custom', sans-serif !important; }
 .inter-light { font-family: 'Inter-Light-Custom', sans-serif !important; }
 
-/* Animación del Tooltip */
+/* Animación de entrada para tooltips y cards */
+.fade-in-up {
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Tooltip triangular */
 .tooltip-fade {
   animation: tooltipEntry 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
