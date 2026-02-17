@@ -28,16 +28,11 @@ const TALENTS_DATA = [
     id: 4, name: "Sofia Müller", role: "UI Designer", tags: ["Design Systems", "Visual"], img: "https://i.pravatar.cc/150?u=4", 
     bio: "Sofia Müller es una especialista en interfaces de usuario y diseño de sistemas (Design Systems). Su carrera se ha centrado en la creación de lenguajes visuales escalables que permiten a las marcas globales mantener una consistencia impecable en múltiples productos y plataformas. Mediante el uso de diseño atómico, Sofia construye librerías de componentes reutilizables que aceleran el tiempo de desarrollo en un 50%, manteniendo siempre un nivel de detalle milimétrico en la tipografía y el uso cromático.", 
     projects: [{name: "Brand Kit", year: "2024", task: "Visual"}] 
-  },
-  { 
-    id: 5, name: "Lucas Petit", role: "Data Scientist", tags: ["Python", "ML", "SQL"], img: "https://i.pravatar.cc/150?u=5", 
-    bio: "Científico de datos con un fuerte trasfondo en matemáticas aplicadas y aprendizaje automático. Lucas se especializa en convertir grandes volúmenes de datos desestructurados en activos estratégicos para el negocio. Ha desarrollado modelos predictivos de fuga de clientes, motores de recomendación personalizados y sistemas de análisis de sentimiento que han permitido a sus clientes aumentar sus ingresos orgánicos sustancialmente.", 
-    projects: [{name: "Data Flow", year: "2023", task: "Analysis"}] 
   }
 ];
 
-// Llenado de los 26 talentos con bios extensas automáticas
-for(let i=6; i<=26; i++) {
+// Llenado de los 26 talentos con bios extensas
+for(let i=5; i<=26; i++) {
   if(!TALENTS_DATA[i-1]) {
     TALENTS_DATA.push({
       id: i, name: `Talento Experto ${i}`, role: "Senior Specialist", tags: ["Expertise", "Innovation"], img: `https://i.pravatar.cc/150?u=${i}`,
@@ -97,10 +92,10 @@ function App() {
     <div className="flex min-h-screen w-full flex-col items-center text-white relative pb-40 px-6 overflow-x-hidden" 
          style={{ background: `radial-gradient(circle at 50% 0%, #1a0b3d 0%, #0A0A0A 60%)` }}>
       
-      {/* HEADER */}
-      <header className="w-full max-w-5xl text-center pt-16 mb-12 z-10 flex flex-col items-center">
+      {/* HEADER - NO TOCAR NI BORRAR EL SUBTÍTULO */}
+      <header className="w-full max-w-5xl text-center pt-16 mb-12 z-10">
         <h1 className="text-[100px] leading-none tracking-[-0.05em] mrm-bold uppercase">MRM</h1>
-        <p className="text-[10px] mrm-bold uppercase tracking-[0.8em] text-[#7D68F6] mt-2 ml-[0.8em]">BOGOTA CREATIVE CREDENTIALS</p>
+        <p className="text-[10px] mrm-bold uppercase tracking-[0.8em] text-[#7D68F6] mt-2">BOGOTA CREATIVE CREDENTIALS</p>
       </header>
 
       {/* 1. CHAT AREA (2 BURBUJAS) */}
