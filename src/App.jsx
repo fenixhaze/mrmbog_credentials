@@ -94,7 +94,7 @@ function App() {
         <p className="text-[10px] mrm-bold uppercase tracking-[0.8em] text-[#7D68F6] mt-2">BOGOTA CREATIVE CREDENTIALS</p>
       </header>
 
-      {/* CHATBOX MÁS ANCHO (MAX-W-5XL) */}
+      {/* CHATBOX CON SMART ENCLOSURE */}
       <div className="w-full max-w-5xl flex flex-col mb-12 z-20 px-4">
         <div className="relative h-[650px] overflow-hidden mb-6" 
              style={{ 
@@ -108,11 +108,16 @@ function App() {
                 ref={idx === chatHistory.length - 1 ? lastMessageRef : null}
                 className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}
               >
-                {/* BURBUJAS AL 95% DE ANCHO */}
-                <div className={`w-[95%] p-8 rounded-[2.5rem] text-[13px] ${msg.type === 'user' ? 'bg-[#7D68F6] mrm-bold rounded-tr-none ml-auto' : 'bg-white/5 border border-white/10 rounded-tl-none inter-light'}`}>
-                  {msg.text}
+                {/* SMART ENCLOSURE: w-fit y max-w-[95%] */}
+                <div className={`w-fit max-w-[95%] p-8 rounded-[2.5rem] text-[13px] ${
+                  msg.type === 'user' 
+                  ? 'bg-[#7D68F6] mrm-bold rounded-tr-none ml-auto' 
+                  : 'bg-white/5 border border-white/10 rounded-tl-none inter-light'
+                }`}>
+                  <p className="w-fit">{msg.text}</p>
+                  
                   {msg.suggestions && (
-                    <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-5 w-full min-w-[300px] lg:min-w-[800px]">
                       {msg.suggestions.map((p, i) => (
                         <div key={i} onClick={() => setSelectedProject(p)} className="flex gap-5 p-6 rounded-[2rem] bg-white/[0.03] border border-white/10 hover:border-[#7D68F6] cursor-pointer transition-all group">
                           <img src={p.img} className="w-24 h-24 rounded-2xl object-cover grayscale group-hover:grayscale-0" />
@@ -138,7 +143,6 @@ function App() {
           </div>
         </div>
         
-        {/* INPUT TAMBIÉN MÁS ANCHO */}
         <div className="max-w-2xl mx-auto w-full flex items-center bg-white/[0.04] border border-white/10 rounded-full px-8 py-5 backdrop-blur-md">
           <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
             placeholder="Describe tu proyecto" className="bg-transparent flex-1 outline-none text-[14px] text-white/70" />
@@ -146,7 +150,7 @@ function App() {
         </div>
       </div>
 
-      {/* RESTO DEL CÓDIGO (CAPABILITIES, GRID, MODALES) SE MANTIENE IGUAL */}
+      {/* --- EL RESTO DEL CÓDIGO PERMANECE IGUAL --- */}
       {showResults && (
         <div className="w-full max-w-2xl flex flex-col items-center mb-28">
           <p className="text-[8px] uppercase tracking-[0.5em] opacity-30 mb-8">Capabilities</p>
@@ -193,7 +197,6 @@ function App() {
         </div>
       )}
 
-      {/* MODALES SE MANTIENEN IGUAL */}
       <AnimatePresence>
         {selectedTalent && (
           <div className="fixed inset-0 z-[1000] flex items-center justify-center px-4">
@@ -249,13 +252,6 @@ function App() {
           </div>
         )}
       </AnimatePresence>
-
-      {myTeam.length > 0 && (
-        <div className="fixed bottom-10 right-10 z-[100] bg-black/80 border border-white/10 p-2 pl-6 rounded-full flex items-center gap-6 backdrop-blur-xl">
-          <span className="text-[10px] mrm-bold uppercase text-[#7D68F6]">Team ({myTeam.length})</span>
-          <button className="px-8 py-3 rounded-full bg-[#7D68F6] text-[10px] mrm-bold uppercase">View Build</button>
-        </div>
-      )}
     </div>
   );
 }
