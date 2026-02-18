@@ -22,9 +22,9 @@ const SKILLS_DATA = [
   { 
     id: 1, name: "Estratégico", role: "Consultoría Senior", icon: <Globe size={26}/>, 
     projects: [
-      { id: 'p1', title: "Digital Roadmap 2030", desc: "Transformación digital maestra para el sector bancario global, redefiniendo la experiencia del cliente final.", img: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800", team: [TALENTS_DATA[0], TALENTS_DATA[1]], tags: ["Strategy", "Fintech", "Cloud"] },
-      { id: 'p2', title: "Market Entry", desc: "Expansión estratégica en mercados emergentes de LATAM basada en análisis predictivo de datos masivos.", img: "https://images.unsplash.com/photo-1553729459-efe14ef6055d?w=800", team: [TALENTS_DATA[2], TALENTS_DATA[3]], tags: ["Data", "Expansion", "Business"] },
-      { id: 'p3', title: "Operations Core", desc: "Optimización integral de procesos operativos críticos mediante metodologías ágiles y automatización.", img: "https://images.unsplash.com/photo-1454165833762-02ad50c8988d?w=800", team: [TALENTS_DATA[4]], tags: ["Ops", "Efficiency", "Lean"] }
+      { id: 'p1', title: "Digital Roadmap 2030", desc: "Transformación digital maestra para el sector bancario global, redefiniendo la experiencia.", img: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800", team: [TALENTS_DATA[0], TALENTS_DATA[1]], tags: ["Strategy", "Fintech", "Cloud"] },
+      { id: 'p2', title: "Market Entry", desc: "Expansión estratégica en mercados emergentes basada en análisis predictivo de datos masivos.", img: "https://images.unsplash.com/photo-1553729459-efe14ef6055d?w=800", team: [TALENTS_DATA[2], TALENTS_DATA[3]], tags: ["Data", "Expansion", "Business"] },
+      { id: 'p3', title: "Operations Core", desc: "Optimización integral de procesos operativos críticos mediante metodologías ágiles.", img: "https://images.unsplash.com/photo-1454165833762-02ad50c8988d?w=800", team: [TALENTS_DATA[4]], tags: ["Ops", "Efficiency", "Lean"] }
     ] 
   }
 ];
@@ -39,9 +39,8 @@ function App() {
   const [isTyping, setIsTyping] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const chatScrollRef = useRef(null);
-  const lastMessageRef = useRef(null); // Referencia para el inicio de la burbuja
+  const lastMessageRef = useRef(null);
 
-  // Ajuste de scroll: Si es AI, scrollear al inicio de la burbuja
   useEffect(() => {
     if (chatHistory.length > 0) {
       const lastMsg = chatHistory[chatHistory.length - 1];
@@ -95,35 +94,36 @@ function App() {
         <p className="text-[10px] mrm-bold uppercase tracking-[0.8em] text-[#7D68F6] mt-2">BOGOTA CREATIVE CREDENTIALS</p>
       </header>
 
-      {/* CHATBOX */}
-      <div className="w-full max-w-2xl flex flex-col mb-12 z-20">
-        <div className="relative h-[600px] overflow-hidden mb-4" 
+      {/* CHATBOX MÁS ANCHO (MAX-W-5XL) */}
+      <div className="w-full max-w-5xl flex flex-col mb-12 z-20 px-4">
+        <div className="relative h-[650px] overflow-hidden mb-6" 
              style={{ 
-               maskImage: 'linear-gradient(to bottom, transparent 0%, black 5%)', 
-               WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 5%)' 
+               maskImage: 'linear-gradient(to bottom, transparent 0%, black 8%)', 
+               WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 8%)' 
              }}>
-          <div ref={chatScrollRef} className="h-full overflow-y-auto pt-[450px] pb-10 px-2 space-y-6 hide-scrollbar scroll-smooth">
+          <div ref={chatScrollRef} className="h-full overflow-y-auto pt-[480px] pb-10 px-4 space-y-8 hide-scrollbar scroll-smooth">
             {chatHistory.map((msg, idx) => (
               <div 
                 key={idx} 
                 ref={idx === chatHistory.length - 1 ? lastMessageRef : null}
                 className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}
               >
-                <div className={`max-w-[85%] p-6 rounded-3xl text-[13px] ${msg.type === 'user' ? 'bg-[#7D68F6] mrm-bold rounded-tr-none' : 'bg-white/5 border border-white/10 rounded-tl-none inter-light'}`}>
+                {/* BURBUJAS AL 95% DE ANCHO */}
+                <div className={`w-[95%] p-8 rounded-[2.5rem] text-[13px] ${msg.type === 'user' ? 'bg-[#7D68F6] mrm-bold rounded-tr-none ml-auto' : 'bg-white/5 border border-white/10 rounded-tl-none inter-light'}`}>
                   {msg.text}
                   {msg.suggestions && (
-                    <div className="mt-6 flex flex-col gap-4">
+                    <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-5">
                       {msg.suggestions.map((p, i) => (
-                        <div key={i} onClick={() => setSelectedProject(p)} className="flex gap-4 p-5 rounded-3xl bg-white/[0.05] border border-white/10 hover:border-[#7D68F6] cursor-pointer transition-all group min-h-[160px]">
-                          <img src={p.img} className="w-20 h-20 rounded-2xl object-cover grayscale group-hover:grayscale-0" />
+                        <div key={i} onClick={() => setSelectedProject(p)} className="flex gap-5 p-6 rounded-[2rem] bg-white/[0.03] border border-white/10 hover:border-[#7D68F6] cursor-pointer transition-all group">
+                          <img src={p.img} className="w-24 h-24 rounded-2xl object-cover grayscale group-hover:grayscale-0" />
                           <div className="flex-1 flex flex-col">
-                            <h4 className="text-[11px] mrm-bold uppercase text-white mb-1">{p.title}</h4>
-                            <div className="flex gap-1 mb-2">
-                              {p.tags?.map(t => <span key={t} className="text-[7.5px] border border-[#7D68F6]/30 px-2.5 py-1 rounded-full uppercase text-[#7D68F6]">{t}</span>)}
+                            <h4 className="text-[12px] mrm-bold uppercase text-white mb-1">{p.title}</h4>
+                            <div className="flex gap-1.5 mb-3">
+                              {p.tags?.map(t => <span key={t} className="text-[7px] border border-[#7D68F6]/30 px-2.5 py-1 rounded-full uppercase text-[#7D68F6]">{t}</span>)}
                             </div>
-                            <p className="text-[10px] text-gray-400 leading-relaxed mb-4">{p.desc}</p>
+                            <p className="text-[10px] text-gray-400 leading-relaxed line-clamp-2 mb-4">{p.desc}</p>
                             
-                            <div className="mt-auto pt-3 border-t border-white/10 flex items-center justify-between">
+                            <div className="mt-auto pt-3 border-t border-white/5 flex items-center justify-between">
                               <span className="text-[9px] mrm-bold uppercase text-[#7D68F6]">Ver detalles del proyecto</span>
                               <ArrowRight size={14} className="text-[#7D68F6] group-hover:translate-x-1 transition-transform" />
                             </div>
@@ -137,14 +137,16 @@ function App() {
             ))}
           </div>
         </div>
-        <div className="flex items-center bg-white/[0.04] border border-white/10 rounded-full px-6 py-4 backdrop-blur-md">
+        
+        {/* INPUT TAMBIÉN MÁS ANCHO */}
+        <div className="max-w-2xl mx-auto w-full flex items-center bg-white/[0.04] border border-white/10 rounded-full px-8 py-5 backdrop-blur-md">
           <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-            placeholder="Describe tu proyecto" className="bg-transparent flex-1 outline-none text-[13px] text-white/70" />
-          <button onClick={handleSendMessage} className="ml-3 w-10 h-10 rounded-full flex items-center justify-center bg-[#7D68F6]"><Send size={16}/></button>
+            placeholder="Describe tu proyecto" className="bg-transparent flex-1 outline-none text-[14px] text-white/70" />
+          <button onClick={handleSendMessage} className="ml-3 w-12 h-12 rounded-full flex items-center justify-center bg-[#7D68F6] hover:scale-105 transition-transform"><Send size={18}/></button>
         </div>
       </div>
 
-      {/* CAPABILITIES CAROUSEL */}
+      {/* RESTO DEL CÓDIGO (CAPABILITIES, GRID, MODALES) SE MANTIENE IGUAL */}
       {showResults && (
         <div className="w-full max-w-2xl flex flex-col items-center mb-28">
           <p className="text-[8px] uppercase tracking-[0.5em] opacity-30 mb-8">Capabilities</p>
@@ -176,7 +178,6 @@ function App() {
         </div>
       )}
 
-      {/* GRID DE PERSONAS */}
       {showResults && (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 w-full max-w-7xl px-4">
           {TALENTS_DATA.map((talent) => (
@@ -192,7 +193,7 @@ function App() {
         </div>
       )}
 
-      {/* MODALES */}
+      {/* MODALES SE MANTIENEN IGUAL */}
       <AnimatePresence>
         {selectedTalent && (
           <div className="fixed inset-0 z-[1000] flex items-center justify-center px-4">
@@ -249,7 +250,6 @@ function App() {
         )}
       </AnimatePresence>
 
-      {/* MY TEAM FLOATING */}
       {myTeam.length > 0 && (
         <div className="fixed bottom-10 right-10 z-[100] bg-black/80 border border-white/10 p-2 pl-6 rounded-full flex items-center gap-6 backdrop-blur-xl">
           <span className="text-[10px] mrm-bold uppercase text-[#7D68F6]">Team ({myTeam.length})</span>
