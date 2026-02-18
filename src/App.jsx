@@ -86,34 +86,34 @@ function App() {
         <p className="text-[10px] mrm-bold uppercase tracking-[0.8em] text-[#7D68F6] mt-2">BOGOTA CREATIVE CREDENTIALS</p>
       </header>
 
-      {/* CHATBOX CON FADE CORREGIDO (NO CORTA) */}
+      {/* CHATBOX REFORZADO */}
       <div className="w-full max-w-2xl flex flex-col mb-12 z-20">
-        <div className="relative h-[500px] overflow-hidden mb-4" 
+        <div className="relative h-[600px] overflow-hidden mb-4" 
              style={{ 
                maskImage: 'linear-gradient(to bottom, transparent 0%, black 5%)', 
                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 5%)' 
              }}>
-          <div ref={chatScrollRef} className="h-full overflow-y-auto pt-40 pb-4 px-2 space-y-6 hide-scrollbar scroll-smooth">
+          <div ref={chatScrollRef} className="h-full overflow-y-auto pt-[450px] pb-10 px-2 space-y-6 hide-scrollbar scroll-smooth">
             {chatHistory.map((msg, idx) => (
               <div key={idx} className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
                 <div className={`max-w-[85%] p-6 rounded-3xl text-[13px] ${msg.type === 'user' ? 'bg-[#7D68F6] mrm-bold rounded-tr-none' : 'bg-white/5 border border-white/10 rounded-tl-none inter-light'}`}>
                   {msg.text}
                   {msg.suggestions && (
-                    <div className="mt-6 flex flex-col gap-3">
+                    <div className="mt-6 flex flex-col gap-4">
                       {msg.suggestions.map((p, i) => (
-                        <div key={i} onClick={() => setSelectedProject(p)} className="flex gap-4 p-5 rounded-3xl bg-white/[0.05] border border-white/10 hover:border-[#7D68F6] cursor-pointer transition-all group">
-                          <img src={p.img} className="w-16 h-16 rounded-2xl object-cover grayscale group-hover:grayscale-0" />
-                          <div className="flex-1 flex flex-col justify-between">
-                            <div>
-                              <h4 className="text-[10px] mrm-bold uppercase text-white mb-1">{p.title}</h4>
-                              <div className="flex gap-1 mb-2">
-                                {p.tags?.map(t => <span key={t} className="text-[7.5px] border border-[#7D68F6]/30 px-2.5 py-1 rounded-full uppercase text-[#7D68F6]">{t}</span>)}
-                              </div>
-                              <p className="text-[10px] text-gray-400 line-clamp-2 leading-relaxed mb-3">{p.desc}</p>
+                        <div key={i} onClick={() => setSelectedProject(p)} className="flex gap-4 p-5 rounded-3xl bg-white/[0.05] border border-white/10 hover:border-[#7D68F6] cursor-pointer transition-all group min-h-[160px]">
+                          <img src={p.img} className="w-20 h-20 rounded-2xl object-cover grayscale group-hover:grayscale-0" />
+                          <div className="flex-1 flex flex-col">
+                            <h4 className="text-[11px] mrm-bold uppercase text-white mb-1">{p.title}</h4>
+                            <div className="flex gap-1 mb-2">
+                              {p.tags?.map(t => <span key={t} className="text-[7.5px] border border-[#7D68F6]/30 px-2.5 py-1 rounded-full uppercase text-[#7D68F6]">{t}</span>)}
                             </div>
-                            <div className="flex items-center justify-between mt-auto pt-2 border-t border-white/5">
-                              <span className="text-[8px] mrm-bold uppercase text-[#7D68F6]/80 group-hover:text-[#7D68F6]">Click to view project details</span>
-                              <ArrowRight size={12} className="text-gray-500 group-hover:text-white transition-colors" />
+                            <p className="text-[10px] text-gray-400 leading-relaxed mb-4">{p.desc}</p>
+                            
+                            {/* CTA Y FLECHA - FORZADOS AL FINAL */}
+                            <div className="mt-auto pt-3 border-t border-white/10 flex items-center justify-between">
+                              <span className="text-[9px] mrm-bold uppercase text-[#7D68F6]">Ver detalles del proyecto</span>
+                              <ArrowRight size={14} className="text-[#7D68F6] group-hover:translate-x-1 transition-transform" />
                             </div>
                           </div>
                         </div>
@@ -132,7 +132,7 @@ function App() {
         </div>
       </div>
 
-      {/* CAPABILITIES CAROUSEL */}
+      {/* RESTO DEL CÓDIGO CONSERVADO (CAPABILITIES, GRID, MODALES) */}
       {showResults && (
         <div className="w-full max-w-2xl flex flex-col items-center mb-28">
           <p className="text-[8px] uppercase tracking-[0.5em] opacity-30 mb-8">Capabilities</p>
@@ -164,7 +164,6 @@ function App() {
         </div>
       )}
 
-      {/* TALENTS GRID */}
       {showResults && (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 w-full max-w-7xl px-4">
           {TALENTS_DATA.map((talent) => (
@@ -180,7 +179,6 @@ function App() {
         </div>
       )}
 
-      {/* MODAL PERSONA */}
       <AnimatePresence>
         {selectedTalent && (
           <div className="fixed inset-0 z-[1000] flex items-center justify-center px-4">
@@ -205,7 +203,6 @@ function App() {
         )}
       </AnimatePresence>
 
-      {/* MODAL PROYECTO */}
       <AnimatePresence>
         {selectedProject && (
           <div className="fixed inset-0 z-[1000] flex items-center justify-center px-4">
@@ -238,7 +235,6 @@ function App() {
         )}
       </AnimatePresence>
 
-      {/* BOTÓN PERMANENTE MY TEAM */}
       {myTeam.length > 0 && (
         <div className="fixed bottom-10 right-10 z-[100] bg-black/80 border border-white/10 p-2 pl-6 rounded-full flex items-center gap-6 backdrop-blur-xl">
           <span className="text-[10px] mrm-bold uppercase text-[#7D68F6]">Team ({myTeam.length})</span>
