@@ -22,9 +22,9 @@ const SKILLS_DATA = [
   { 
     id: 1, name: "Estratégico", role: "Consultoría Senior", icon: <Globe size={26}/>, 
     projects: [
-      { id: 'p1', title: "Digital Roadmap 2030", desc: "Transformación digital maestra para el sector bancario global.", img: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800", team: [TALENTS_DATA[0], TALENTS_DATA[1]], tags: ["Strategy", "Fintech", "Cloud"] },
-      { id: 'p2', title: "Market Entry", desc: "Expansión en LATAM basada en análisis de datos masivos.", img: "https://images.unsplash.com/photo-1553729459-efe14ef6055d?w=800", team: [TALENTS_DATA[2], TALENTS_DATA[3]], tags: ["Data", "Expansion", "Business"] },
-      { id: 'p3', title: "Operations Core", desc: "Optimización de procesos operativos críticos.", img: "https://images.unsplash.com/photo-1454165833762-02ad50c8988d?w=800", team: [TALENTS_DATA[4]], tags: ["Ops", "Efficiency", "Lean"] }
+      { id: 'p1', title: "Digital Roadmap 2030", desc: "Transformación digital maestra para el sector bancario global, redefiniendo la experiencia del cliente final.", img: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800", team: [TALENTS_DATA[0], TALENTS_DATA[1]], tags: ["Strategy", "Fintech", "Cloud"] },
+      { id: 'p2', title: "Market Entry", desc: "Expansión estratégica en mercados emergentes de LATAM basada en análisis predictivo de datos masivos.", img: "https://images.unsplash.com/photo-1553729459-efe14ef6055d?w=800", team: [TALENTS_DATA[2], TALENTS_DATA[3]], tags: ["Data", "Expansion", "Business"] },
+      { id: 'p3', title: "Operations Core", desc: "Optimización integral de procesos operativos críticos mediante metodologías ágiles y automatización.", img: "https://images.unsplash.com/photo-1454165833762-02ad50c8988d?w=800", team: [TALENTS_DATA[4]], tags: ["Ops", "Efficiency", "Lean"] }
     ] 
   }
 ];
@@ -86,10 +86,11 @@ function App() {
         <p className="text-[10px] mrm-bold uppercase tracking-[0.8em] text-[#7D68F6] mt-2">BOGOTA CREATIVE CREDENTIALS</p>
       </header>
 
-      {/* CHATBOX */}
+      {/* CHATBOX CON FADE AJUSTADO (MÁS ARRIBA) */}
       <div className="w-full max-w-2xl flex flex-col mb-12 z-20">
-        <div className="relative h-[350px] overflow-hidden mb-4" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 20%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 20%)' }}>
-          <div ref={chatScrollRef} className="h-full overflow-y-auto pt-24 pb-4 px-2 space-y-6 hide-scrollbar scroll-smooth">
+        <div className="relative h-[450px] overflow-hidden mb-4" 
+             style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%)' }}>
+          <div ref={chatScrollRef} className="h-full overflow-y-auto pt-32 pb-4 px-2 space-y-6 hide-scrollbar scroll-smooth">
             {chatHistory.map((msg, idx) => (
               <div key={idx} className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
                 <div className={`max-w-[85%] p-6 rounded-3xl text-[13px] ${msg.type === 'user' ? 'bg-[#7D68F6] mrm-bold rounded-tr-none' : 'bg-white/5 border border-white/10 rounded-tl-none inter-light'}`}>
@@ -97,12 +98,19 @@ function App() {
                   {msg.suggestions && (
                     <div className="mt-6 flex flex-col gap-3">
                       {msg.suggestions.map((p, i) => (
-                        <div key={i} onClick={() => setSelectedProject(p)} className="flex gap-4 p-4 rounded-2xl bg-white/[0.05] border border-white/10 hover:border-[#7D68F6] cursor-pointer transition-all group">
-                          <img src={p.img} className="w-16 h-16 rounded-xl object-cover grayscale group-hover:grayscale-0" />
-                          <div className="flex-1">
-                            <h4 className="text-[10px] mrm-bold uppercase flex items-center justify-between">{p.title} <ArrowRight size={12}/></h4>
-                            <div className="flex gap-1 mt-1">
-                              {p.tags?.map(t => <span key={t} className="text-[7.5px] border border-[#7D68F6]/30 px-2.5 py-1 rounded-full uppercase text-[#7D68F6]">{t}</span>)}
+                        <div key={i} onClick={() => setSelectedProject(p)} className="flex gap-4 p-5 rounded-3xl bg-white/[0.05] border border-white/10 hover:border-[#7D68F6] cursor-pointer transition-all group">
+                          <img src={p.img} className="w-16 h-16 rounded-2xl object-cover grayscale group-hover:grayscale-0" />
+                          <div className="flex-1 flex flex-col justify-between">
+                            <div>
+                              <h4 className="text-[10px] mrm-bold uppercase text-white mb-1">{p.title}</h4>
+                              <div className="flex gap-1 mb-2">
+                                {p.tags?.map(t => <span key={t} className="text-[6.5px] border border-[#7D68F6]/30 px-2.5 py-1 rounded-full uppercase text-[#7D68F6]">{t}</span>)}
+                              </div>
+                              <p className="text-[10px] text-gray-400 line-clamp-2 leading-relaxed mb-3">{p.desc}</p>
+                            </div>
+                            <div className="flex items-center justify-between mt-auto pt-2 border-t border-white/5">
+                              <span className="text-[8px] mrm-bold uppercase text-[#7D68F6]/80 group-hover:text-[#7D68F6]">Click to view project details</span>
+                              <ArrowRight size={12} className="text-gray-500 group-hover:text-white transition-colors" />
                             </div>
                           </div>
                         </div>
