@@ -78,8 +78,8 @@ function App() {
   };
 
   return (
-    <div className="flex min-h-screen w-full flex-col items-center text-white relative pb-40 px-6" 
-         style={{ background: `radial-gradient(circle at 50% 0%, #1a0b3d 0%, #0A0A0A 60%)` }}>
+    <div className="flex min-h-screen w-full flex-col items-center text-white relative pb-40 px-6 transition-colors duration-500" 
+         style={{ background: `#0A0A0A`, backgroundImage: `radial-gradient(circle at 50% 0%, #1a0b3d 0%, #0A0A0A 60%)`, backgroundAttachment: 'fixed' }}>
       
       <header className="w-full max-w-5xl text-center pt-16 mb-12">
         <h1 className="text-[100px] leading-none tracking-[-0.05em] mrm-bold uppercase">MRM</h1>
@@ -141,8 +141,6 @@ function App() {
               <div key={idx} onClick={() => setSelectedProject(proj)} className="group relative px-5 py-2.5 rounded-full border border-white/10 bg-white/[0.03] flex items-center gap-2.5 cursor-pointer hover:bg-white/10 transition-all">
                 <div className="w-1.5 h-1.5 rounded-full bg-[#7D68F6]" />
                 <span className="text-[10px] uppercase mrm-bold text-gray-300">{proj.title}</span>
-                
-                {/* TOOLTIP 120% MÁS GRANDE */}
                 <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-48 bg-[#0A0A0A] border border-white/10 p-3 rounded-[1.5rem] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-[60] shadow-2xl">
                   <img src={proj.img} className="w-full h-24 object-cover rounded-xl mb-3" />
                   <div className="flex flex-wrap gap-1.5">
