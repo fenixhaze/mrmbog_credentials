@@ -39,9 +39,18 @@ function App() {
   const [isTyping, setIsTyping] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const chatScrollRef = useRef(null);
+  const lastMessageRef = useRef(null); // Referencia para el inicio de la burbuja
 
+  // Ajuste de scroll: Si es AI, scrollear al inicio de la burbuja
   useEffect(() => {
-    if (chatScrollRef.current) chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+    if (chatHistory.length > 0) {
+      const lastMsg = chatHistory[chatHistory.length - 1];
+      if (lastMsg.type === 'ai' && lastMessageRef.current) {
+        lastMessageRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else if (chatScrollRef.current) {
+        chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+      }
+    }
   }, [chatHistory, isTyping]);
 
   const handleSendMessage = () => {
@@ -86,7 +95,7 @@ function App() {
         <p className="text-[10px] mrm-bold uppercase tracking-[0.8em] text-[#7D68F6] mt-2">BOGOTA CREATIVE CREDENTIALS</p>
       </header>
 
-      {/* CHATBOX REFORZADO */}
+      {/* CHATBOX */}
       <div className="w-full max-w-2xl flex flex-col mb-12 z-20">
         <div className="relative h-[600px] overflow-hidden mb-4" 
              style={{ 
@@ -95,7 +104,11 @@ function App() {
              }}>
           <div ref={chatScrollRef} className="h-full overflow-y-auto pt-[450px] pb-10 px-2 space-y-6 hide-scrollbar scroll-smooth">
             {chatHistory.map((msg, idx) => (
-              <div key={idx} className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
+              <div 
+                key={idx} 
+                ref={idx === chatHistory.length - 1 ? lastMessageRef : null}
+                className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}
+              >
                 <div className={`max-w-[85%] p-6 rounded-3xl text-[13px] ${msg.type === 'user' ? 'bg-[#7D68F6] mrm-bold rounded-tr-none' : 'bg-white/5 border border-white/10 rounded-tl-none inter-light'}`}>
                   {msg.text}
                   {msg.suggestions && (
@@ -110,7 +123,6 @@ function App() {
                             </div>
                             <p className="text-[10px] text-gray-400 leading-relaxed mb-4">{p.desc}</p>
                             
-                            {/* CTA Y FLECHA - FORZADOS AL FINAL */}
                             <div className="mt-auto pt-3 border-t border-white/10 flex items-center justify-between">
                               <span className="text-[9px] mrm-bold uppercase text-[#7D68F6]">Ver detalles del proyecto</span>
                               <ArrowRight size={14} className="text-[#7D68F6] group-hover:translate-x-1 transition-transform" />
@@ -132,7 +144,7 @@ function App() {
         </div>
       </div>
 
-      {/* RESTO DEL CÓDIGO CONSERVADO (CAPABILITIES, GRID, MODALES) */}
+      {/* CAPABILITIES CAROUSEL */}
       {showResults && (
         <div className="w-full max-w-2xl flex flex-col items-center mb-28">
           <p className="text-[8px] uppercase tracking-[0.5em] opacity-30 mb-8">Capabilities</p>
@@ -164,6 +176,7 @@ function App() {
         </div>
       )}
 
+      {/* GRID DE PERSONAS */}
       {showResults && (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 w-full max-w-7xl px-4">
           {TALENTS_DATA.map((talent) => (
@@ -179,6 +192,7 @@ function App() {
         </div>
       )}
 
+      {/* MODALES */}
       <AnimatePresence>
         {selectedTalent && (
           <div className="fixed inset-0 z-[1000] flex items-center justify-center px-4">
@@ -235,6 +249,7 @@ function App() {
         )}
       </AnimatePresence>
 
+      {/* MY TEAM FLOATING */}
       {myTeam.length > 0 && (
         <div className="fixed bottom-10 right-10 z-[100] bg-black/80 border border-white/10 p-2 pl-6 rounded-full flex items-center gap-6 backdrop-blur-xl">
           <span className="text-[10px] mrm-bold uppercase text-[#7D68F6]">Team ({myTeam.length})</span>
