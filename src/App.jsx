@@ -86,11 +86,14 @@ function App() {
         <p className="text-[10px] mrm-bold uppercase tracking-[0.8em] text-[#7D68F6] mt-2">BOGOTA CREATIVE CREDENTIALS</p>
       </header>
 
-      {/* CHATBOX CON FADE AJUSTADO (MÁS ARRIBA) */}
+      {/* CHATBOX CON FADE CORREGIDO (NO CORTA) */}
       <div className="w-full max-w-2xl flex flex-col mb-12 z-20">
-        <div className="relative h-[450px] overflow-hidden mb-4" 
-             style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%)' }}>
-          <div ref={chatScrollRef} className="h-full overflow-y-auto pt-32 pb-4 px-2 space-y-6 hide-scrollbar scroll-smooth">
+        <div className="relative h-[500px] overflow-hidden mb-4" 
+             style={{ 
+               maskImage: 'linear-gradient(to bottom, transparent 0%, black 5%)', 
+               WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 5%)' 
+             }}>
+          <div ref={chatScrollRef} className="h-full overflow-y-auto pt-40 pb-4 px-2 space-y-6 hide-scrollbar scroll-smooth">
             {chatHistory.map((msg, idx) => (
               <div key={idx} className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
                 <div className={`max-w-[85%] p-6 rounded-3xl text-[13px] ${msg.type === 'user' ? 'bg-[#7D68F6] mrm-bold rounded-tr-none' : 'bg-white/5 border border-white/10 rounded-tl-none inter-light'}`}>
@@ -104,7 +107,7 @@ function App() {
                             <div>
                               <h4 className="text-[10px] mrm-bold uppercase text-white mb-1">{p.title}</h4>
                               <div className="flex gap-1 mb-2">
-                                {p.tags?.map(t => <span key={t} className="text-[6.5px] border border-[#7D68F6]/30 px-2.5 py-1 rounded-full uppercase text-[#7D68F6]">{t}</span>)}
+                                {p.tags?.map(t => <span key={t} className="text-[7.5px] border border-[#7D68F6]/30 px-2.5 py-1 rounded-full uppercase text-[#7D68F6]">{t}</span>)}
                               </div>
                               <p className="text-[10px] text-gray-400 line-clamp-2 leading-relaxed mb-3">{p.desc}</p>
                             </div>
