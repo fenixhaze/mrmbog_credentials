@@ -1,0 +1,11 @@
+ID;Title;Category;Description;ImageURLs;Tags;TeamIDs
+P01;Nike Refresh 2024;UX/UI;Rediseño integral de la experiencia de usuario para la plataforma e-commerce en Latam.;https://picsum.photos/seed/nike1/800/500,https://picsum.photos/seed/nike2/800/500;E-commerce, UX, UI;T25,T10,T01,T08
+P02;Coca-Cola Summer;MOTION GRAPHICS;Campaña de piezas animadas para pantallas gigantes y redes sociales durante el verano.;https://picsum.photos/seed/coke1/800/500,https://picsum.photos/seed/coke2/800/500;Motion, Animation, Social;T11,T04,T05
+P03;Mastercard Security;VIDEO PRODUCTION;Producción de video tipo case study sobre las nuevas capas de seguridad biométrica.;https://picsum.photos/seed/mc1/800/500;Video, Production, Security;T05,T14,T15
+P04;Lego Builder Ads;BANNER ADS;Set de banners interactivos rich media para el lanzamiento de la línea Technic.;https://picsum.photos/seed/lego1/800/500;Rich Media, Banners, HTML5;T02,T03,T06
+P05;Spotify Wrapped Local;SOCIAL MEDIA & DOOH;Adaptación de la campaña Wrapped para vallas digitales en Bogotá y Medellín.;https://picsum.photos/seed/spot1/800/500,https://picsum.photos/seed/spot2/800/500;DOOH, Social Media, Data;T20,T21,T16
+P06;Nestlé Smart Data;CREATIVE DATA;Dashboard interactivo y visualización de datos de consumo para toma de decisiones.;https://picsum.photos/seed/nestle1/800/500;Data Viz, Creative Data, UI;T01,T13,T12
+P07;IKEA Welcome Home;CRM & EMAIL DESIGN;Estrategia de fidelización automatizada con diseño dinámico de correos electrónicos.;https://picsum.photos/seed/ikea1/800/500;CRM, Email, Design;T18,T19,T07
+P08;P&G Global Pitch;PRESENTATION DESIGN;Diseño de narrativa visual y decks para la licitación global de cuentas de cuidado personal.;https://picsum.photos/seed/pg1/800/500;Keynote, Pitch, Narrative;T24,T05,T14
+P09;AI Workflow 1.0;AI PRODUCTION;Implementación de herramientas de IA generativa para la creación de assets de campaña.;https://picsum.photos/seed/ai1/800/500;AI, Gen-AI, Workflow;T14,T25,T09
+P10;Netflix Premiere;UX/UI;Optimización del flujo de suscripción para lanzamientos de series originales en la región.;https://picsum.photos/seed/netflix1/800/500;UX, Optimization, Streaming;T25,T13,T10
