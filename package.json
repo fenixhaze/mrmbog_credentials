@@ -12,6 +12,8 @@
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
+    "@azure/msal-browser": "^5.2.0",
+    "@azure/msal-react": "^5.0.4",
     "framer-motion": "^12.34.1",
     "lucide-react": "^0.263.1",
     "papaparse": "^5.5.3",
