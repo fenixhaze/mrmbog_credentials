@@ -1,376 +1,265 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { PublicClientApplication } from "@azure/msal-browser";
+import { MsalProvider, AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from "@azure/msal-react";
+import { motion, AnimatePresence } from 'framer-motion';
+import { Send, LogOut, Search, Users, Briefcase, MessageSquare, X, Loader2, Filter, ChevronRight } from 'lucide-react';
+import Papa from 'papaparse';
 
-/** * @section CONFIGURACIÓN DE IDENTIDAD VISUAL (MRM BRANDING)
- * Centralización de constantes estéticas para facilitar cambios de tema globales.
- */
-const lila = "rgb(143, 134, 255)"; // Color primario
-const aqua = "#4ade80";           // Color para aciertos/impacto
-const yellow = "#fbbf24";         // Color para herramientas/AI
-const darkBg = "#0f1115";         // Fondo profundo
-const cardBg = "rgba(255, 255, 255, 0.03)"; // Glassmorphism base
+// --- CONFIGURACIÓN DE MICROSOFT ---
+const POWER_AUTOMATE_URL = "https://defaultd026e4c15892497ab9daee493c9f03.64.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/58399658d2814f708a2774d517d4b66a/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=W9bUtaaDctUdbMF6_y7e63sZ7GExKXeuYite_O5T4kg"; 
 
-/**
- * @section HOJA DE ESTILOS DINÁMICA
- * Definición de animaciones y clases CSS para el DOM.
- */
-const styleSheet = `
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-
-body { margin: 0; background-color: ${darkBg}; font-family: 'Inter', sans-serif; color: white; }
-
-/* Header con efecto Blur y posicionamiento fijo */
-.header-anchor {
-  position: fixed; top: 0; left: 0; right: 0; height: 90px;
-  padding: 0 60px; display: flex; justify-content: space-between;
-  align-items: center; z-index: 1000;
-  backdrop-filter: blur(30px); border-bottom: 1px solid rgba(255,255,255,0.03);
-}
-
-/* Buscador animado */
-.search-input-header {
-  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 12px; padding: 10px 20px; color: white; outline: none;
-  font-size: 13px; width: 250px; transition: all 0.3s ease;
-}
-.search-input-header:focus { border-color: ${lila}; width: 300px; background: rgba(255,255,255,0.08); }
-
-/* Tarjetas de talento con efecto de elevación */
-.card-talent { 
-  position: relative; transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); 
-  border: 1px solid rgba(255,255,255,0.08); background: ${cardBg}; cursor: pointer; 
-  overflow: hidden;
-}
-.card-talent:hover { transform: translateY(-10px); border-color: ${lila}; background: rgba(255,255,255,0.06); }
-
-/* Animación de carga para las barras de skills */
-@keyframes fillBar { from { width: 0; } }
-.skill-bar-inner { animation: fillBar 1.2s ease forwards; }
-
-.onboarding-tag {
-  padding: 12px 20px; border-radius: 100px; border: 1px solid rgba(255,255,255,0.1);
-  font-size: 11px; font-weight: 800; cursor: pointer; transition: all 0.3s ease;
-  background: transparent; color: #64748b;
-}
-.onboarding-tag.active { border-color: ${lila}; background: rgba(143, 134, 255, 0.1); color: white; }
-`;
-
-/**
- * @section HELPERS & DATA GENERATORS
- * Funciones para simular contenido dinámico por perfil.
- */
-const availableTags = ["UI/UX", "Motion", "AI Strategy", "Branding", "3D Design", "Data Viz", "Creative Copy", "Creative Tech", "Experience Design", "Project Management"];
-
-const generateWorks = () => [
-  { id: Math.random(), title: 'Global Campaign 2026', img: 'https://images.unsplash.com/photo-1558655146-d09347e92766?w=800', desc: 'Digital transformation project.', achievements: ['Reducción 40% tiempo prod.', 'Scalable System'] },
-  { id: Math.random(), title: 'AI Interface Prototype', img: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800', desc: 'Generative UI implementation.', achievements: ['Patente voz', '85% Sat'] }
-];
-
-const generateSkills = () => [
-  { category: 'Hard Skills', items: [{ n: 'Creative Strategy', v: 92, c: lila, radarMap: 0 }, { n: 'Digital Craft', v: 95, c: lila, radarMap: 2 }] },
-  { category: 'Soft Skills', items: [{ n: 'Leadership', v: 90, c: aqua, radarMap: 3 }] },
-  { category: 'Tools & AI', items: [{ n: 'AI Workflows', v: 88, c: yellow, radarMap: 4 }] }
-];
-
-/**
- * @section DATA SOURCE
- * Base de datos de los 26 talentos con roles actualizados.
- */
-const profilesData = [
-  { id: "1", name: "German Bernardo Jose Herrera", role: "Creative Director", email: "g.herrera@mrm.com", tags: ["Branding", "AI Strategy"], photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800" },
-  { id: "2", name: "Darwin Jose Silva", role: "Art Director", email: "d.silva@mrm.com", tags: ["UI/UX", "3D Design"], photo: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=800" },
-  { id: "3", name: "Stephany Diaz", role: "Senior Digital Designer", email: "s.diaz@mrm.com", tags: ["Motion", "UI/UX"], photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=800" },
-  { id: "4", name: "Laura Patino", role: "Creative Operations Manager", email: "l.patino@mrm.com", tags: ["Project Management", "Data Viz"], photo: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800" },
-  { id: "5", name: "Ana Maria Nino", role: "Digital Designer Semi Senior", email: "a.nino@mrm.com", tags: ["UI/UX", "Branding"], photo: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=800" },
-  { id: "6", name: "David Ricardo Angel", role: "Digital Designer Semi Senior", email: "d.angel@mrm.com", tags: ["Creative Tech", "AI Strategy"], photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800" },
-  { id: "7", name: "Sara Maria Builes", role: "Creative Digital Specialist", email: "s.builes@mrm.com", tags: ["Data Viz", "Experience Design"], photo: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800" },
-  { id: "8", name: "Mariana Osorio", role: "Digital Designer Semi Senior", email: "m.osorio@mrm.com", tags: ["UI/UX", "Motion"], photo: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=800" },
-  { id: "9", name: "Camilo Esteban Vaca", role: "Digital Designer Semi Senior", email: "c.vaca@mrm.com", tags: ["Creative Tech", "UI/UX"], photo: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=800" },
-  { id: "10", name: "Juan Pablo Pabon", role: "Senior Digital Designer", email: "j.pabon@mrm.com", tags: ["UI/UX", "Branding"], photo: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=800" },
-  { id: "11", name: "Juan Diego Cordoba", role: "Senior Presentation Designer", email: "j.cordoba@mrm.com", tags: ["Branding", "Motion"], photo: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=800" },
-  { id: "12", name: "Juan Camilo Bahamon", role: "Senior UX/UI Designer", email: "j.bahamon@mrm.com", tags: ["UI/UX", "Experience Design"], photo: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=800" },
-  { id: "13", name: "Marina Esther Montero", role: "Semi Senior Digital Designer", email: "m.montero@mrm.com", tags: ["UI/UX", "Creative Tech"], photo: "https://images.unsplash.com/photo-1567532939604-b6b5b0db2a04?w=800" },
-  { id: "14", name: "Agustina De Girolamo", role: "UX/UI Analyst", email: "a.girolamo@mrm.com", tags: ["Data Viz", "UI/UX"], photo: "https://images.unsplash.com/photo-1614283233556-f35b0c801ef1?w=800" },
-  { id: "15", name: "Mariapaula Fernandez", role: "Semi Senior Digital Designer", email: "m.fernandez@mrm.com", tags: ["Branding", "UI/UX"], photo: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800" },
-  { id: "16", name: "Mariana Ceballos", role: "Semi Senior Digital Designer", email: "m.ceballos@mrm.com", tags: ["UI/UX", "Experience Design"], photo: "https://images.unsplash.com/photo-1554151228-14d9def656e4?w=800" },
-  { id: "17", name: "Ricardo Gomez", role: "Technical Lead", email: "r.gomez@mrm.com", tags: ["Creative Tech", "AI Strategy"], photo: "https://images.unsplash.com/photo-1552058544-f2b08422138a?w=800" },
-  { id: "18", name: "Angela Restrepo", role: "Account Director", email: "a.restrepo@mrm.com", tags: ["Project Management"], photo: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=800" },
-  { id: "19", name: "Fernando Ruiz", role: "Motion Designer", email: "f.ruiz@mrm.com", tags: ["Motion", "3D Design"], photo: "https://images.unsplash.com/photo-1463453091185-61582044d556?w=800" },
-  { id: "20", name: "Lucia Salazar", role: "Copywriter Senior", email: "l.salazar@mrm.com", tags: ["Creative Copy", "Branding"], photo: "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=800" },
-  { id: "21", name: "Mateo Villalba", role: "UI Designer", email: "m.villalba@mrm.com", tags: ["UI/UX", "Branding"], photo: "https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=800" },
-  { id: "22", name: "Sofia Arango", role: "Data Analyst", email: "s.arango@mrm.com", tags: ["Data Viz", "AI Strategy"], photo: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800" },
-  { id: "23", name: "Carlos Mario Duque", role: "Creative Lead", email: "c.duque@mrm.com", tags: ["Branding", "Creative Tech"], photo: "https://images.unsplash.com/photo-1441786426383-bb306fc26cc7?w=800" },
-  { id: "24", name: "Valeria Ortiz", role: "UX Researcher", email: "v.ortiz@mrm.com", tags: ["Experience Design", "UI/UX"], photo: "https://images.unsplash.com/photo-1548142813-c348350df52b?w=800" },
-  { id: "25", name: "Andres Felipe Cano", role: "Senior Developer", email: "a.cano@mrm.com", tags: ["Creative Tech", "Data Viz"], photo: "https://images.unsplash.com/photo-1513956589380-bad6acb9b9d4?w=800" },
-  { id: "26", name: "Paula Andrea Rios", role: "Visual Designer", email: "p.rios@mrm.com", tags: ["Branding", "UI/UX"], photo: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800" }
-].map(p => ({ ...p, works: generateWorks(), categorizedSkills: generateSkills() }));
-
-/**
- * @component SkillRadar
- * @description Genera un gráfico radial dinámico usando SVG.
- * @param {Array} skills - Habilidades categorizadas del usuario.
- * @param {Number} activeIndex - Índice de la habilidad resaltada para interactividad.
- */
-const SkillRadar = ({ skills, activeIndex }) => {
-  // Memorización del cálculo de puntos del radar para optimizar performance
-  const radarValues = useMemo(() => {
-    const axes = [0, 0, 0, 0, 0, 0];
-    const counts = [0, 0, 0, 0, 0, 0];
-    skills.forEach(cat => cat.items.forEach(s => { axes[s.radarMap] += s.v; counts[s.radarMap] += 1; }));
-    return axes.map((val, i) => (counts[i] > 0 ? val / counts[i] : 20));
-  }, [skills]);
-
-  const labels = ['Visual', 'Motion', 'UX', 'Strat', 'AI', 'Data'];
-  
-  // Mapeo circular (Trigonometría básica para coordenadas SVG)
-  const points = radarValues.map((v, i) => {
-    const angle = (Math.PI * 2 * i) / 6 - Math.PI / 2;
-    const r = (v / 100) * 80; // Radio máximo de 80 unidades
-    return { x: 100 + r * Math.cos(angle), y: 100 + r * Math.sin(angle) };
-  });
-
-  const polyPoints = points.map(p => `${p.x},${p.y}`).join(' ');
-
-  return (
-    <div style={{ width: '100%', height: '230px', marginBottom: '25px' }}>
-      <svg viewBox="0 0 200 200" style={{ width: '100%', height: '100%' }}>
-        {/* Círculos de referencia concéntricos */}
-        {[80, 60, 40].map(r => <circle key={r} cx="100" cy="100" r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="1" strokeDasharray="2 2" />)}
-        
-        {/* Ejes y Etiquetas */}
-        {labels.map((l, i) => {
-          const angle = (Math.PI * 2 * i) / 6 - Math.PI / 2;
-          const isActive = activeIndex === i;
-          return (
-            <g key={l}>
-              <line x1="100" y1="100" x2={100 + 80 * Math.cos(angle)} y2={100 + 80 * Math.sin(angle)} stroke={isActive ? lila : "rgba(255,255,255,0.1)"} strokeWidth={isActive ? 2 : 0.5} />
-              <text x={100 + 105 * Math.cos(angle)} y={100 + 105 * Math.sin(angle)} fill={isActive ? "white" : "#64748b"} fontSize={isActive ? "10" : "8"} fontWeight="900" textAnchor="middle">{l}</text>
-            </g>
-          );
-        })}
-        {/* Polígono del radar */}
-        <polygon points={polyPoints} fill={`${lila}33`} stroke={lila} strokeWidth="2.5" />
-        {points.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r="3" fill={lila} />)}
-      </svg>
-    </div>
-  );
+const authConfig = {
+    auth: {
+        clientId: "23d1168d-113b-48c0-a4fe-6e6d743f77af",
+        authority: "https://login.microsoftonline.com/d026e4c1-5892-497a-b9da-ee493c9f0364",
+        redirectUri: "https://fenixhaze.github.io/mrmbog_credentials/", 
+    },
+    cache: { cacheLocation: "sessionStorage", storeAuthStateInCookie: false }
 };
 
-/**
- * @component App (Main Entry Point)
- * @description Orquestador principal de la aplicación. Gestiona estados de filtrado, equipo y vistas.
- */
-export default function App() {
-  // --- ESTADOS LOCALES ---
-  const [step, setStep] = useState('onboarding');     // 'onboarding' | 'grid' | 'deck'
-  const [projectTitle, setProjectTitle] = useState('');
-  const [projectBrief, setProjectBrief] = useState('');
-  const [selectedTags, setSelectedTags] = useState([]); // Filtros de tags
-  const [myTeam, setMyTeam] = useState([]);           // Carrito de talentos seleccionados
-  const [selProfile, setSelProfile] = useState(null);   // Perfil en vista detallada
-  const [showModal, setShowModal] = useState(false);    // Control de modal de equipo
-  const [modalView, setModalView] = useState('list');   // 'list' | 'form' en modal
-  const [openWorkId, setOpenWorkId] = useState(null);   // Control de acordeón de portafolio
-  const [hoveredRadarIdx, setHoveredRadarIdx] = useState(null); // Feedback visual radar
-  const [searchTerm, setSearchTerm] = useState('');     // Texto de búsqueda libre
+const msalInstance = new PublicClientApplication(authConfig);
 
-  /**
-   * @logic Filtrado de Perfiles
-   * Combina búsqueda por texto y filtrado por tags de especialidad.
-   */
-  const filteredProfiles = useMemo(() => {
-    return profilesData.filter(p => {
-      const matchTags = selectedTags.length === 0 || selectedTags.some(t => p.tags.includes(t));
-      const matchSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          p.role.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchTags && matchSearch;
-    });
-  }, [selectedTags, searchTerm]);
+function MainContent() {
+  const { instance, accounts } = useMsal();
+  const [activeTab, setActiveTab] = useState('landing'); 
+  const [talentData, setTalentData] = useState([]); 
+  const [flatProjects, setFlatProjects] = useState([]); 
+  const [loading, setLoading] = useState(true);
+  const [chatHistory, setChatHistory] = useState([]);
+  const [input, setInput] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedProject, setSelectedProject] = useState(null);
+  
+  // Filtros de Talento
+  const [filterRole, setFilterRole] = useState('All');
+  const [filterSkill, setFilterSkill] = useState('All');
 
-  // --- HANDLERS ---
-  const isAlreadyAdded = (id) => myTeam.some(m => m.id === id);
-  const removeFromTeam = (id) => setMyTeam(myTeam.filter(t => t.id !== id));
+  const chatContainerRef = useRef(null);
 
-  /** Genera un link Mail-to para convocar a todo el equipo seleccionado */
-  const handleTeamsMeeting = () => {
-    const emails = myTeam.map(m => m.email).join(';');
-    window.location.href = `mailto:${emails}?subject=Project Kickoff: ${projectTitle}&body=Hola equipo, agendemos la reunión de inicio para el proyecto.`;
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({ top: chatContainerRef.current.scrollHeight, behavior: 'smooth' });
+    }
+  }, [chatHistory, isTyping]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const tokenRes = await instance.acquireTokenSilent({
+          scopes: ["Files.Read", "User.Read"],
+          account: accounts[0]
+        });
+        const headers = { 'Authorization': `Bearer ${tokenRes.accessToken}` };
+        const [tRes, pRes] = await Promise.all([
+          fetch(`https://graph.microsoft.com/v1.0/me/drive/items/01M53CARQG2KHMRUDB7NHK4ARNCRUIXTNX/content`, { headers }),
+          fetch(`https://graph.microsoft.com/v1.0/me/drive/items/01M53CARURZZPIO6GCCBG3SJUDAKN5OX7T/content`, { headers })
+        ]);
+        const talentCSV = await tRes.text();
+        const projectsCSV = await pRes.text();
+
+        // Procesar Talento con Tags corregidos
+        const rawTalent = Papa.parse(talentCSV, { header: true, skipEmptyLines: true, delimiter: ";" }).data;
+        setTalentData(rawTalent.map(p => ({
+            ...p,
+            skillsArray: (p.Tags || p.tags || "").split(/[,;]/).map(s => s.trim()).filter(s => s !== "")
+        })));
+
+        // Procesar Proyectos
+        setFlatProjects(Papa.parse(projectsCSV, { header: true, skipEmptyLines: true, delimiter: ";" }).data.map((p, index) => ({
+          ...p,
+          internalID: `ID_${index}`, 
+          images: p.ImageURLs ? p.ImageURLs.split(',').map(i => i.trim()) : ["https://picsum.photos/1200/800"],
+          tagsArray: p.Tags ? p.Tags.split(',').map(t => t.trim()) : []
+        })));
+
+        setLoading(false);
+        setChatHistory([{ type: 'ai', text: `Búsqueda Inteligente activa. ¿Qué credenciales revisamos hoy?` }]);
+      } catch (e) { console.error(e); setLoading(false); }
+    };
+    fetchData();
+  }, [instance, accounts]);
+
+  const handleSend = async () => {
+    if (!input.trim()) return;
+    const userMsg = input;
+    setChatHistory(prev => [...prev, { type: 'user', text: userMsg }]);
+    setInput('');
+    setIsTyping(true);
+    try {
+        const response = await fetch(POWER_AUTOMATE_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt: userMsg, context: JSON.stringify(flatProjects.slice(0, 10)) })
+        });
+        const data = await response.json();
+        const aiContent = data.content || data.text || "Sin respuesta";
+        let parsed;
+        try { parsed = JSON.parse(aiContent.replace(/```json|```/g, '')); } 
+        catch { parsed = { match_ids: [], reason: aiContent }; }
+        setChatHistory(prev => [...prev, { type: 'ai', text: parsed.reason, results: flatProjects.filter(p => parsed.match_ids?.includes(p.internalID)) }]);
+    } catch { setChatHistory(prev => [...prev, { type: 'ai', text: "Error de conexión." }]); }
+    finally { setIsTyping(false); }
   };
 
-  /** Header Reutilizable */
-  const renderHeader = () => (
-    <header className="header-anchor">
-      <div style={{ display: 'flex', alignItems: 'center', gap: '30px' }}>
-        <h1 onClick={() => setStep('grid')} style={{ color: lila, fontSize: '22px', fontWeight: '900', cursor: 'pointer', margin: 0 }}>MRM Bogotá</h1>
-        {step === 'grid' && (
-          <input 
-            className="search-input-header" 
-            placeholder="Search talent or role..." 
-            value={searchTerm} 
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        )}
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-        <button onClick={() => setStep('onboarding')} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.1)', color: '#64748b', padding: '10px 20px', borderRadius: '100px', fontSize: '9px', fontWeight: '800', cursor: 'pointer' }}>Re-brief</button>
-        {myTeam.length > 0 && (
-          <div onClick={() => { setShowModal(true); setModalView('list'); }} style={{ background: 'rgba(143, 134, 255, 0.1)', border: `1px solid ${lila}44`, padding: '8px 20px', borderRadius: '100px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px' }}>
-             <div style={{ display: 'flex' }}>{myTeam.map((m, i) => <img key={i} src={m.photo} style={{ width: '28px', height: '28px', borderRadius: '50%', border: `2px solid ${darkBg}`, marginLeft: i === 0 ? 0 : '-10px', objectFit: 'cover' }} />)}</div>
-             <span style={{ fontSize: '10px', fontWeight: '900', color: lila }}>Overview ({myTeam.length})</span>
-          </div>
-        )}
-      </div>
-    </header>
-  );
+  const filteredTalent = useMemo(() => talentData.filter(p => (filterRole === 'All' || p.Role === filterRole) && (filterSkill === 'All' || p.skillsArray.includes(filterSkill))), [talentData, filterRole, filterSkill]);
+  const uniqueRoles = useMemo(() => ['All', ...new Set(talentData.map(t => t.Role))], [talentData]);
+  const uniqueSkills = useMemo(() => ['All', ...new Set(talentData.flatMap(t => t.skillsArray))], [talentData]);
 
-  /** RENDER: PASO 1 - ONBOARDING / BRIEFING */
-  if (step === 'onboarding') {
-    return (
-      <div style={{ backgroundColor: darkBg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <style>{styleSheet}</style>
-        <div style={{ width: '90%', maxWidth: '900px', textAlign: 'center' }}>
-          <h1 style={{ fontSize: '80px', fontWeight: '900', color: lila, margin: 0 }}>MRM Bogotá</h1>
-          <p style={{ color: '#64748b', fontWeight: '700', letterSpacing: '4px', marginBottom: '50px' }}>Profile Matching</p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '30px', textAlign: 'left' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <input value={projectTitle} onChange={(e)=>setProjectTitle(e.target.value)} placeholder="Client / Project Name" style={{ background: cardBg, border: '1px solid rgba(255,255,255,0.1)', padding: '25px', borderRadius: '25px', color: 'white', outline: 'none' }} />
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>{availableTags.map(t => (<button key={t} className={`onboarding-tag ${selectedTags.includes(t) ? 'active' : ''}`} onClick={() => setSelectedTags(prev => prev.includes(t) ? prev.filter(x=>x!==t) : [...prev, t])}>{t}</button>))}</div>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <textarea value={projectBrief} onChange={(e)=>setProjectBrief(e.target.value)} placeholder="Project Challenge..." style={{ height: '250px', background: cardBg, border: '1px solid rgba(255,255,255,0.1)', padding: '25px', borderRadius: '25px', color: 'white', resize: 'none', outline: 'none' }} />
-              <button onClick={() => setStep('grid')} style={{ padding: '25px', borderRadius: '25px', background: lila, color: 'white', border: 'none', fontWeight: '900', cursor: 'pointer' }}>Match {filteredProfiles.length} Talents</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <div className="h-screen bg-[#0A0A0A] flex items-center justify-center text-[#7D68F6] font-black tracking-widest animate-pulse uppercase">MRM BOGOTÁ</div>;
 
-  /** RENDER: PASOS 2 & 3 - GRID Y DETALLE */
   return (
-    <div style={{ backgroundColor: darkBg, minHeight: '100vh', paddingTop: '110px' }}>
-      <style>{styleSheet}</style>
-      {renderHeader()}
-
-      {/* MODAL GLOBAL: Gestión de equipo y envío de proyecto */}
-      {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div style={{ background: '#0f1115', width: '480px', borderRadius: '40px', border: `1px solid ${lila}33`, padding: '40px' }} onClick={e => e.stopPropagation()}>
-            {modalView === 'list' ? (
-              <>
-                <h2 style={{ margin: '0 0 20px', fontSize: '24px', fontWeight: '900' }}>Team Overview</h2>
-                <div style={{ maxHeight: '300px', overflowY: 'auto', marginBottom: '30px' }}>
-                  {myTeam.map(m => (
-                    <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                      <img src={m.photo} style={{ width: '40px', height: '40px', borderRadius: '12px', objectFit: 'cover' }} />
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: '800', fontSize: '13px' }}>{m.name}</div>
-                        <div style={{ fontSize: '10px', color: lila }}>{m.role}</div>
-                      </div>
-                      <button onClick={() => removeFromTeam(m.id)} style={{ background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer', fontSize: '18px' }}>×</button>
-                    </div>
-                  ))}
-                </div>
-                <button onClick={handleTeamsMeeting} className="modal-cta cta-teams">Determinar Reunión (Teams)</button>
-                <button onClick={() => setModalView('form')} className="modal-cta cta-project">Generar Proyecto</button>
-              </>
-            ) : (
-              <>
-                <h2 style={{ margin: '0 0 20px', fontSize: '24px', fontWeight: '900' }}>New Project Form</h2>
-                <input className="form-input" placeholder="Project Name" defaultValue={projectTitle} />
-                <textarea className="form-input" style={{ height: '100px', resize: 'none' }} placeholder="Final Objectives..." defaultValue={projectBrief} />
-                <input className="form-input" placeholder="Delivery Date (DD/MM/YYYY)" />
-                <button onClick={() => { alert('Project Request Sent!'); setShowModal(false); }} className="modal-cta cta-project">Send Request</button>
-                <button onClick={() => setModalView('list')} style={{ background: 'none', border: 'none', color: '#64748b', width: '100%', marginTop: '10px', cursor: 'pointer', fontSize: '10px', fontWeight: '800' }}>Go back</button>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* VISTA: GRILLA DE RESULTADOS */}
-      {step === 'grid' ? (
-        <div style={{ padding: '0 60px 40px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '25px' }}>
-          {filteredProfiles.map(p => (
-            <div key={p.id} onClick={() => { setSelProfile(p); setStep('deck'); }} className="card-talent" style={{ borderRadius: '35px', padding: '15px' }}>
-              {isAlreadyAdded(p.id) && <div className="added-badge">Added</div>}
-              <img src={p.photo} style={{ width: '100%', height: '240px', objectFit: 'cover', borderRadius: '25px', filter: isAlreadyAdded(p.id) ? 'grayscale(0.5)' : 'none' }} />
-              <div style={{ padding: '15px 5px' }}>
-                <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '900', lineHeight: '1.2' }}>{p.name}</h3>
-                <p style={{ color: lila, fontSize: '10px', fontWeight: '800', marginBottom: '10px' }}>{p.role}</p>
-                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>{p.tags.slice(0, 3).map(tag => <span key={tag} className="card-spec-tag">{tag}</span>)}</div>
-              </div>
+    <div className="min-h-screen bg-[#0A0A0A] text-white font-sans selection:bg-[#7D68F6]/30 overflow-x-hidden">
+      <div className="fixed inset-0 bg-[radial-gradient(circle_at_20%_20%,#1a0b3d_0%,transparent_50%)] z-0 pointer-events-none" />
+      
+      {/* HEADER: LOGO VERTICAL IZQUIERDA */}
+      <header className="fixed top-0 left-0 w-full p-10 px-12 z-[100] flex justify-between items-start pointer-events-none">
+        <div className="pointer-events-auto flex flex-col items-start cursor-pointer" onClick={() => setActiveTab('landing')}>
+            <h1 className="text-6xl font-black uppercase italic tracking-tighter leading-none m-0">MRM</h1>
+            <div className="flex flex-col text-[10px] font-black uppercase tracking-[0.3em] text-[#7D68F6] mt-2 ml-1 leading-[1.1] border-l-2 border-[#7D68F6] pl-3">
+                <span>Bogota</span>
+                <span>Creative</span>
+                <span>Credentials</span>
             </div>
-          ))}
-          {filteredProfiles.length === 0 && (
-            <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '100px', color: '#64748b' }}>
-              <h3 style={{ fontWeight: '900' }}>No talents found for "{searchTerm}"</h3>
-            </div>
-          )}
         </div>
-      ) : (
-        /* VISTA: DECK DETALLADO (Perfil Individual) */
-        <div style={{ padding: '0 60px 60px', display: 'grid', gridTemplateColumns: '380px 1fr 380px', gap: '40px' }}>
-          
-          {/* Columna Izquierda: Bio y Acción */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-             <button onClick={() => setStep('grid')} style={{ alignSelf: 'flex-start', background: 'none', border: 'none', color: lila, fontWeight: '900', marginBottom: '20px', cursor: 'pointer' }}>← Back</button>
-             <div style={{ width: '100%', backgroundColor: cardBg, padding: '45px 35px', borderRadius: '45px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.05)', position: 'relative' }}>
-                {isAlreadyAdded(selProfile.id) && <div className="added-badge">Added</div>}
-                <div style={{ width: '160px', height: '160px', margin: '0 auto 25px', borderRadius: '50%', border: `3px solid ${lila}`, overflow: 'hidden' }}><img src={selProfile.photo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div>
-                <h2 style={{ fontSize: '24px', fontWeight: '900', margin: 0 }}>{selProfile.name}</h2>
-                <p style={{ color: lila, fontWeight: '800' }}>{selProfile.role}</p>
-             </div>
-             <div style={{ display: 'flex', width: '100%', marginTop: '20px' }}>
-               <button disabled={isAlreadyAdded(selProfile.id)} onClick={() => setMyTeam([...myTeam, selProfile])} className="action-btn btn-add">
-                 {isAlreadyAdded(selProfile.id) ? 'Already in Team' : 'Add Talent +'}
-               </button>
-               {isAlreadyAdded(selProfile.id) && (
-                 <button onClick={() => removeFromTeam(selProfile.id)} className="action-btn btn-dismiss">Dismiss</button>
-               )}
-             </div>
-          </div>
-
-          {/* Columna Central: Portafolio Dinámico */}
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <h3 style={{ fontSize: '10px', color: '#444', letterSpacing: '2px', marginBottom: '25px' }}>Portfolio Overview ({selProfile.works.length})</h3>
-            <div style={{ maxHeight: '70vh', overflowY: 'auto', paddingRight: '10px' }}>
-              {selProfile.works.map(w => (
-                <div key={w.id} className={`work-item ${openWorkId === w.id ? 'open' : ''}`}>
-                  <div onClick={() => setOpenWorkId(openWorkId === w.id ? null : w.id)} style={{ padding: '20px 30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
-                    <span style={{ fontWeight: '900', fontSize: '14px' }}>{w.title}</span>
-                    <span style={{ color: lila }}>{openWorkId === w.id ? '−' : '+'}</span>
-                  </div>
-                  {openWorkId === w.id && (
-                    <div style={{ padding: '0 30px 30px', display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '25px' }}>
-                      <div style={{ borderRadius: '15px', overflow: 'hidden', height: '180px' }}><img src={w.img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                        <div><h5 style={{ color: lila, fontSize: '8px', margin: '0 0 5px' }}>Brief</h5><p style={{ color: '#94a3b8', fontSize: '12px', margin: 0 }}>{w.desc}</p></div>
-                        <div><h5 style={{ color: aqua, fontSize: '8px', margin: '0 0 5px' }}>Impact</h5><ul style={{ margin: 0, paddingLeft: '15px', color: '#cbd5e1', fontSize: '11px' }}>{w.achievements.map((a, i) => <li key={i}>{a}</li>)}</ul></div>
-                      </div>
-                    </div>
-                  )}
-                </div>
+        
+        {activeTab !== 'landing' && (
+          <nav className="flex gap-2 p-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-full pointer-events-auto shadow-2xl">
+              {[
+                  {id: 'chat', label: 'Búsqueda Inteligente', icon: <MessageSquare size={14}/>},
+                  {id: 'projects', label: 'Proyectos', icon: <Briefcase size={14}/>},
+                  {id: 'team', label: 'Talento', icon: <Users size={14}/>}
+              ].map(tab => (
+                  <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[#7D68F6] text-white shadow-xl' : 'hover:bg-white/10 text-white/40'}`}>
+                      {tab.icon} {tab.label}
+                  </button>
               ))}
-            </div>
-          </div>
+          </nav>
+        )}
+      </header>
 
-          {/* Columna Derecha: Analítica de Skills */}
-          <div style={{ backgroundColor: cardBg, padding: '40px', borderRadius: '50px', border: '1px solid rgba(255,255,255,0.05)' }}>
-            <SkillRadar skills={selProfile.categorizedSkills} activeIndex={hoveredRadarIdx} />
-            {selProfile.categorizedSkills.map((cat, idx) => (
-              <div key={idx} style={{ marginBottom: '30px' }}>
-                <h4 style={{ fontSize: '10px', color: cat.category === 'Hard Skills' ? lila : aqua, fontWeight: '900', marginBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '5px' }}>{cat.category}</h4>
-                {cat.items.map((s, i) => (
-                  <div key={i} className="skill-bar-row" onMouseEnter={() => setHoveredRadarIdx(s.radarMap)} onMouseLeave={() => setHoveredRadarIdx(null)}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '6px' }}><span>{s.n}</span><span style={{ color: s.c }}>{s.v}%</span></div>
-                    <div style={{ height: '6px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', overflow: 'hidden' }}><div className="skill-bar-inner" style={{ width: `${s.v}%`, height: '100%', background: s.c }} /></div>
+      <main className="relative z-10 min-h-screen flex flex-col">
+        <AnimatePresence mode="wait">
+          
+          {/* LANDING: 3 PILARES FULL PAGE */}
+          {activeTab === 'landing' && (
+            <motion.section key="landing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex items-stretch h-screen overflow-hidden">
+              {[
+                { id: 'chat', title: 'Búsqueda Inteligente', desc: 'IA entrenada con nuestras credenciales.', icon: <MessageSquare size={48}/>, img: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1964' },
+                { id: 'projects', title: 'Proyectos', desc: 'Explora nuestro portafolio creativo.', icon: <Briefcase size={48}/>, img: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=2070' },
+                { id: 'team', title: 'Talento', desc: 'El equipo detrás de las grandes ideas.', icon: <Users size={48}/>, img: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=2070' }
+              ].map((card) => (
+                <motion.div 
+                  key={card.id}
+                  onClick={() => setActiveTab(card.id)}
+                  className="relative flex-1 group cursor-pointer overflow-hidden border-r border-white/10 last:border-r-0"
+                >
+                  <div className="absolute inset-0 z-0">
+                    <img src={card.img} className="w-full h-full object-cover grayscale brightness-50 group-hover:grayscale-0 group-hover:brightness-75 group-hover:scale-110 transition-all duration-1000 ease-out" alt="bg"/>
+                    <div className="absolute inset-0 bg-black/40 group-hover:bg-transparent transition-colors duration-700" />
                   </div>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+                  <div className="relative z-10 h-full flex flex-col justify-end p-16 pb-24">
+                    <div className="mb-8 text-[#7D68F6] group-hover:translate-y-[-10px] transition-transform duration-500">{card.icon}</div>
+                    <h3 className="text-5xl font-black uppercase italic tracking-tighter mb-4 leading-none">{card.title}</h3>
+                    <p className="text-white/60 text-lg leading-relaxed max-w-xs mb-8 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-500">{card.desc}</p>
+                    <div className="flex items-center gap-3 text-[#7D68F6] font-black text-xs uppercase tracking-[0.3em] opacity-0 group-hover:opacity-100 transition-all">Explorar <ChevronRight size={18}/></div>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.section>
+          )}
+
+          {/* TAB: BÚSQUEDA INTELIGENTE */}
+          {activeTab === 'chat' && (
+            <motion.section key="chat" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto pt-48">
+                <div className="relative h-[550px] mb-10 overflow-hidden">
+                    <div ref={chatContainerRef} className="h-full overflow-y-auto pt-10 pb-12 flex flex-col gap-10 hide-scrollbar mask-fade-top scroll-smooth">
+                        {chatHistory.map((msg, i) => (
+                            <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
+                                <div className={`max-w-[80%] p-8 px-10 rounded-[3rem] text-[15px] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6] rounded-tr-none shadow-[#7D68F6]/20' : 'bg-white/5 border-white/10 backdrop-blur-xl rounded-tl-none shadow-2xl'}`}>{msg.text}</div>
+                            </motion.div>
+                        ))}
+                    </div>
+                </div>
+                <div className="relative max-w-3xl mx-auto">
+                    <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describe tu necesidad..." className="w-full bg-white/5 border border-white/20 rounded-[2.5rem] py-8 px-12 outline-none focus:border-[#7D68F6] transition-all text-[15px] min-h-[100px] backdrop-blur-md resize-none shadow-xl" />
+                    <button onClick={handleSend} className="absolute right-6 bottom-6 bg-[#7D68F6] p-6 rounded-full hover:scale-110 shadow-xl transition-all"><Send size={24}/></button>
+                </div>
+            </motion.section>
+          )}
+
+          {/* TAB: TALENTO CON FILTROS */}
+          {activeTab === 'team' && (
+            <motion.section key="team" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-16 items-start pt-48 px-12 max-w-7xl mx-auto">
+                <aside className="w-64 sticky top-48 space-y-10">
+                    <div>
+                        <h3 className="text-[#7D68F6] text-[10px] font-black uppercase tracking-[0.3em] mb-6 flex items-center gap-2"><Filter size={14}/> Filtrar Rol</h3>
+                        <div className="flex flex-col gap-2">
+                            {uniqueRoles.map(role => (
+                                <button key={role} onClick={() => setFilterRole(role)} className={`text-left px-5 py-2.5 rounded-full text-[11px] font-bold uppercase transition-all ${filterRole === role ? 'bg-[#7D68F6] text-white shadow-md' : 'text-white/30 hover:text-white hover:bg-white/5'}`}>{role}</button>
+                            ))}
+                        </div>
+                    </div>
+                    <div>
+                        <h3 className="text-[#7D68F6] text-[10px] font-black uppercase tracking-[0.3em] mb-6">Filtrar Skill</h3>
+                        <div className="flex flex-wrap gap-2">
+                            {uniqueSkills.slice(0, 15).map(skill => (
+                                <button key={skill} onClick={() => setFilterSkill(skill)} className={`px-4 py-2 rounded-full text-[9px] font-bold uppercase border transition-all ${filterSkill === skill ? 'bg-white text-black border-white' : 'border-white/10 text-white/40 hover:border-white/30'}`}>{skill}</button>
+                            ))}
+                        </div>
+                    </div>
+                </aside>
+
+                <div className="flex-1 pb-40">
+                    <div className="mb-12"><h2 className="text-7xl font-black italic uppercase tracking-tighter leading-none">Equipo Bogotá</h2><p className="text-[#7D68F6] font-bold text-[11px] tracking-[0.6em] mt-3 uppercase">Talento ({filteredTalent.length})</p></div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {filteredTalent.map((person, i) => (
+                            <motion.div key={i} whileHover={{ y: -5 }} className="bg-white/5 border border-white/10 p-8 rounded-[3.5rem] text-center hover:border-[#7D68F6] transition-all group overflow-hidden">
+                                <div className="w-24 h-24 rounded-full mx-auto mb-6 overflow-hidden border-4 border-transparent group-hover:border-[#7D68F6] transition-all duration-500 shadow-xl">
+                                    <img src={person.ImageURL} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" alt="avatar"/>
+                                </div>
+                                <h4 className="text-xl font-black uppercase mb-1 tracking-tighter leading-none">{person.Name}</h4>
+                                <p className="text-[10px] text-[#7D68F6] font-bold uppercase mb-6 tracking-widest">{person.Role}</p>
+                                <div className="flex flex-wrap gap-1.5 justify-center">
+                                    {person.skillsArray?.map((skill, idx) => (
+                                        <span key={idx} className="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-[7px] font-black uppercase text-white/40">{skill}</span>
+                                    ))}
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+                </div>
+            </motion.section>
+          )}
+
+        </AnimatePresence>
+      </main>
+
+      <footer className="fixed bottom-10 right-12 z-[100]"><button onClick={() => instance.logoutRedirect()} className="p-5 bg-white/5 rounded-full border border-white/10 text-white/20 hover:text-red-500 transition-all shadow-xl"><LogOut size={22}/></button></footer>
+
+      <style>{`
+        .mask-fade-top { 
+          mask-image: linear-gradient(to bottom, transparent 0%, black 15%); 
+          -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%);
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <MsalProvider instance={msalInstance}>
+      <AuthenticatedTemplate><MainContent /></AuthenticatedTemplate>
+      <UnauthenticatedTemplate>
+        <div className="h-screen bg-[#0A0A0A] flex flex-col items-center justify-center text-center px-6">
+            <h1 className="text-[14vw] font-black italic text-white mb-2 tracking-tighter leading-none">MRM.</h1>
+            <p className="text-[#7D68F6] font-bold tracking-[1.6em] uppercase text-[14px] mb-20 ml-8">Bogota creative credentials</p>
+            <button onClick={() => msalInstance.loginRedirect()} className="bg-[#7D68F6] text-white px-20 py-8 rounded-full font-black text-xs uppercase tracking-[0.3em] shadow-2xl hover:scale-110 transition-all">Acceso Corporativo</button>
+        </div>
+      </UnauthenticatedTemplate>
+    </MsalProvider>
   );
 }
