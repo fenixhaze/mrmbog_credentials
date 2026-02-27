@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Send, LogOut, Users, Briefcase, MessageSquare, Filter, ChevronRight, Loader2, X, Star } from 'lucide-react';
 import Papa from 'papaparse';
 
-// --- CONFIGURACIÓN ---
 const POWER_AUTOMATE_URL = "https://defaultd026e4c15892497ab9daee493c9f03.64.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/58399658d2814f708a2774d517d4b66a/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=W9bUtaaDctUdbMF6_y7e63sZ7GExKXeuYite_O5T4kg"; 
 
 const authConfig = {
@@ -30,7 +29,6 @@ function MainContent() {
   const [isTyping, setIsTyping] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
   
-  // Filtros de Talento
   const [filterRole, setFilterRole] = useState('All');
   const [filterSkill, setFilterSkill] = useState('All');
 
@@ -54,17 +52,15 @@ function MainContent() {
           fetch(`https://graph.microsoft.com/v1.0/me/drive/items/01M53CARQG2KHMRUDB7NHK4ARNCRUIXTNX/content`, { headers }),
           fetch(`https://graph.microsoft.com/v1.0/me/drive/items/01M53CARURZZPIO6GCCBG3SJUDAKN5OX7T/content`, { headers })
         ]);
+        
         const talentCSV = await tRes.text();
-        const projectsCSV = await pRes.text();
-
-        // Procesar Talento con Skills
         const rawTalent = Papa.parse(talentCSV, { header: true, skipEmptyLines: true, delimiter: ";" }).data;
         setTalentData(rawTalent.map(p => ({
             ...p,
             skillsArray: (p.Tags || p.tags || "").split(/[,;]/).map(s => s.trim()).filter(s => s !== "")
         })));
 
-        // Procesar Proyectos
+        const projectsCSV = await pRes.text();
         setFlatProjects(Papa.parse(projectsCSV, { header: true, skipEmptyLines: true, delimiter: ";" }).data.map((p, index) => ({
           ...p,
           internalID: `ID_${index}`, 
@@ -73,7 +69,7 @@ function MainContent() {
         })));
 
         setLoading(false);
-        setChatHistory([{ type: 'ai', text: `Consultoría Estratégica MRM activa. ¿En qué pitch estamos trabajando hoy?` }]);
+        setChatHistory([{ type: 'ai', text: `Consultoría Estratégica MRM. ¿Qué equipo de élite vamos a conformar hoy?` }]);
       } catch (e) { console.error(e); setLoading(false); }
     };
     fetchData();
@@ -86,45 +82,51 @@ function MainContent() {
     setInput('');
     setIsTyping(true);
     
+    // Optimización de datos para evitar "Invalid Input"
+    const invLite = flatProjects.slice(0, 15).map(p => ({ id: p.ID || p.internalID, n: p.ProjectName, d: p.Description?.substring(0, 150) }));
+    const talLite = talentData.slice(0, 20).map(t => ({ n: t.Name, r: t.Role, s: t.skillsArray?.join(',') }));
+
     try {
         const response = await fetch(POWER_AUTOMATE_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ 
                 PreguntaUsuario: userMsg, 
-                Inventario: JSON.stringify(flatProjects.slice(0, 20)),
-                Talento: JSON.stringify(talentData.slice(0, 25))
+                Inventario: JSON.stringify(invLite),
+                Talento: JSON.stringify(talLite)
             })
         });
+        
         const data = await response.json();
         const rawContent = data.content || data.text || "";
         
-        let finalProjectIds = [];
-        let finalTalentNames = [];
+        let pIds = [];
+        let tNames = [];
         let cleanReason = "";
 
-        try {
-            const jsonOnly = rawContent.match(/\{[\s\S]*\}/);
-            if (jsonOnly) {
-                const parsed = JSON.parse(jsonOnly[0]);
-                finalProjectIds = parsed.match_ids || [];
-                finalTalentNames = parsed.talent_names || [];
+        const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            try {
+                const parsed = JSON.parse(jsonMatch[0]);
+                pIds = parsed.match_ids || [];
+                tNames = parsed.talent_names || [];
                 cleanReason = parsed.reason || "";
-            } else { cleanReason = rawContent; }
-        } catch (e) { cleanReason = rawContent; }
+            } catch { cleanReason = rawContent; }
+        } else { cleanReason = rawContent; }
 
-        const matchedProjects = flatProjects.filter(p => finalProjectIds.includes(p.internalID) || finalProjectIds.includes(p.ID));
-        const matchedTalent = talentData.filter(t => finalTalentNames.includes(t.Name));
+        const matchedP = flatProjects.filter(p => pIds.includes(p.internalID) || pIds.includes(p.ID));
+        // Tomamos los 4 mejores según la IA
+        const matchedT = talentData.filter(t => tNames.includes(t.Name)).slice(0, 4);
 
         setChatHistory(prev => [...prev, { 
             type: 'ai', 
             text: cleanReason, 
-            results: matchedProjects,
-            recommendedTalent: matchedTalent
+            results: matchedP,
+            recommendedTalent: matchedT
         }]);
 
-    } catch { 
-        setChatHistory(prev => [...prev, { type: 'ai', text: "Error analizando la solicitud estratégica." }]); 
+    } catch (err) { 
+        setChatHistory(prev => [...prev, { type: 'ai', text: "Error analizando la estrategia de equipo de élite." }]); 
     } finally { setIsTyping(false); }
   };
 
@@ -138,7 +140,6 @@ function MainContent() {
     <div className="min-h-screen bg-[#0A0A0A] text-white font-sans selection:bg-[#7D68F6]/30 overflow-x-hidden">
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_20%_20%,#1a0b3d_0%,transparent_50%)] z-0 pointer-events-none" />
       
-      {/* HEADER LOGO VERTICAL */}
       <header className="fixed top-0 left-0 w-full p-10 px-12 z-[100] flex justify-between items-start pointer-events-none">
         <div className="pointer-events-auto flex flex-col items-start cursor-pointer" onClick={() => setActiveTab('landing')}>
             <h1 className="text-6xl font-black uppercase italic tracking-tighter leading-none m-0">MRM</h1>
@@ -148,7 +149,7 @@ function MainContent() {
         </div>
         {activeTab !== 'landing' && (
           <nav className="flex gap-2 p-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-full pointer-events-auto shadow-2xl">
-              {[ {id: 'chat', label: 'Búsqueda Inteligente', icon: <MessageSquare size={14}/>}, {id: 'projects', label: 'Proyectos', icon: <Briefcase size={14}/>}, {id: 'team', label: 'Talento', icon: <Users size={14}/>} ].map(tab => (
+              {[ {id: 'chat', label: 'IA Copilot', icon: <MessageSquare size={14}/>}, {id: 'projects', label: 'Proyectos', icon: <Briefcase size={14}/>}, {id: 'team', label: 'Talento', icon: <Users size={14}/>} ].map(tab => (
                   <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[#7D68F6] text-white shadow-xl' : 'hover:bg-white/10 text-white/40'}`}> {tab.icon} {tab.label} </button>
               ))}
           </nav>
@@ -160,9 +161,9 @@ function MainContent() {
           {activeTab === 'landing' && (
             <motion.section key="landing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex items-stretch h-screen overflow-hidden">
               {[
-                { id: 'chat', title: 'Consultoría IA', desc: 'Equipo y proyectos curados estratégicamente.', icon: <MessageSquare size={48}/>, img: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1964' },
-                { id: 'projects', title: 'Proyectos', desc: 'Nuestro legado creativo en un solo lugar.', icon: <Briefcase size={48}/>, img: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=2070' },
-                { id: 'team', title: 'Talento', desc: 'Las mentes detrás de la magia en Bogotá.', icon: <Users size={48}/>, img: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=2070' }
+                { id: 'chat', title: 'Consultoría IA', desc: 'Armamos tu equipo y portafolio de élite.', icon: <MessageSquare size={48}/>, img: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1964' },
+                { id: 'projects', title: 'Proyectos', desc: 'Credenciales que definen nuestra visión.', icon: <Briefcase size={48}/>, img: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=2070' },
+                { id: 'team', title: 'Talento', desc: 'El corazón creativo de Bogotá.', icon: <Users size={48}/>, img: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=2070' }
               ].map((card) => (
                 <motion.div key={card.id} onClick={() => setActiveTab(card.id)} className="relative flex-1 group cursor-pointer overflow-hidden border-r border-white/10 last:border-r-0">
                   <div className="absolute inset-0 z-0"><img src={card.img} className="w-full h-full object-cover grayscale brightness-50 group-hover:grayscale-0 group-hover:brightness-75 group-hover:scale-110 transition-all duration-1000 ease-out" alt="bg"/><div className="absolute inset-0 bg-black/40 group-hover:bg-transparent transition-colors duration-700" /></div>
@@ -181,30 +182,31 @@ function MainContent() {
                                 <div className={`max-w-[85%] p-8 px-10 rounded-[3rem] text-[15px] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6] rounded-tr-none shadow-[#7D68F6]/20' : 'bg-white/5 border-white/10 backdrop-blur-xl rounded-tl-none shadow-2xl'}`}>
                                     <p className="whitespace-pre-wrap leading-relaxed opacity-90">{msg.text}</p>
                                     
-                                    {/* CARDS DE PROYECTOS */}
                                     {msg.results && msg.results.length > 0 && (
                                         <div className="mt-8 flex gap-5 overflow-x-auto pb-6 hide-scrollbar snap-x snap-mandatory border-t border-white/5 pt-8">
                                             {msg.results.map((project, idx) => (
                                                 <motion.div key={idx} whileHover={{ y: -5 }} onClick={() => setSelectedProject(project)} className="min-w-[260px] w-[260px] flex-shrink-0 snap-start bg-black/40 border border-white/10 rounded-3xl overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all">
                                                     <div className="h-36 overflow-hidden relative"><img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" alt="img"/></div>
-                                                    <div className="p-5"><h4 className="text-[11px] font-black uppercase tracking-tighter mb-1 truncate">{project.ProjectName}</h4><p className="text-[8px] text-[#7D68F6] font-bold uppercase tracking-widest truncate">{project.Client}</p><div className="mt-4 text-[7px] font-black uppercase tracking-[0.2em] text-white/30 group-hover:text-white transition-colors flex items-center gap-1">Ver detalles <ChevronRight size={12}/></div></div>
+                                                    <div className="p-5"><h4 className="text-[11px] font-black uppercase tracking-tighter mb-1 truncate">{project.ProjectName}</h4><p className="text-[8px] text-[#7D68F6] font-bold uppercase tracking-widest truncate">{project.Client}</p><div className="mt-4 text-[7px] font-black uppercase tracking-[0.2em] text-white/30 group-hover:text-white transition-colors flex items-center gap-1">Detalles <ChevronRight size={12}/></div></div>
                                                 </motion.div>
                                             ))}
                                         </div>
                                     )}
 
-                                    {/* TALENTO RECOMENDADO */}
                                     {msg.recommendedTalent && msg.recommendedTalent.length > 0 && (
                                         <div className="mt-6 pt-6 border-t border-white/5">
-                                            <h5 className="text-[9px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mb-6 flex items-center gap-2"><Star size={12}/> Equipo Recomendado</h5>
+                                            <h5 className="text-[9px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mb-6 flex items-center gap-2"><Star size={12}/> Top 4 Equipo de Élite</h5>
                                             <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-2">
                                                 {msg.recommendedTalent.map((t, idx) => (
-                                                    <div key={idx} className="flex flex-col items-center min-w-[120px] group text-center">
+                                                    <div key={idx} className="flex flex-col items-center min-w-[130px] group text-center">
                                                         <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-transparent group-hover:border-[#7D68F6] transition-all mb-3 shadow-xl">
                                                             <img src={t.ImageURL} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" alt="avatar"/>
                                                         </div>
-                                                        <span className="text-[9px] font-black uppercase tracking-tight truncate w-full">{t.Name}</span>
-                                                        <span className="text-[7px] text-white/30 font-bold uppercase tracking-widest">{t.Role}</span>
+                                                        <span className="text-[10px] font-black uppercase tracking-tight truncate w-full">{t.Name}</span>
+                                                        <span className="text-[7px] text-white/30 font-bold uppercase tracking-widest mb-2">{t.Role}</span>
+                                                        <div className="flex flex-wrap gap-1 justify-center">
+                                                            {t.skillsArray?.slice(0, 1).map((s, i) => <span key={i} className="text-[5px] bg-white/5 px-2 py-0.5 rounded-full border border-white/10">{s}</span>)}
+                                                        </div>
                                                     </div>
                                                 ))}
                                             </div>
@@ -217,7 +219,7 @@ function MainContent() {
                     </div>
                 </div>
                 <div className="relative max-w-3xl mx-auto mb-32">
-                    <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Pídele a nuestra IA un análisis estratégico..." className="w-full bg-white/5 border border-white/20 rounded-[2.5rem] py-8 px-12 outline-none focus:border-[#7D68F6] transition-all text-[15px] min-h-[100px] backdrop-blur-md resize-none shadow-xl" />
+                    <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describe tu necesidad creativa y de equipo..." className="w-full bg-white/5 border border-white/20 rounded-[2.5rem] py-8 px-12 outline-none focus:border-[#7D68F6] transition-all text-[15px] min-h-[100px] backdrop-blur-md resize-none shadow-xl" />
                     <button onClick={handleSend} className="absolute right-6 bottom-6 bg-[#7D68F6] p-6 rounded-full hover:scale-110 shadow-xl transition-all"><Send size={24}/></button>
                 </div>
             </motion.section>
@@ -232,12 +234,6 @@ function MainContent() {
                             {uniqueRoles.map(role => (<button key={role} onClick={() => setFilterRole(role)} className={`text-left px-5 py-2.5 rounded-full text-[11px] font-bold uppercase transition-all ${filterRole === role ? 'bg-[#7D68F6] text-white shadow-md' : 'text-white/30 hover:text-white hover:bg-white/5'}`}>{role}</button>))}
                         </div>
                     </div>
-                    <div>
-                        <h3 className="text-[#7D68F6] text-[10px] font-black uppercase tracking-[0.3em] mb-6">Filtrar Skill</h3>
-                        <div className="flex flex-wrap gap-2">
-                            {uniqueSkills.slice(0, 15).map(skill => (<button key={skill} onClick={() => setFilterSkill(skill)} className={`px-4 py-2 rounded-full text-[9px] font-bold uppercase border transition-all ${filterSkill === skill ? 'bg-white text-black border-white' : 'border-white/10 text-white/40 hover:border-white/30'}`}>{skill}</button>))}
-                        </div>
-                    </div>
                 </aside>
                 <div className="flex-1">
                     <div className="mb-12"><h2 className="text-7xl font-black italic uppercase tracking-tighter leading-none">Equipo Bogotá</h2></div>
@@ -249,8 +245,6 @@ function MainContent() {
                                 </div>
                                 <h4 className="text-xl font-black uppercase mb-1 tracking-tighter leading-none">{person.Name}</h4>
                                 <p className="text-[10px] text-[#7D68F6] font-bold uppercase mb-6 tracking-widest">{person.Role}</p>
-                                
-                                {/* CHIPS DE SKILLS RESTAURADOS */}
                                 <div className="flex flex-wrap gap-1.5 justify-center mt-4">
                                     {person.skillsArray?.map((skill, idx) => (
                                         <span key={idx} className="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-[7px] font-black uppercase text-white/40 group-hover:text-white transition-colors">{skill}</span>
