@@ -28,19 +28,21 @@ function MainContent() {
   const [chatHistory, setChatHistory] = useState([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  
+  // Filtros
   const [filterRole, setFilterRole] = useState('All');
   const [filterSkill, setFilterSkill] = useState('All');
 
   const chatContainerRef = useRef(null);
 
-  // Auto-scroll para el chat
+  // Scroll automático del chat
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTo({ top: chatContainerRef.current.scrollHeight, behavior: 'smooth' });
     }
   }, [chatHistory, isTyping]);
 
-  // Cargar datos de OneDrive
+  // Carga de Excel (OneDrive)
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -76,7 +78,7 @@ function MainContent() {
     fetchData();
   }, [instance, accounts]);
 
-  // Enviar mensaje a Power Automate
+  // Petición a Power Automate
   const handleSend = async () => {
     if (!input.trim()) return;
     const userMsg = input;
@@ -99,7 +101,6 @@ function MainContent() {
     finally { setIsTyping(false); }
   };
 
-  // Filtros
   const filteredTalent = useMemo(() => talentData.filter(p => (filterRole === 'All' || p.Role === filterRole) && (filterSkill === 'All' || p.skillsArray.includes(filterSkill))), [talentData, filterRole, filterSkill]);
   const uniqueRoles = useMemo(() => ['All', ...new Set(talentData.map(t => t.Role))], [talentData]);
   const uniqueSkills = useMemo(() => ['All', ...new Set(talentData.flatMap(t => t.skillsArray))], [talentData]);
@@ -110,7 +111,7 @@ function MainContent() {
     <div className="min-h-screen bg-[#0A0A0A] text-white font-sans selection:bg-[#7D68F6]/30 overflow-x-hidden">
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_20%_20%,#1a0b3d_0%,transparent_50%)] z-0 pointer-events-none" />
       
-      {/* HEADER LOGO VERTICAL & NAV */}
+      {/* HEADER: LOGO VERTICAL & NAV */}
       <header className="fixed top-0 left-0 w-full p-10 px-12 z-[100] flex justify-between items-start pointer-events-none">
         <div className="pointer-events-auto flex flex-col items-start cursor-pointer" onClick={() => setActiveTab('landing')}>
             <h1 className="text-6xl font-black uppercase italic tracking-tighter leading-none m-0">MRM</h1>
@@ -139,7 +140,7 @@ function MainContent() {
       <main className="relative z-10 min-h-screen flex flex-col">
         <AnimatePresence mode="wait">
           
-          {/* TABS: LANDING */}
+          {/* LANDING DE 3 PILARES */}
           {activeTab === 'landing' && (
             <motion.section key="landing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex items-stretch h-screen overflow-hidden">
               {[
@@ -163,14 +164,36 @@ function MainContent() {
             </motion.section>
           )}
 
-          {/* TAB: BÚSQUEDA INTELIGENTE */}
+          {/* CHAT / BÚSQUEDA INTELIGENTE */}
           {activeTab === 'chat' && (
-            <motion.section key="chat" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto pt-48">
+            <motion.section key="chat" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto pt-48 w-full px-6">
                 <div className="relative h-[550px] mb-10 overflow-hidden">
                     <div ref={chatContainerRef} className="h-full overflow-y-auto pt-10 pb-12 flex flex-col gap-10 hide-scrollbar mask-fade-top scroll-smooth">
                         {chatHistory.map((msg, i) => (
                             <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
-                                <div className={`max-w-[80%] p-8 px-10 rounded-[3rem] text-[15px] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6] rounded-tr-none shadow-[#7D68F6]/20' : 'bg-white/5 border-white/10 backdrop-blur-xl rounded-tl-none shadow-2xl'}`}>{msg.text}</div>
+                                <div className={`max-w-[80%] p-8 px-10 rounded-[3rem] text-[15px] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6] rounded-tr-none shadow-[#7D68F6]/20' : 'bg-white/5 border-white/10 backdrop-blur-xl rounded-tl-none shadow-2xl'}`}>
+                                    
+                                    {/* TEXTO DEL MENSAJE */}
+                                    <p className="whitespace-pre-wrap leading-relaxed">{msg.text}</p>
+                                    
+                                    {/* TARJETAS DE RESULTADOS RESTAURADAS */}
+                                    {msg.results && msg.results.length > 0 && (
+                                        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            {msg.results.map((project, idx) => (
+                                                <div key={idx} className="bg-black/40 border border-white/10 rounded-3xl overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all">
+                                                    <div className="h-32 overflow-hidden relative">
+                                                        <img src={project.images[0]} alt={project.ProjectName} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" />
+                                                    </div>
+                                                    <div className="p-5">
+                                                        <h4 className="text-sm font-black uppercase tracking-tighter mb-1 truncate">{project.ProjectName}</h4>
+                                                        <p className="text-[9px] text-[#7D68F6] font-bold uppercase tracking-widest truncate">{project.Client}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                </div>
                             </motion.div>
                         ))}
                     </div>
@@ -182,7 +205,7 @@ function MainContent() {
             </motion.section>
           )}
 
-          {/* TAB: TALENTO */}
+          {/* TALENTO */}
           {activeTab === 'team' && (
             <motion.section key="team" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-16 items-start pt-48 px-12 max-w-7xl mx-auto pb-40">
                 <aside className="w-64 sticky top-48 space-y-10">
@@ -250,7 +273,6 @@ export default function App() {
       <UnauthenticatedTemplate>
         <div className="h-screen bg-[#0A0A0A] flex flex-col items-center justify-center text-center px-6 relative">
             <h1 className="text-[14vw] font-black italic text-white mb-2 tracking-tighter leading-none">MRM.</h1>
-            {/* LOGO VERTICAL EN EL LOGIN TAMBIÉN */}
             <div className="flex flex-col text-[14px] font-black uppercase tracking-[1.6em] text-[#7D68F6] mt-2 ml-10 leading-[1.2] border-l-4 border-[#7D68F6] pl-6 mb-20 text-left">
                 <span>Bogota</span>
                 <span>Creative</span>
