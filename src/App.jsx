@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { PublicClientApplication } from "@azure/msal-browser";
 import { MsalProvider, AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from "@azure/msal-react";
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, LogOut, Search, Users, Briefcase, MessageSquare, X, Loader2, Filter, ChevronRight } from 'lucide-react';
+import { Send, LogOut, Users, Briefcase, MessageSquare, Filter, ChevronRight } from 'lucide-react';
 import Papa from 'papaparse';
 
 // --- CONFIGURACIÓN DE MICROSOFT ---
@@ -28,19 +28,19 @@ function MainContent() {
   const [chatHistory, setChatHistory] = useState([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedProject, setSelectedProject] = useState(null);
   const [filterRole, setFilterRole] = useState('All');
   const [filterSkill, setFilterSkill] = useState('All');
 
   const chatContainerRef = useRef(null);
 
+  // Auto-scroll para el chat
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTo({ top: chatContainerRef.current.scrollHeight, behavior: 'smooth' });
     }
   }, [chatHistory, isTyping]);
 
+  // Cargar datos de OneDrive
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -76,6 +76,7 @@ function MainContent() {
     fetchData();
   }, [instance, accounts]);
 
+  // Enviar mensaje a Power Automate
   const handleSend = async () => {
     if (!input.trim()) return;
     const userMsg = input;
@@ -98,6 +99,7 @@ function MainContent() {
     finally { setIsTyping(false); }
   };
 
+  // Filtros
   const filteredTalent = useMemo(() => talentData.filter(p => (filterRole === 'All' || p.Role === filterRole) && (filterSkill === 'All' || p.skillsArray.includes(filterSkill))), [talentData, filterRole, filterSkill]);
   const uniqueRoles = useMemo(() => ['All', ...new Set(talentData.map(t => t.Role))], [talentData]);
   const uniqueSkills = useMemo(() => ['All', ...new Set(talentData.flatMap(t => t.skillsArray))], [talentData]);
@@ -108,7 +110,7 @@ function MainContent() {
     <div className="min-h-screen bg-[#0A0A0A] text-white font-sans selection:bg-[#7D68F6]/30 overflow-x-hidden">
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_20%_20%,#1a0b3d_0%,transparent_50%)] z-0 pointer-events-none" />
       
-      {/* HEADER: LOGO VERTICAL IZQUIERDA */}
+      {/* HEADER LOGO VERTICAL & NAV */}
       <header className="fixed top-0 left-0 w-full p-10 px-12 z-[100] flex justify-between items-start pointer-events-none">
         <div className="pointer-events-auto flex flex-col items-start cursor-pointer" onClick={() => setActiveTab('landing')}>
             <h1 className="text-6xl font-black uppercase italic tracking-tighter leading-none m-0">MRM</h1>
@@ -137,7 +139,7 @@ function MainContent() {
       <main className="relative z-10 min-h-screen flex flex-col">
         <AnimatePresence mode="wait">
           
-          {/* LANDING: 3 PILARES FULL PAGE */}
+          {/* TABS: LANDING */}
           {activeTab === 'landing' && (
             <motion.section key="landing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex items-stretch h-screen overflow-hidden">
               {[
@@ -145,11 +147,7 @@ function MainContent() {
                 { id: 'projects', title: 'Proyectos', desc: 'Explora nuestro portafolio creativo.', icon: <Briefcase size={48}/>, img: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=2070' },
                 { id: 'team', title: 'Talento', desc: 'El equipo detrás de las grandes ideas.', icon: <Users size={48}/>, img: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=2070' }
               ].map((card) => (
-                <motion.div 
-                  key={card.id}
-                  onClick={() => setActiveTab(card.id)}
-                  className="relative flex-1 group cursor-pointer overflow-hidden border-r border-white/10 last:border-r-0"
-                >
+                <motion.div key={card.id} onClick={() => setActiveTab(card.id)} className="relative flex-1 group cursor-pointer overflow-hidden border-r border-white/10 last:border-r-0">
                   <div className="absolute inset-0 z-0">
                     <img src={card.img} className="w-full h-full object-cover grayscale brightness-50 group-hover:grayscale-0 group-hover:brightness-75 group-hover:scale-110 transition-all duration-1000 ease-out" alt="bg"/>
                     <div className="absolute inset-0 bg-black/40 group-hover:bg-transparent transition-colors duration-700" />
@@ -177,7 +175,7 @@ function MainContent() {
                         ))}
                     </div>
                 </div>
-                <div className="relative max-w-3xl mx-auto">
+                <div className="relative max-w-3xl mx-auto mb-20">
                     <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describe tu necesidad creativa..." className="w-full bg-white/5 border border-white/20 rounded-[2.5rem] py-8 px-12 outline-none focus:border-[#7D68F6] transition-all text-[15px] min-h-[100px] backdrop-blur-md resize-none shadow-xl" />
                     <button onClick={handleSend} className="absolute right-6 bottom-6 bg-[#7D68F6] p-6 rounded-full hover:scale-110 shadow-xl transition-all"><Send size={24}/></button>
                 </div>
@@ -186,7 +184,7 @@ function MainContent() {
 
           {/* TAB: TALENTO */}
           {activeTab === 'team' && (
-            <motion.section key="team" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-16 items-start pt-48 px-12 max-w-7xl mx-auto">
+            <motion.section key="team" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-16 items-start pt-48 px-12 max-w-7xl mx-auto pb-40">
                 <aside className="w-64 sticky top-48 space-y-10">
                     <div>
                         <h3 className="text-[#7D68F6] text-[10px] font-black uppercase tracking-[0.3em] mb-6 flex items-center gap-2"><Filter size={14}/> Filtrar Rol</h3>
@@ -206,7 +204,7 @@ function MainContent() {
                     </div>
                 </aside>
 
-                <div className="flex-1 pb-40">
+                <div className="flex-1">
                     <div className="mb-12"><h2 className="text-7xl font-black italic uppercase tracking-tighter leading-none">Equipo Bogotá</h2><p className="text-[#7D68F6] font-bold text-[11px] tracking-[0.6em] mt-3 uppercase">Talento ({filteredTalent.length})</p></div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredTalent.map((person, i) => (
@@ -235,8 +233,8 @@ function MainContent() {
 
       <style>{`
         .mask-fade-top { 
-            mask-image: linear-gradient(to bottom, transparent 0%, black 18%); 
-            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 18%);
+          mask-image: linear-gradient(to bottom, transparent 0%, black 15%); 
+          -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%);
         }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -250,9 +248,14 @@ export default function App() {
     <MsalProvider instance={msalInstance}>
       <AuthenticatedTemplate><MainContent /></AuthenticatedTemplate>
       <UnauthenticatedTemplate>
-        <div className="h-screen bg-[#0A0A0A] flex flex-col items-center justify-center text-center px-6">
+        <div className="h-screen bg-[#0A0A0A] flex flex-col items-center justify-center text-center px-6 relative">
             <h1 className="text-[14vw] font-black italic text-white mb-2 tracking-tighter leading-none">MRM.</h1>
-            <p className="text-[#7D68F6] font-bold tracking-[1.6em] uppercase text-[14px] mb-20 ml-8">Bogota creative credentials</p>
+            {/* LOGO VERTICAL EN EL LOGIN TAMBIÉN */}
+            <div className="flex flex-col text-[14px] font-black uppercase tracking-[1.6em] text-[#7D68F6] mt-2 ml-10 leading-[1.2] border-l-4 border-[#7D68F6] pl-6 mb-20 text-left">
+                <span>Bogota</span>
+                <span>Creative</span>
+                <span>Credentials</span>
+            </div>
             <button onClick={() => msalInstance.loginRedirect()} className="bg-[#7D68F6] text-white px-20 py-8 rounded-full font-black text-xs uppercase tracking-[0.3em] shadow-2xl hover:scale-110 transition-all">Acceso Corporativo</button>
         </div>
       </UnauthenticatedTemplate>
