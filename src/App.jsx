@@ -2,7 +2,8 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { PublicClientApplication } from "@azure/msal-browser";
 import { MsalProvider, AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from "@azure/msal-react";
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, LogOut, Users, Briefcase, MessageSquare, Filter, ChevronRight } from 'lucide-react';
+// ¡AQUÍ ESTABA EL ERROR! Faltaba importar Loader2
+import { Send, LogOut, Users, Briefcase, MessageSquare, Filter, ChevronRight, Loader2 } from 'lucide-react';
 import Papa from 'papaparse';
 
 // --- CONFIGURACIÓN DE MICROSOFT ---
