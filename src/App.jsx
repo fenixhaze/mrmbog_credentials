@@ -29,20 +29,18 @@ function MainContent() {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   
-  // Filtros
   const [filterRole, setFilterRole] = useState('All');
   const [filterSkill, setFilterSkill] = useState('All');
 
   const chatContainerRef = useRef(null);
 
-  // Scroll automático del chat
+  // Auto-scroll para mantener a la vista el mensaje más reciente
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTo({ top: chatContainerRef.current.scrollHeight, behavior: 'smooth' });
     }
   }, [chatHistory, isTyping]);
 
-  // Carga de Excel (OneDrive)
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -78,13 +76,13 @@ function MainContent() {
     fetchData();
   }, [instance, accounts]);
 
-  // Petición a Power Automate
   const handleSend = async () => {
     if (!input.trim()) return;
     const userMsg = input;
     setChatHistory(prev => [...prev, { type: 'user', text: userMsg }]);
     setInput('');
     setIsTyping(true);
+    
     try {
         const response = await fetch(POWER_AUTOMATE_URL, {
             method: "POST",
@@ -93,12 +91,25 @@ function MainContent() {
         });
         const data = await response.json();
         const aiContent = data.content || data.text || "Sin respuesta";
+        
         let parsed;
-        try { parsed = JSON.parse(aiContent.replace(/```json|```/g, '')); } 
-        catch { parsed = { match_ids: [], reason: aiContent }; }
-        setChatHistory(prev => [...prev, { type: 'ai', text: parsed.reason, results: flatProjects.filter(p => parsed.match_ids?.includes(p.internalID)) }]);
-    } catch { setChatHistory(prev => [...prev, { type: 'ai', text: "Error de conexión." }]); }
-    finally { setIsTyping(false); }
+        try { 
+            parsed = JSON.parse(aiContent.replace(/```json|```/g, '')); 
+        } catch { 
+            parsed = { match_ids: [], reason: aiContent }; 
+        }
+        
+        // Aquí se inyectan los resultados en el historial del chat
+        setChatHistory(prev => [...prev, { 
+            type: 'ai', 
+            text: parsed.reason, 
+            results: flatProjects.filter(p => parsed.match_ids?.includes(p.internalID)) 
+        }]);
+    } catch { 
+        setChatHistory(prev => [...prev, { type: 'ai', text: "Error de conexión." }]); 
+    } finally { 
+        setIsTyping(false); 
+    }
   };
 
   const filteredTalent = useMemo(() => talentData.filter(p => (filterRole === 'All' || p.Role === filterRole) && (filterSkill === 'All' || p.skillsArray.includes(filterSkill))), [talentData, filterRole, filterSkill]);
@@ -111,7 +122,7 @@ function MainContent() {
     <div className="min-h-screen bg-[#0A0A0A] text-white font-sans selection:bg-[#7D68F6]/30 overflow-x-hidden">
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_20%_20%,#1a0b3d_0%,transparent_50%)] z-0 pointer-events-none" />
       
-      {/* HEADER: LOGO VERTICAL & NAV */}
+      {/* HEADER LOGO VERTICAL & NAV */}
       <header className="fixed top-0 left-0 w-full p-10 px-12 z-[100] flex justify-between items-start pointer-events-none">
         <div className="pointer-events-auto flex flex-col items-start cursor-pointer" onClick={() => setActiveTab('landing')}>
             <h1 className="text-6xl font-black uppercase italic tracking-tighter leading-none m-0">MRM</h1>
@@ -140,7 +151,7 @@ function MainContent() {
       <main className="relative z-10 min-h-screen flex flex-col">
         <AnimatePresence mode="wait">
           
-          {/* LANDING DE 3 PILARES */}
+          {/* TABS: LANDING */}
           {activeTab === 'landing' && (
             <motion.section key="landing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex items-stretch h-screen overflow-hidden">
               {[
@@ -164,7 +175,7 @@ function MainContent() {
             </motion.section>
           )}
 
-          {/* CHAT / BÚSQUEDA INTELIGENTE */}
+          {/* TAB: BÚSQUEDA INTELIGENTE */}
           {activeTab === 'chat' && (
             <motion.section key="chat" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto pt-48 w-full px-6">
                 <div className="relative h-[550px] mb-10 overflow-hidden">
@@ -173,20 +184,19 @@ function MainContent() {
                             <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
                                 <div className={`max-w-[80%] p-8 px-10 rounded-[3rem] text-[15px] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6] rounded-tr-none shadow-[#7D68F6]/20' : 'bg-white/5 border-white/10 backdrop-blur-xl rounded-tl-none shadow-2xl'}`}>
                                     
-                                    {/* TEXTO DEL MENSAJE */}
                                     <p className="whitespace-pre-wrap leading-relaxed">{msg.text}</p>
                                     
-                                    {/* TARJETAS DE RESULTADOS RESTAURADAS */}
+                                    {/* TARJETAS DE PROYECTOS RESTAURADAS AQUÍ */}
                                     {msg.results && msg.results.length > 0 && (
                                         <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             {msg.results.map((project, idx) => (
                                                 <div key={idx} className="bg-black/40 border border-white/10 rounded-3xl overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all">
                                                     <div className="h-32 overflow-hidden relative">
-                                                        <img src={project.images[0]} alt={project.ProjectName} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" />
+                                                        <img src={project.images[0] || "https://picsum.photos/1200/800"} alt={project.ProjectName || 'Proyecto'} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" />
                                                     </div>
                                                     <div className="p-5">
-                                                        <h4 className="text-sm font-black uppercase tracking-tighter mb-1 truncate">{project.ProjectName}</h4>
-                                                        <p className="text-[9px] text-[#7D68F6] font-bold uppercase tracking-widest truncate">{project.Client}</p>
+                                                        <h4 className="text-sm font-black uppercase tracking-tighter mb-1 truncate">{project.ProjectName || 'Proyecto'}</h4>
+                                                        <p className="text-[9px] text-[#7D68F6] font-bold uppercase tracking-widest truncate">{project.Client || 'Cliente'}</p>
                                                     </div>
                                                 </div>
                                             ))}
@@ -196,6 +206,13 @@ function MainContent() {
                                 </div>
                             </motion.div>
                         ))}
+                        {isTyping && (
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-start">
+                                <div className="p-4 px-6 rounded-[3rem] bg-white/5 border border-white/10 backdrop-blur-xl rounded-tl-none">
+                                    <Loader2 className="animate-spin text-[#7D68F6]" size={20} />
+                                </div>
+                            </motion.div>
+                        )}
                     </div>
                 </div>
                 <div className="relative max-w-3xl mx-auto mb-20">
@@ -205,7 +222,7 @@ function MainContent() {
             </motion.section>
           )}
 
-          {/* TALENTO */}
+          {/* TAB: TALENTO */}
           {activeTab === 'team' && (
             <motion.section key="team" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-16 items-start pt-48 px-12 max-w-7xl mx-auto pb-40">
                 <aside className="w-64 sticky top-48 space-y-10">
