@@ -30,8 +30,6 @@ function MainContent() {
   const [isTyping, setIsTyping] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProject, setSelectedProject] = useState(null);
-  
-  // Filtros de Talento
   const [filterRole, setFilterRole] = useState('All');
   const [filterSkill, setFilterSkill] = useState('All');
 
@@ -58,14 +56,12 @@ function MainContent() {
         const talentCSV = await tRes.text();
         const projectsCSV = await pRes.text();
 
-        // Procesar Talento con Tags corregidos
         const rawTalent = Papa.parse(talentCSV, { header: true, skipEmptyLines: true, delimiter: ";" }).data;
         setTalentData(rawTalent.map(p => ({
             ...p,
             skillsArray: (p.Tags || p.tags || "").split(/[,;]/).map(s => s.trim()).filter(s => s !== "")
         })));
 
-        // Procesar Proyectos
         setFlatProjects(Papa.parse(projectsCSV, { header: true, skipEmptyLines: true, delimiter: ";" }).data.map((p, index) => ({
           ...p,
           internalID: `ID_${index}`, 
@@ -182,13 +178,13 @@ function MainContent() {
                     </div>
                 </div>
                 <div className="relative max-w-3xl mx-auto">
-                    <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describe tu necesidad..." className="w-full bg-white/5 border border-white/20 rounded-[2.5rem] py-8 px-12 outline-none focus:border-[#7D68F6] transition-all text-[15px] min-h-[100px] backdrop-blur-md resize-none shadow-xl" />
+                    <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describe tu necesidad creativa..." className="w-full bg-white/5 border border-white/20 rounded-[2.5rem] py-8 px-12 outline-none focus:border-[#7D68F6] transition-all text-[15px] min-h-[100px] backdrop-blur-md resize-none shadow-xl" />
                     <button onClick={handleSend} className="absolute right-6 bottom-6 bg-[#7D68F6] p-6 rounded-full hover:scale-110 shadow-xl transition-all"><Send size={24}/></button>
                 </div>
             </motion.section>
           )}
 
-          {/* TAB: TALENTO CON FILTROS */}
+          {/* TAB: TALENTO */}
           {activeTab === 'team' && (
             <motion.section key="team" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-16 items-start pt-48 px-12 max-w-7xl mx-auto">
                 <aside className="w-64 sticky top-48 space-y-10">
@@ -239,8 +235,8 @@ function MainContent() {
 
       <style>{`
         .mask-fade-top { 
-          mask-image: linear-gradient(to bottom, transparent 0%, black 15%); 
-          -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%);
+            mask-image: linear-gradient(to bottom, transparent 0%, black 18%); 
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 18%);
         }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
