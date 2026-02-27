@@ -2,10 +2,10 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { PublicClientApplication } from "@azure/msal-browser";
 import { MsalProvider, AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from "@azure/msal-react";
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, LogOut, Users, Briefcase, MessageSquare, Filter, ChevronRight, Loader2 } from 'lucide-react';
+import { Send, LogOut, Users, Briefcase, MessageSquare, Filter, ChevronRight, Loader2, X } from 'lucide-react';
 import Papa from 'papaparse';
 
-// --- CONFIGURACIÓN DE MICROSOFT ---
+// --- CONFIGURACIÓN ---
 const POWER_AUTOMATE_URL = "https://defaultd026e4c15892497ab9daee493c9f03.64.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/58399658d2814f708a2774d517d4b66a/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=W9bUtaaDctUdbMF6_y7e63sZ7GExKXeuYite_O5T4kg"; 
 
 const authConfig = {
@@ -28,6 +28,7 @@ function MainContent() {
   const [chatHistory, setChatHistory] = useState([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [selectedProject, setSelectedProject] = useState(null);
   
   const [filterRole, setFilterRole] = useState('All');
   const [filterSkill, setFilterSkill] = useState('All');
@@ -86,46 +87,33 @@ function MainContent() {
         const response = await fetch(POWER_AUTOMATE_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ prompt: userMsg, context: JSON.stringify(flatProjects.slice(0, 10)) })
+            body: JSON.stringify({ prompt: userMsg, context: JSON.stringify(flatProjects.slice(0, 15)) })
         });
         const data = await response.json();
-        const aiContent = data.content || data.text || "Sin respuesta";
+        const aiContent = data.content || data.text || "No encontré resultados específicos.";
         
-        let parsed = { match_ids: [], reason: aiContent };
-        
-        // 1. Intentamos leer JSON si la IA se porta bien
-        try { 
-            const jsonMatch = aiContent.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-                const parsedJson = JSON.parse(jsonMatch[0]);
-                if (parsedJson.match_ids) parsed.match_ids = parsedJson.match_ids;
-                if (parsedJson.reason) parsed.reason = parsedJson.reason;
+        // --- MOTOR DE RASTREO DE PROYECTOS ---
+        const matchedProjects = [];
+        flatProjects.forEach(p => {
+            const id = String(p.ID || p.id || '').toLowerCase().trim();
+            const name = String(p.ProjectName || '').toLowerCase().trim();
+            
+            // Detecta si el texto menciona "P03", "3" o el nombre del proyecto
+            const mentionedId = id.length > 0 && aiContent.toLowerCase().includes(id);
+            const mentionedName = name.length > 3 && aiContent.toLowerCase().includes(name);
+            
+            if (mentionedId || mentionedName) {
+                matchedProjects.push(p);
             }
-        } catch { } // Si falla, no pasa nada, pasamos al plan B
-        
-        // 2. PLAN B (A prueba de balas): Buscar IDs o Nombres directamente en el texto
-        if (parsed.match_ids.length === 0) {
-            flatProjects.forEach(p => {
-                const id = String(p.ID || p.id || p.Proyecto || '').trim();
-                const name = String(p.ProjectName || p.projectName || '').trim();
-                
-                const hasId = id.length > 0 && aiContent.includes(id);
-                const hasName = name.length > 3 && aiContent.toLowerCase().includes(name.toLowerCase());
-                
-                if (hasId || hasName) {
-                    parsed.match_ids.push(p.internalID);
-                }
-            });
-            parsed.match_ids = [...new Set(parsed.match_ids)]; // Quitar duplicados
-        }
-        
+        });
+
         setChatHistory(prev => [...prev, { 
             type: 'ai', 
-            text: parsed.reason, 
-            results: flatProjects.filter(p => parsed.match_ids.includes(p.internalID)) 
+            text: aiContent, 
+            results: matchedProjects 
         }]);
     } catch { 
-        setChatHistory(prev => [...prev, { type: 'ai', text: "Error de conexión." }]); 
+        setChatHistory(prev => [...prev, { type: 'ai', text: "Hubo un error de conexión con la IA." }]); 
     } finally { 
         setIsTyping(false); 
     }
@@ -141,7 +129,7 @@ function MainContent() {
     <div className="min-h-screen bg-[#0A0A0A] text-white font-sans selection:bg-[#7D68F6]/30 overflow-x-hidden">
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_20%_20%,#1a0b3d_0%,transparent_50%)] z-0 pointer-events-none" />
       
-      {/* HEADER LOGO VERTICAL & NAV */}
+      {/* HEADER LOGO VERTICAL */}
       <header className="fixed top-0 left-0 w-full p-10 px-12 z-[100] flex justify-between items-start pointer-events-none">
         <div className="pointer-events-auto flex flex-col items-start cursor-pointer" onClick={() => setActiveTab('landing')}>
             <h1 className="text-6xl font-black uppercase italic tracking-tighter leading-none m-0">MRM</h1>
@@ -170,7 +158,7 @@ function MainContent() {
       <main className="relative z-10 min-h-screen flex flex-col">
         <AnimatePresence mode="wait">
           
-          {/* TABS: LANDING */}
+          {/* LANDING: 3 PILARES */}
           {activeTab === 'landing' && (
             <motion.section key="landing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex items-stretch h-screen overflow-hidden">
               {[
@@ -194,35 +182,36 @@ function MainContent() {
             </motion.section>
           )}
 
-          {/* TAB: BÚSQUEDA INTELIGENTE */}
+          {/* CHAT / BÚSQUEDA INTELIGENTE */}
           {activeTab === 'chat' && (
             <motion.section key="chat" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto pt-48 w-full px-6">
-                <div className="relative h-[550px] mb-10 overflow-hidden">
-                    <div ref={chatContainerRef} className="h-full overflow-y-auto pt-10 pb-12 flex flex-col gap-10 hide-scrollbar mask-fade-top scroll-smooth">
+                <div className="relative h-[600px] mb-10 overflow-hidden">
+                    <div ref={chatContainerRef} className="h-full overflow-y-auto pt-10 pb-20 flex flex-col gap-10 hide-scrollbar mask-fade-top scroll-smooth">
                         {chatHistory.map((msg, i) => (
                             <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
-                                <div className={`max-w-[80%] p-8 px-10 rounded-[3rem] text-[15px] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6] rounded-tr-none shadow-[#7D68F6]/20' : 'bg-white/5 border-white/10 backdrop-blur-xl rounded-tl-none shadow-2xl'}`}>
+                                <div className={`max-w-[85%] p-8 px-10 rounded-[3rem] text-[15px] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6] rounded-tr-none shadow-[#7D68F6]/20' : 'bg-white/5 border-white/10 backdrop-blur-xl rounded-tl-none shadow-2xl'}`}>
                                     
-                                    <p className="whitespace-pre-wrap leading-relaxed">{msg.text}</p>
+                                    <p className="whitespace-pre-wrap leading-relaxed opacity-90">{msg.text}</p>
                                     
-                                    {/* TARJETAS DE PROYECTOS RESTAURADAS CON SCROLL HORIZONTAL */}
+                                    {/* CARDS CON SCROLL HORIZONTAL */}
                                     {msg.results && msg.results.length > 0 && (
-                                        <div className="mt-8 flex gap-5 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory">
+                                        <div className="mt-8 flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory">
                                             {msg.results.map((project, idx) => (
-                                                <div key={idx} className="min-w-[260px] w-[260px] flex-shrink-0 snap-start bg-black/40 border border-white/10 rounded-3xl overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all shadow-xl">
-                                                    <div className="h-36 overflow-hidden relative">
-                                                        <img src={project.images[0] || "https://picsum.photos/1200/800"} alt={project.ProjectName || 'Proyecto'} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" />
+                                                <motion.div 
+                                                    key={idx} 
+                                                    whileHover={{ y: -5 }}
+                                                    onClick={() => setSelectedProject(project)}
+                                                    className="min-w-[240px] w-[240px] flex-shrink-0 snap-start bg-black/40 border border-white/10 rounded-3xl overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all"
+                                                >
+                                                    <div className="h-32 overflow-hidden relative">
+                                                        <img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" alt="img"/>
                                                     </div>
-                                                    <div className="p-5 relative">
-                                                        <h4 className="text-sm font-black uppercase tracking-tighter mb-1 truncate">{project.ProjectName || 'Proyecto'}</h4>
-                                                        <p className="text-[9px] text-[#7D68F6] font-bold uppercase tracking-widest truncate">{project.Client || 'Cliente'}</p>
-                                                        
-                                                        {/* BOTÓN VER PROYECTO */}
-                                                        <div className="mt-4 flex items-center gap-1 text-[10px] text-white/40 group-hover:text-white transition-colors font-bold uppercase tracking-widest">
-                                                            Ver proyecto <ChevronRight size={14}/>
-                                                        </div>
+                                                    <div className="p-5">
+                                                        <h4 className="text-[11px] font-black uppercase tracking-tighter mb-1 truncate">{project.ProjectName}</h4>
+                                                        <p className="text-[8px] text-[#7D68F6] font-bold uppercase tracking-widest truncate">{project.Client}</p>
+                                                        <div className="mt-4 text-[7px] font-black uppercase tracking-[0.2em] text-white/30 group-hover:text-white transition-colors flex items-center gap-1">Ver detalles <ChevronRight size={10}/></div>
                                                     </div>
-                                                </div>
+                                                </motion.div>
                                             ))}
                                         </div>
                                     )}
@@ -232,15 +221,15 @@ function MainContent() {
                         ))}
                         {isTyping && (
                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-start">
-                                <div className="p-4 px-6 rounded-[3rem] bg-white/5 border border-white/10 backdrop-blur-xl rounded-tl-none">
+                                <div className="p-6 px-8 rounded-[3rem] bg-white/5 border border-white/10 backdrop-blur-xl rounded-tl-none">
                                     <Loader2 className="animate-spin text-[#7D68F6]" size={20} />
                                 </div>
                             </motion.div>
                         )}
                     </div>
                 </div>
-                <div className="relative max-w-3xl mx-auto mb-20">
-                    <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describe tu necesidad creativa..." className="w-full bg-white/5 border border-white/20 rounded-[2.5rem] py-8 px-12 outline-none focus:border-[#7D68F6] transition-all text-[15px] min-h-[100px] backdrop-blur-md resize-none shadow-xl" />
+                <div className="relative max-w-3xl mx-auto mb-32">
+                    <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describe lo que necesitas buscar..." className="w-full bg-white/5 border border-white/20 rounded-[2.5rem] py-8 px-12 outline-none focus:border-[#7D68F6] transition-all text-[15px] min-h-[100px] backdrop-blur-md resize-none shadow-xl" />
                     <button onClick={handleSend} className="absolute right-6 bottom-6 bg-[#7D68F6] p-6 rounded-full hover:scale-110 shadow-xl transition-all"><Send size={24}/></button>
                 </div>
             </motion.section>
@@ -255,14 +244,6 @@ function MainContent() {
                         <div className="flex flex-col gap-2">
                             {uniqueRoles.map(role => (
                                 <button key={role} onClick={() => setFilterRole(role)} className={`text-left px-5 py-2.5 rounded-full text-[11px] font-bold uppercase transition-all ${filterRole === role ? 'bg-[#7D68F6] text-white shadow-md' : 'text-white/30 hover:text-white hover:bg-white/5'}`}>{role}</button>
-                            ))}
-                        </div>
-                    </div>
-                    <div>
-                        <h3 className="text-[#7D68F6] text-[10px] font-black uppercase tracking-[0.3em] mb-6">Filtrar Skill</h3>
-                        <div className="flex flex-wrap gap-2">
-                            {uniqueSkills.slice(0, 15).map(skill => (
-                                <button key={skill} onClick={() => setFilterSkill(skill)} className={`px-4 py-2 rounded-full text-[9px] font-bold uppercase border transition-all ${filterSkill === skill ? 'bg-white text-black border-white' : 'border-white/10 text-white/40 hover:border-white/30'}`}>{skill}</button>
                             ))}
                         </div>
                     </div>
@@ -289,11 +270,39 @@ function MainContent() {
                 </div>
             </motion.section>
           )}
-
         </AnimatePresence>
       </main>
 
-      <footer className="fixed bottom-10 right-12 z-[100]"><button onClick={() => instance.logoutRedirect()} className="p-5 bg-white/5 rounded-full border border-white/10 text-white/20 hover:text-red-500 transition-all shadow-xl"><LogOut size={22}/></button></footer>
+      {/* MODAL DETALLE DE PROYECTO */}
+      <AnimatePresence>
+        {selectedProject && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center p-6 backdrop-blur-2xl bg-black/80">
+            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-[#111] border border-white/10 w-full max-w-4xl max-h-[90vh] rounded-[4rem] overflow-hidden relative flex flex-col">
+              <button onClick={() => setSelectedProject(null)} className="absolute top-8 right-8 z-10 p-4 bg-white/5 rounded-full hover:bg-white/10 transition-all"><X size={24}/></button>
+              <div className="h-2/3 overflow-hidden">
+                <img src={selectedProject.images[0]} className="w-full h-full object-cover" alt="hero"/>
+              </div>
+              <div className="p-16 flex-1 overflow-y-auto">
+                <p className="text-[#7D68F6] font-black uppercase tracking-[0.4em] text-xs mb-4">{selectedProject.Client}</p>
+                <h2 className="text-6xl font-black italic uppercase tracking-tighter mb-8 leading-none">{selectedProject.ProjectName}</h2>
+                <div className="grid grid-cols-3 gap-12">
+                  <div className="col-span-2 text-white/60 leading-relaxed text-lg">{selectedProject.Description || 'Sin descripción disponible.'}</div>
+                  <div className="space-y-6">
+                    <div><p className="text-[10px] font-black uppercase text-white/30 tracking-widest mb-2">Categoría</p><p className="font-bold text-sm uppercase">{selectedProject.Category || 'General'}</p></div>
+                    <div className="flex flex-wrap gap-2">
+                        {selectedProject.tagsArray?.map(t => <span key={t} className="bg-white/5 border border-white/10 px-4 py-2 rounded-full text-[10px] font-bold uppercase">{t}</span>)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <footer className="fixed bottom-10 right-12 z-[100] flex gap-4">
+        <button onClick={() => instance.logoutRedirect()} className="p-5 bg-white/5 rounded-full border border-white/10 text-white/20 hover:text-red-500 transition-all shadow-xl"><LogOut size={22}/></button>
+      </footer>
 
       <style>{`
         .mask-fade-top { 
