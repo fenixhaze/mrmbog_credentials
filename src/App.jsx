@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { PublicClientApplication } from "@azure/msal-browser";
 import { MsalProvider, AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from "@azure/msal-react";
 import { motion, AnimatePresence } from 'framer-motion';
-// ¡AQUÍ ESTABA EL ERROR! Faltaba importar Loader2
 import { Send, LogOut, Users, Briefcase, MessageSquare, Filter, ChevronRight, Loader2 } from 'lucide-react';
 import Papa from 'papaparse';
 
@@ -35,7 +34,6 @@ function MainContent() {
 
   const chatContainerRef = useRef(null);
 
-  // Auto-scroll para mantener a la vista el mensaje más reciente
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTo({ top: chatContainerRef.current.scrollHeight, behavior: 'smooth' });
@@ -93,18 +91,38 @@ function MainContent() {
         const data = await response.json();
         const aiContent = data.content || data.text || "Sin respuesta";
         
-        let parsed;
+        let parsed = { match_ids: [], reason: aiContent };
+        
+        // 1. Intentamos leer JSON si la IA se porta bien
         try { 
-            parsed = JSON.parse(aiContent.replace(/```json|```/g, '')); 
-        } catch { 
-            parsed = { match_ids: [], reason: aiContent }; 
+            const jsonMatch = aiContent.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                const parsedJson = JSON.parse(jsonMatch[0]);
+                if (parsedJson.match_ids) parsed.match_ids = parsedJson.match_ids;
+                if (parsedJson.reason) parsed.reason = parsedJson.reason;
+            }
+        } catch { } // Si falla, no pasa nada, pasamos al plan B
+        
+        // 2. PLAN B (A prueba de balas): Buscar IDs o Nombres directamente en el texto
+        if (parsed.match_ids.length === 0) {
+            flatProjects.forEach(p => {
+                const id = String(p.ID || p.id || p.Proyecto || '').trim();
+                const name = String(p.ProjectName || p.projectName || '').trim();
+                
+                const hasId = id.length > 0 && aiContent.includes(id);
+                const hasName = name.length > 3 && aiContent.toLowerCase().includes(name.toLowerCase());
+                
+                if (hasId || hasName) {
+                    parsed.match_ids.push(p.internalID);
+                }
+            });
+            parsed.match_ids = [...new Set(parsed.match_ids)]; // Quitar duplicados
         }
         
-        // Aquí se inyectan los resultados en el historial del chat
         setChatHistory(prev => [...prev, { 
             type: 'ai', 
             text: parsed.reason, 
-            results: flatProjects.filter(p => parsed.match_ids?.includes(p.internalID)) 
+            results: flatProjects.filter(p => parsed.match_ids.includes(p.internalID)) 
         }]);
     } catch { 
         setChatHistory(prev => [...prev, { type: 'ai', text: "Error de conexión." }]); 
@@ -187,17 +205,22 @@ function MainContent() {
                                     
                                     <p className="whitespace-pre-wrap leading-relaxed">{msg.text}</p>
                                     
-                                    {/* TARJETAS DE PROYECTOS RESTAURADAS AQUÍ */}
+                                    {/* TARJETAS DE PROYECTOS RESTAURADAS CON SCROLL HORIZONTAL */}
                                     {msg.results && msg.results.length > 0 && (
-                                        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div className="mt-8 flex gap-5 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory">
                                             {msg.results.map((project, idx) => (
-                                                <div key={idx} className="bg-black/40 border border-white/10 rounded-3xl overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all">
-                                                    <div className="h-32 overflow-hidden relative">
+                                                <div key={idx} className="min-w-[260px] w-[260px] flex-shrink-0 snap-start bg-black/40 border border-white/10 rounded-3xl overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all shadow-xl">
+                                                    <div className="h-36 overflow-hidden relative">
                                                         <img src={project.images[0] || "https://picsum.photos/1200/800"} alt={project.ProjectName || 'Proyecto'} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" />
                                                     </div>
-                                                    <div className="p-5">
+                                                    <div className="p-5 relative">
                                                         <h4 className="text-sm font-black uppercase tracking-tighter mb-1 truncate">{project.ProjectName || 'Proyecto'}</h4>
                                                         <p className="text-[9px] text-[#7D68F6] font-bold uppercase tracking-widest truncate">{project.Client || 'Cliente'}</p>
+                                                        
+                                                        {/* BOTÓN VER PROYECTO */}
+                                                        <div className="mt-4 flex items-center gap-1 text-[10px] text-white/40 group-hover:text-white transition-colors font-bold uppercase tracking-widest">
+                                                            Ver proyecto <ChevronRight size={14}/>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             ))}
