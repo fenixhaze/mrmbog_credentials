@@ -83,7 +83,6 @@ function MainContent() {
     setInput('');
     setIsTyping(true);
     
-    // Mantenemos la estructura ligera para que Power Automate no se rompa
     const invLite = JSON.stringify(flatProjects.slice(0, 12).map(p => ({ id: p.ID || p.internalID, n: p.ProjectName })));
     const talLite = JSON.stringify(talentData.slice(0, 15).map(t => ({ n: t.Name, r: t.Role, s: t.skillsArray?.slice(0,3).join(',') })));
 
@@ -174,17 +173,17 @@ function MainContent() {
           )}
 
           {activeTab === 'chat' && (
-            <motion.section key="chat" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto pt-48 w-full px-6">
-                <div className="relative h-[650px] mb-10 overflow-hidden">
-                    <div ref={chatContainerRef} className="h-full overflow-y-auto pt-10 pb-40 flex flex-col gap-8 hide-scrollbar mask-fade-top scroll-smooth">
+            <motion.section key="chat" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto pt-48 w-full px-6 flex flex-col h-screen">
+                <div className="relative flex-1 mb-8 overflow-hidden">
+                    <div ref={chatContainerRef} className="h-full overflow-y-auto pt-10 pb-4 flex flex-col gap-6 hide-scrollbar mask-fade-top scroll-smooth">
                         {chatHistory.map((msg, i) => (
                             <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
-                                {/* AJUSTE VISUAL: Padding reducido y esquinas suavizadas en las burbujas */}
-                                <div className={`max-w-[85%] p-6 px-8 rounded-[2rem] text-[15px] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6] rounded-tr-none shadow-[#7D68F6]/20' : 'bg-white/5 border-white/10 backdrop-blur-xl rounded-tl-none shadow-2xl'}`}>
+                                {/* AJUSTE VISUAL: Burbujas más anchas (max-w-[95%]) y con menos padding (p-5 px-6) */}
+                                <div className={`max-w-[95%] p-5 px-6 rounded-[2rem] text-[15px] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6] rounded-tr-none shadow-[#7D68F6]/20' : 'bg-white/5 border-white/10 backdrop-blur-xl rounded-tl-none shadow-2xl'}`}>
                                     <p className="whitespace-pre-wrap leading-relaxed opacity-90">{msg.text}</p>
                                     
                                     {msg.results && msg.results.length > 0 && (
-                                        <div className="mt-8 flex gap-4 overflow-x-auto pb-6 hide-scrollbar snap-x snap-mandatory border-t border-white/5 pt-6">
+                                        <div className="mt-6 flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory border-t border-white/5 pt-6">
                                             {msg.results.map((project, idx) => (
                                                 <motion.div key={idx} whileHover={{ y: -5 }} onClick={() => setSelectedProject(project)} className="min-w-[240px] w-[240px] flex-shrink-0 snap-start bg-black/40 border border-white/10 rounded-2xl overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all">
                                                     <div className="h-32 overflow-hidden relative"><img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" alt="img"/></div>
@@ -195,19 +194,17 @@ function MainContent() {
                                     )}
 
                                     {msg.recommendedTalent && msg.recommendedTalent.length > 0 && (
-                                        <div className="mt-4 pt-6 border-t border-white/5">
-                                            <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mb-6 flex items-center gap-2"><Star size={14}/> Top 4 Equipo Sugerido</h5>
+                                        <div className="mt-2 pt-6 border-t border-white/5">
+                                            <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mb-5 flex items-center gap-2"><Star size={14}/> Top 4 Equipo Sugerido</h5>
                                             <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-2">
                                                 {msg.recommendedTalent.map((t, idx) => (
                                                     <div key={idx} className="flex flex-col items-center min-w-[140px] group text-center">
                                                         <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-transparent group-hover:border-[#7D68F6] transition-all mb-3 shadow-xl">
                                                             <img src={t.ImageURL} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" alt="avatar"/>
                                                         </div>
-                                                        {/* AJUSTE VISUAL: Nombres y roles más grandes y legibles */}
                                                         <span className="text-xs font-black uppercase tracking-tight truncate w-full">{t.Name}</span>
                                                         <span className="text-[9px] text-white/40 font-bold uppercase tracking-widest mb-3">{t.Role}</span>
                                                         <div className="flex flex-wrap gap-1.5 justify-center">
-                                                            {/* AJUSTE VISUAL: Chips más grandes en el chat */}
                                                             {t.skillsArray?.slice(0, 2).map((s, i) => <span key={i} className="text-[8px] bg-white/5 px-2.5 py-1 rounded-full border border-white/10">{s}</span>)}
                                                         </div>
                                                     </div>
@@ -218,14 +215,39 @@ function MainContent() {
                                 </div>
                             </motion.div>
                         ))}
-                        {isTyping && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-start"><div className="p-5 px-7 rounded-[2rem] bg-white/5 border border-white/10 backdrop-blur-xl rounded-tl-none"><Loader2 className="animate-spin text-[#7D68F6]" size={20} /></div></motion.div>}
+                        {isTyping && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-start"><div className="p-4 px-6 rounded-[2rem] bg-white/5 border border-white/10 backdrop-blur-xl rounded-tl-none"><Loader2 className="animate-spin text-[#7D68F6]" size={20} /></div></motion.div>}
                     </div>
                 </div>
-                <div className="relative max-w-3xl mx-auto mb-32">
-                    {/* AJUSTE VISUAL: Más padding derecho (pr-20) para que el texto no se monte en el botón */}
-                    <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describe tu necesidad creativa..." className="w-full bg-white/5 border border-white/20 rounded-[2.5rem] py-6 pl-8 pr-20 outline-none focus:border-[#7D68F6] transition-all text-[15px] min-h-[80px] backdrop-blur-md resize-none shadow-xl" />
-                    {/* AJUSTE VISUAL: Botón más pequeño y centrado */}
-                    <button onClick={handleSend} className="absolute right-4 bottom-4 bg-[#7D68F6] p-4 rounded-full hover:scale-110 shadow-xl transition-all"><Send size={20}/></button>
+                
+                {/* AJUSTE VISUAL: Contenedor flex para separar el input del botón CTA */}
+                <div className="flex items-center gap-4 w-full mb-12">
+                    <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describe tu necesidad creativa..." className="flex-1 bg-white/5 border border-white/20 rounded-[2.5rem] py-5 px-8 outline-none focus:border-[#7D68F6] transition-all text-[15px] min-h-[64px] backdrop-blur-md resize-none shadow-xl" />
+                    <button onClick={handleSend} className="bg-[#7D68F6] w-[64px] h-[64px] rounded-full hover:scale-105 shadow-xl transition-all flex flex-shrink-0 items-center justify-center group">
+                        <Send size={22} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform"/>
+                    </button>
+                </div>
+            </motion.section>
+          )}
+
+          {/* AJUSTE VISUAL: RE-AGREGADO TAB DE PROYECTOS */}
+          {activeTab === 'projects' && (
+            <motion.section key="projects" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-48 px-12 max-w-7xl mx-auto pb-40">
+                <div className="mb-12">
+                    <h2 className="text-7xl font-black italic uppercase tracking-tighter leading-none">Proyectos</h2>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {flatProjects.map((project, i) => (
+                        <motion.div key={i} whileHover={{ y: -5 }} onClick={() => setSelectedProject(project)} className="bg-white/5 border border-white/10 rounded-[3rem] overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all shadow-xl">
+                            <div className="h-48 overflow-hidden relative">
+                                <img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" alt="img"/>
+                            </div>
+                            <div className="p-8">
+                                <h4 className="text-xl font-black uppercase tracking-tighter mb-2 truncate">{project.ProjectName}</h4>
+                                <p className="text-xs text-[#7D68F6] font-bold uppercase tracking-widest truncate mb-4">{project.Client}</p>
+                                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 group-hover:text-white transition-colors flex items-center gap-2">Ver detalles <ChevronRight size={14}/></div>
+                            </div>
+                        </motion.div>
+                    ))}
                 </div>
             </motion.section>
           )}
@@ -251,7 +273,6 @@ function MainContent() {
                                 <h4 className="text-xl font-black uppercase mb-1 tracking-tighter leading-none">{person.Name}</h4>
                                 <p className="text-[10px] text-[#7D68F6] font-bold uppercase mb-6 tracking-widest">{person.Role}</p>
                                 <div className="flex flex-wrap gap-1.5 justify-center mt-4">
-                                    {/* AJUSTE VISUAL: Chips más grandes en la pestaña principal de equipo */}
                                     {person.skillsArray?.map((skill, idx) => (
                                         <span key={idx} className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-full text-[9px] font-black uppercase text-white/40 group-hover:text-white transition-colors">{skill}</span>
                                     ))}
