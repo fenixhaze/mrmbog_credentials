@@ -79,43 +79,44 @@ function MainContent() {
         const response = await fetch(POWER_AUTOMATE_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ prompt: userMsg, context: JSON.stringify(flatProjects.slice(0, 15)) })
+            body: JSON.stringify({ prompt: userMsg, context: JSON.stringify(flatProjects.slice(0, 20)) })
         });
         const data = await response.json();
-        const aiContent = data.content || data.text || "No encontré resultados.";
+        const rawContent = data.content || data.text || "";
         
         let finalIds = [];
-        let displayText = aiContent;
+        let reasonText = "";
 
-        // --- EXTRACCIÓN Y LIMPIEZA ---
-        const jsonMatch = aiContent.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-            try {
-                const parsed = JSON.parse(jsonMatch[0]);
+        // --- PARSER PARA EL NUEVO PROMPT JSON ---
+        try {
+            // Extraer el JSON aunque venga envuelto en markdown ```json
+            const jsonOnly = rawContent.match(/\{[\s\S]*\}/);
+            if (jsonOnly) {
+                const parsed = JSON.parse(jsonOnly[0]);
                 finalIds = parsed.match_ids || [];
-                displayText = parsed.reason || aiContent.replace(/```json|```|\{[\s\S]*\}/g, '').trim();
-            } catch {
-                displayText = aiContent.replace(/```json|```|\{[\s\S]*\}/g, '').trim();
+                reasonText = parsed.reason || "";
+            } else {
+                reasonText = rawContent;
             }
-        } else {
-            displayText = aiContent.replace(/```json|```/g, '').trim();
+        } catch (e) {
+            reasonText = rawContent;
         }
 
-        // --- RASTREO MANUAL SI FALLA EL JSON ---
-        if (finalIds.length === 0) {
-            flatProjects.forEach(p => {
-                const id = String(p.ID || p.id || '').toLowerCase().trim();
-                if (id && aiContent.toLowerCase().includes(id)) finalIds.push(p.internalID);
-            });
-        }
+        // Si la IA mandó IDs tipo "ID_0", "P01", los buscamos en nuestra data
+        const resultsFound = flatProjects.filter(p => 
+            finalIds.includes(p.internalID) || 
+            finalIds.includes(p.ID) || 
+            finalIds.includes(p.id)
+        );
 
         setChatHistory(prev => [...prev, { 
             type: 'ai', 
-            text: displayText || "Aquí tienes los resultados:", 
-            results: flatProjects.filter(p => finalIds.includes(p.internalID)) 
+            text: reasonText || "He encontrado estos proyectos que coinciden con tu búsqueda:", 
+            results: resultsFound 
         }]);
+
     } catch { 
-        setChatHistory(prev => [...prev, { type: 'ai', text: "Error de conexión." }]); 
+        setChatHistory(prev => [...prev, { type: 'ai', text: "Error al conectar con GPT-5." }]); 
     } finally { 
         setIsTyping(false); 
     }
@@ -130,6 +131,7 @@ function MainContent() {
     <div className="min-h-screen bg-[#0A0A0A] text-white font-sans selection:bg-[#7D68F6]/30 overflow-x-hidden">
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_20%_20%,#1a0b3d_0%,transparent_50%)] z-0 pointer-events-none" />
       
+      {/* HEADER LOGO VERTICAL */}
       <header className="fixed top-0 left-0 w-full p-10 px-12 z-[100] flex justify-between items-start pointer-events-none">
         <div className="pointer-events-auto flex flex-col items-start cursor-pointer" onClick={() => setActiveTab('landing')}>
             <h1 className="text-6xl font-black uppercase italic tracking-tighter leading-none m-0">MRM</h1>
@@ -153,9 +155,9 @@ function MainContent() {
           {activeTab === 'landing' && (
             <motion.section key="landing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex items-stretch h-screen overflow-hidden">
               {[
-                { id: 'chat', title: 'Búsqueda Inteligente', desc: 'IA entrenada con nuestras credenciales.', icon: <MessageSquare size={48}/>, img: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1964' },
-                { id: 'projects', title: 'Proyectos', desc: 'Explora nuestro portafolio creativo.', icon: <Briefcase size={48}/>, img: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=2070' },
-                { id: 'team', title: 'Talento', desc: 'El equipo detrás de las grandes ideas.', icon: <Users size={48}/>, img: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=2070' }
+                { id: 'chat', title: 'Búsqueda Inteligente', desc: 'IA entrenada con nuestras credenciales.', icon: <MessageSquare size={48}/>, img: '[https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1964](https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1964)' },
+                { id: 'projects', title: 'Proyectos', desc: 'Explora nuestro portafolio creativo.', icon: <Briefcase size={48}/>, img: '[https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=2070](https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=2070)' },
+                { id: 'team', title: 'Talento', desc: 'El equipo detrás de las grandes ideas.', icon: <Users size={48}/>, img: '[https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=2070](https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=2070)' }
               ].map((card) => (
                 <motion.div key={card.id} onClick={() => setActiveTab(card.id)} className="relative flex-1 group cursor-pointer overflow-hidden border-r border-white/10 last:border-r-0">
                   <div className="absolute inset-0 z-0">
@@ -181,12 +183,20 @@ function MainContent() {
                             <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
                                 <div className={`max-w-[85%] p-8 px-10 rounded-[3rem] text-[15px] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6] rounded-tr-none shadow-[#7D68F6]/20' : 'bg-white/5 border-white/10 backdrop-blur-xl rounded-tl-none shadow-2xl'}`}>
                                     <p className="whitespace-pre-wrap leading-relaxed opacity-90">{msg.text}</p>
+                                    
+                                    {/* CARDS CON SCROLL HORIZONTAL RESTAURADAS */}
                                     {msg.results && msg.results.length > 0 && (
                                         <div className="mt-8 flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory">
                                             {msg.results.map((project, idx) => (
-                                                <motion.div key={idx} whileHover={{ y: -5 }} onClick={() => setSelectedProject(project)} className="min-w-[240px] w-[240px] flex-shrink-0 snap-start bg-black/40 border border-white/10 rounded-3xl overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all">
-                                                    <div className="h-32 overflow-hidden relative"><img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" alt="img"/></div>
-                                                    <div className="p-5"><h4 className="text-[11px] font-black uppercase tracking-tighter mb-1 truncate">{project.ProjectName}</h4><p className="text-[8px] text-[#7D68F6] font-bold uppercase tracking-widest truncate">{project.Client}</p><div className="mt-4 text-[7px] font-black uppercase tracking-[0.2em] text-white/30 group-hover:text-white transition-colors flex items-center gap-1">Ver detalles <ChevronRight size={10}/></div></div>
+                                                <motion.div key={idx} whileHover={{ y: -5 }} onClick={() => setSelectedProject(project)} className="min-w-[260px] w-[260px] flex-shrink-0 snap-start bg-black/40 border border-white/10 rounded-3xl overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all shadow-2xl">
+                                                    <div className="h-36 overflow-hidden relative">
+                                                        <img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" alt="img"/>
+                                                    </div>
+                                                    <div className="p-5">
+                                                        <h4 className="text-[11px] font-black uppercase tracking-tighter mb-1 truncate">{project.ProjectName}</h4>
+                                                        <p className="text-[8px] text-[#7D68F6] font-bold uppercase tracking-widest truncate">{project.Client}</p>
+                                                        <div className="mt-4 text-[7px] font-black uppercase tracking-[0.2em] text-white/30 group-hover:text-white transition-colors flex items-center gap-1">Ver detalles <ChevronRight size={12}/></div>
+                                                    </div>
                                                 </motion.div>
                                             ))}
                                         </div>
@@ -216,10 +226,11 @@ function MainContent() {
         </AnimatePresence>
       </main>
 
+      {/* MODAL DETALLE DE PROYECTO */}
       <AnimatePresence>
         {selectedProject && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center p-6 backdrop-blur-2xl bg-black/80">
-            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-[#111] border border-white/10 w-full max-w-4xl max-h-[90vh] rounded-[4rem] overflow-hidden relative flex flex-col">
+            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-[#111] border border-white/10 w-full max-w-4xl max-h-[90vh] rounded-[4rem] overflow-hidden relative flex flex-col shadow-2xl">
               <button onClick={() => setSelectedProject(null)} className="absolute top-8 right-8 z-10 p-4 bg-white/5 rounded-full hover:bg-white/10 transition-all"><X size={24}/></button>
               <div className="h-2/3 overflow-hidden"><img src={selectedProject.images[0]} className="w-full h-full object-cover" alt="hero"/></div>
               <div className="p-16 flex-1 overflow-y-auto"><p className="text-[#7D68F6] font-black uppercase tracking-[0.4em] text-xs mb-4">{selectedProject.Client}</p><h2 className="text-6xl font-black italic uppercase tracking-tighter mb-8 leading-none">{selectedProject.ProjectName}</h2><div className="text-white/60 leading-relaxed text-lg">{selectedProject.Description || 'Sin descripción disponible.'}</div></div>
