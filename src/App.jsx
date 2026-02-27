@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { PublicClientApplication } from "@azure/msal-browser";
 import { MsalProvider, AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from "@azure/msal-react";
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, LogOut, Users, Briefcase, MessageSquare, Filter, ChevronRight, Loader2, X, Star } from 'lucide-react';
+import { Send, LogOut, Users, Briefcase, MessageSquare, Filter, ChevronRight, Loader2, X, Star, Plus, Check } from 'lucide-react';
 import Papa from 'papaparse';
 
 // --- CONFIGURACIÓN ---
@@ -29,6 +29,9 @@ function MainContent() {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
+  
+  // NUEVO: Estado para el Squad
+  const [squad, setSquad] = useState([]);
   
   const [filterRole, setFilterRole] = useState('All');
   const [filterSkill, setFilterSkill] = useState('All');
@@ -66,7 +69,8 @@ function MainContent() {
           ...p,
           internalID: `ID_${index}`, 
           images: p.ImageURLs ? p.ImageURLs.split(',').map(i => i.trim()) : ["https://picsum.photos/1200/800"],
-          tagsArray: p.Tags ? p.Tags.split(',').map(t => t.trim()) : []
+          tagsArray: (p.Tags || p.tags || "").split(',').map(t => t.trim()).filter(Boolean),
+          teamArray: (p.Team || p.team || "").split(',').map(t => t.trim()).filter(Boolean)
         })));
 
         setLoading(false);
@@ -129,6 +133,13 @@ function MainContent() {
     } finally { setIsTyping(false); }
   };
 
+  const toggleSquad = (person) => {
+      setSquad(prev => prev.some(p => p.Name === person.Name) 
+          ? prev.filter(p => p.Name !== person.Name) 
+          : [...prev, person]
+      );
+  };
+
   const filteredTalent = useMemo(() => talentData.filter(p => (filterRole === 'All' || p.Role === filterRole) && (filterSkill === 'All' || p.skillsArray.includes(filterSkill))), [talentData, filterRole, filterSkill]);
   const uniqueRoles = useMemo(() => ['All', ...new Set(talentData.map(t => t.Role))], [talentData]);
   const uniqueSkills = useMemo(() => ['All', ...new Set(talentData.flatMap(t => t.skillsArray))], [talentData]);
@@ -178,37 +189,49 @@ function MainContent() {
                     <div ref={chatContainerRef} className="h-full overflow-y-auto pt-10 pb-4 flex flex-col gap-6 hide-scrollbar mask-fade-top scroll-smooth">
                         {chatHistory.map((msg, i) => (
                             <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
-                                {/* AJUSTE VISUAL: Burbujas más anchas (max-w-[95%]) y con menos padding (p-5 px-6) */}
                                 <div className={`max-w-[95%] p-5 px-6 rounded-[2rem] text-[15px] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6] rounded-tr-none shadow-[#7D68F6]/20' : 'bg-white/5 border-white/10 backdrop-blur-xl rounded-tl-none shadow-2xl'}`}>
                                     <p className="whitespace-pre-wrap leading-relaxed opacity-90">{msg.text}</p>
                                     
+                                    {/* PROYECTOS CON TÍTULO Y CTA PARA VER TODOS */}
                                     {msg.results && msg.results.length > 0 && (
-                                        <div className="mt-6 flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory border-t border-white/5 pt-6">
-                                            {msg.results.map((project, idx) => (
-                                                <motion.div key={idx} whileHover={{ y: -5 }} onClick={() => setSelectedProject(project)} className="min-w-[240px] w-[240px] flex-shrink-0 snap-start bg-black/40 border border-white/10 rounded-2xl overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all">
-                                                    <div className="h-32 overflow-hidden relative"><img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" alt="img"/></div>
-                                                    <div className="p-4"><h4 className="text-xs font-black uppercase tracking-tighter mb-1 truncate">{project.ProjectName}</h4><p className="text-[9px] text-[#7D68F6] font-bold uppercase tracking-widest truncate">{project.Client}</p><div className="mt-3 text-[9px] font-black uppercase tracking-[0.2em] text-white/30 group-hover:text-white transition-colors flex items-center gap-1">Detalles <ChevronRight size={12}/></div></div>
-                                                </motion.div>
-                                            ))}
+                                        <div className="mt-6 pt-6 border-t border-white/5">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6] flex items-center gap-2"><Briefcase size={14}/> Proyectos Asociados</h5>
+                                                <button onClick={() => setActiveTab('projects')} className="text-[9px] font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors flex items-center gap-1">Ver todos <ChevronRight size={10}/></button>
+                                            </div>
+                                            <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory">
+                                                {msg.results.map((project, idx) => (
+                                                    <motion.div key={idx} whileHover={{ y: -5 }} onClick={() => setSelectedProject(project)} className="min-w-[240px] w-[240px] flex-shrink-0 snap-start bg-black/40 border border-white/10 rounded-2xl overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all">
+                                                        <div className="h-32 overflow-hidden relative"><img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" alt="img"/></div>
+                                                        <div className="p-4"><h4 className="text-xs font-black uppercase tracking-tighter mb-1 truncate">{project.ProjectName}</h4><p className="text-[9px] text-[#7D68F6] font-bold uppercase tracking-widest truncate">{project.Client}</p><div className="mt-3 text-[9px] font-black uppercase tracking-[0.2em] text-white/30 group-hover:text-white transition-colors flex items-center gap-1">Detalles <ChevronRight size={12}/></div></div>
+                                                    </motion.div>
+                                                ))}
+                                            </div>
                                         </div>
                                     )}
 
+                                    {/* EQUIPO CON BOTÓN DE SQUAD */}
                                     {msg.recommendedTalent && msg.recommendedTalent.length > 0 && (
                                         <div className="mt-2 pt-6 border-t border-white/5">
                                             <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mb-5 flex items-center gap-2"><Star size={14}/> Top 4 Equipo Sugerido</h5>
                                             <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-2">
-                                                {msg.recommendedTalent.map((t, idx) => (
-                                                    <div key={idx} className="flex flex-col items-center min-w-[140px] group text-center">
+                                                {msg.recommendedTalent.map((t, idx) => {
+                                                    const inSquad = squad.some(p => p.Name === t.Name);
+                                                    return (
+                                                    <div key={idx} className="flex flex-col items-center min-w-[140px] group text-center bg-black/20 p-4 rounded-3xl border border-white/5">
                                                         <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-transparent group-hover:border-[#7D68F6] transition-all mb-3 shadow-xl">
                                                             <img src={t.ImageURL} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" alt="avatar"/>
                                                         </div>
                                                         <span className="text-xs font-black uppercase tracking-tight truncate w-full">{t.Name}</span>
                                                         <span className="text-[9px] text-white/40 font-bold uppercase tracking-widest mb-3">{t.Role}</span>
-                                                        <div className="flex flex-wrap gap-1.5 justify-center">
-                                                            {t.skillsArray?.slice(0, 2).map((s, i) => <span key={i} className="text-[8px] bg-white/5 px-2.5 py-1 rounded-full border border-white/10">{s}</span>)}
-                                                        </div>
+                                                        <button 
+                                                            onClick={(e) => { e.stopPropagation(); toggleSquad(t); }}
+                                                            className={`w-full py-2 rounded-full text-[8px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1 ${inSquad ? 'bg-[#7D68F6] text-white' : 'border border-[#7D68F6] text-[#7D68F6] hover:bg-[#7D68F6]/20'}`}
+                                                        >
+                                                            {inSquad ? <><Check size={10}/> Agregado</> : <><Plus size={10}/> Add Squad</>}
+                                                        </button>
                                                     </div>
-                                                ))}
+                                                )})}
                                             </div>
                                         </div>
                                     )}
@@ -219,7 +242,6 @@ function MainContent() {
                     </div>
                 </div>
                 
-                {/* AJUSTE VISUAL: Contenedor flex para separar el input del botón CTA */}
                 <div className="flex items-center gap-4 w-full mb-12">
                     <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describe tu necesidad creativa..." className="flex-1 bg-white/5 border border-white/20 rounded-[2.5rem] py-5 px-8 outline-none focus:border-[#7D68F6] transition-all text-[15px] min-h-[64px] backdrop-blur-md resize-none shadow-xl" />
                     <button onClick={handleSend} className="bg-[#7D68F6] w-[64px] h-[64px] rounded-full hover:scale-105 shadow-xl transition-all flex flex-shrink-0 items-center justify-center group">
@@ -229,7 +251,6 @@ function MainContent() {
             </motion.section>
           )}
 
-          {/* AJUSTE VISUAL: RE-AGREGADO TAB DE PROYECTOS */}
           {activeTab === 'projects' && (
             <motion.section key="projects" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-48 px-12 max-w-7xl mx-auto pb-40">
                 <div className="mb-12">
@@ -265,20 +286,28 @@ function MainContent() {
                 <div className="flex-1">
                     <div className="mb-12"><h2 className="text-7xl font-black italic uppercase tracking-tighter leading-none">Equipo Bogotá</h2></div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {filteredTalent.map((person, i) => (
-                            <motion.div key={i} whileHover={{ y: -5 }} className="bg-white/5 border border-white/10 p-8 rounded-[3.5rem] text-center hover:border-[#7D68F6] transition-all group overflow-hidden">
+                        {filteredTalent.map((person, i) => {
+                            const inSquad = squad.some(p => p.Name === person.Name);
+                            return (
+                            <motion.div key={i} whileHover={{ y: -5 }} className="bg-white/5 border border-white/10 p-8 rounded-[3.5rem] text-center hover:border-[#7D68F6] transition-all group overflow-hidden relative">
                                 <div className="w-24 h-24 rounded-full mx-auto mb-6 overflow-hidden border-4 border-transparent group-hover:border-[#7D68F6] transition-all duration-500 shadow-xl">
                                     <img src={person.ImageURL} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" alt="avatar"/>
                                 </div>
                                 <h4 className="text-xl font-black uppercase mb-1 tracking-tighter leading-none">{person.Name}</h4>
                                 <p className="text-[10px] text-[#7D68F6] font-bold uppercase mb-6 tracking-widest">{person.Role}</p>
-                                <div className="flex flex-wrap gap-1.5 justify-center mt-4">
-                                    {person.skillsArray?.map((skill, idx) => (
+                                <div className="flex flex-wrap gap-1.5 justify-center mb-6">
+                                    {person.skillsArray?.slice(0, 3).map((skill, idx) => (
                                         <span key={idx} className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-full text-[9px] font-black uppercase text-white/40 group-hover:text-white transition-colors">{skill}</span>
                                     ))}
                                 </div>
+                                <button 
+                                    onClick={() => toggleSquad(person)}
+                                    className={`w-full py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${inSquad ? 'bg-[#7D68F6] text-white' : 'border border-[#7D68F6] text-[#7D68F6] hover:bg-[#7D68F6]/20'}`}
+                                >
+                                    {inSquad ? <><Check size={14}/> En el Squad</> : <><Plus size={14}/> Add to Squad</>}
+                                </button>
                             </motion.div>
-                        ))}
+                        )})}
                     </div>
                 </div>
             </motion.section>
@@ -286,9 +315,85 @@ function MainContent() {
         </AnimatePresence>
       </main>
 
-      <AnimatePresence>{selectedProject && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center p-6 backdrop-blur-2xl bg-black/80"><motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-[#111] border border-white/10 w-full max-w-4xl max-h-[90vh] rounded-[4rem] overflow-hidden relative flex flex-col shadow-2xl"><button onClick={() => setSelectedProject(null)} className="absolute top-8 right-8 z-10 p-4 bg-white/5 rounded-full hover:bg-white/10 transition-all"><X size={24}/></button><div className="h-2/3 overflow-hidden"><img src={selectedProject.images[0]} className="w-full h-full object-cover" alt="hero"/></div><div className="p-16 flex-1 overflow-y-auto"><p className="text-[#7D68F6] font-black uppercase tracking-[0.4em] text-xs mb-4">{selectedProject.Client}</p><h2 className="text-6xl font-black italic uppercase tracking-tighter mb-8 leading-none">{selectedProject.ProjectName}</h2><div className="text-white/60 leading-relaxed text-lg">{selectedProject.Description || 'Sin descripción disponible.'}</div></div></motion.div></motion.div>
-      )}</AnimatePresence>
+      {/* NUEVO MODAL DE PROYECTOS (OVERVIEW, SKILLS, TEAM, GALLERY) */}
+      <AnimatePresence>
+        {selectedProject && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center p-6 backdrop-blur-2xl bg-black/80">
+            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-[#0f0f0f] border border-white/10 w-full max-w-5xl h-[90vh] rounded-[3rem] overflow-hidden relative flex flex-col shadow-2xl">
+              <button onClick={() => setSelectedProject(null)} className="absolute top-6 right-6 z-10 p-4 bg-black/50 backdrop-blur-xl rounded-full hover:bg-[#7D68F6] transition-all"><X size={24}/></button>
+              
+              {/* GALERÍA DE IMÁGENES */}
+              <div className="h-[45%] bg-black relative flex overflow-x-auto snap-x snap-mandatory hide-scrollbar">
+                  {selectedProject.images.map((img, i) => (
+                      <img key={i} src={img} className="w-full h-full flex-shrink-0 snap-start object-cover opacity-90 hover:opacity-100 transition-opacity" alt="gallery"/>
+                  ))}
+                  {selectedProject.images.length > 1 && (
+                      <div className="absolute bottom-4 right-6 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest">
+                          Scroll para ver más →
+                      </div>
+                  )}
+              </div>
+
+              {/* DETALLES DEL PROYECTO */}
+              <div className="p-12 flex-1 overflow-y-auto hide-scrollbar">
+                  <p className="text-[#7D68F6] font-black uppercase tracking-[0.4em] text-xs mb-2">{selectedProject.Client}</p>
+                  <h2 className="text-5xl font-black italic uppercase tracking-tighter mb-10 leading-none">{selectedProject.ProjectName}</h2>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
+                      <div className="md:col-span-2">
+                          <h3 className="text-xs font-black uppercase tracking-[0.3em] text-white/40 mb-4 flex items-center gap-2">Overview</h3>
+                          <div className="text-white/80 leading-relaxed text-lg mb-10">{selectedProject.Description || 'Sin descripción disponible para este proyecto.'}</div>
+                          
+                          <h3 className="text-xs font-black uppercase tracking-[0.3em] text-white/40 mb-4 flex items-center gap-2">Skills Involucrados</h3>
+                          <div className="flex flex-wrap gap-2">
+                              {selectedProject.tagsArray?.map((tag, idx) => (
+                                  <span key={idx} className="bg-white/5 border border-white/10 px-4 py-2 rounded-full text-[10px] font-black uppercase text-white/70">{tag}</span>
+                              ))}
+                          </div>
+                      </div>
+                      
+                      <div className="bg-white/5 border border-white/10 rounded-[2rem] p-8 h-fit">
+                          <h3 className="text-xs font-black uppercase tracking-[0.3em] text-[#7D68F6] mb-6 flex items-center gap-2">Personas Involucradas</h3>
+                          <div className="flex flex-col gap-5">
+                              {selectedProject.teamArray?.length > 0 ? selectedProject.teamArray.map((name, idx) => {
+                                  const person = talentData.find(t => t.Name.toLowerCase().includes(name.toLowerCase()));
+                                  return (
+                                      <div key={idx} className="flex items-center gap-4 group cursor-pointer">
+                                          <div className="w-12 h-12 rounded-full overflow-hidden border border-white/10 group-hover:border-[#7D68F6] transition-colors">
+                                              <img src={person?.ImageURL || 'https://picsum.photos/100'} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" alt="avatar" />
+                                          </div>
+                                          <div>
+                                              <p className="text-xs font-black uppercase tracking-tight">{name}</p>
+                                              <p className="text-[9px] text-[#7D68F6] font-bold uppercase tracking-widest">{person?.Role || 'Talento MRM'}</p>
+                                          </div>
+                                      </div>
+                                  )
+                              }) : <p className="text-xs text-white/40 italic">Equipo no especificado</p>}
+                          </div>
+                      </div>
+                  </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* DOCK FLOTANTE DE SQUAD */}
+      <AnimatePresence>
+          {squad.length > 0 && (
+              <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="fixed bottom-10 left-12 z-[100] flex items-center gap-4 bg-[#111] border border-[#7D68F6]/50 p-2 pr-6 rounded-full shadow-[0_0_30px_rgba(125,104,246,0.2)] backdrop-blur-xl">
+                  <div className="flex -space-x-3 ml-2">
+                      {squad.map((p, i) => (
+                          <div key={i} className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#111]"><img src={p.ImageURL} className="w-full h-full object-cover" alt="squad member"/></div>
+                      ))}
+                  </div>
+                  <div>
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#7D68F6]">Tu Squad</p>
+                      <p className="text-[8px] text-white/60 font-bold uppercase tracking-widest">{squad.length} Mentes Creativas</p>
+                  </div>
+              </motion.div>
+          )}
+      </AnimatePresence>
 
       <footer className="fixed bottom-10 right-12 z-[100]"><button onClick={() => instance.logoutRedirect()} className="p-5 bg-white/5 rounded-full border border-white/10 text-white/20 hover:text-red-500 transition-all shadow-xl"><LogOut size={22}/></button></footer>
       <style>{`.mask-fade-top { mask-image: linear-gradient(to bottom, transparent 0%, black 15%); -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%); } .hide-scrollbar::-webkit-scrollbar { display: none; } .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }`}</style>
