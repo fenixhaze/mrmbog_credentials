@@ -90,20 +90,12 @@ function MainContent() {
         const response = await fetch(POWER_AUTOMATE_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-                PreguntaUsuario: userMsg, 
-                Inventario: invLite,
-                Talento: talLite
-            })
+            body: JSON.stringify({ PreguntaUsuario: userMsg, Inventario: invLite, Talento: talLite })
         });
-        
         const data = await response.json();
         const rawContent = data.content || data.text || "";
         
-        let pIds = [];
-        let tNames = [];
-        let cleanReason = "";
-
+        let pIds = [], tNames = [], cleanReason = "";
         const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
             try {
@@ -120,20 +112,16 @@ function MainContent() {
         setChatHistory(prev => [...prev, { 
             type: 'ai', 
             text: cleanReason, 
-            results: matchedP,
-            recommendedTalent: matchedT
+            results: matchedP, 
+            recommendedTalent: matchedT 
         }]);
-
     } catch (err) { 
         setChatHistory(prev => [...prev, { type: 'ai', text: "Hubo un error analizando la solicitud." }]); 
     } finally { setIsTyping(false); }
   };
 
   const toggleSquad = (person) => {
-      setSquad(prev => prev.some(p => p.Name === person.Name) 
-          ? prev.filter(p => p.Name !== person.Name) 
-          : [...prev, person]
-      );
+      setSquad(prev => prev.some(p => p.Name === person.Name) ? prev.filter(p => p.Name !== person.Name) : [...prev, person]);
   };
 
   const filteredTalent = useMemo(() => talentData.filter(p => (filterRole === 'All' || p.Role === filterRole)), [talentData, filterRole]);
@@ -155,7 +143,7 @@ function MainContent() {
         {activeTab !== 'landing' && (
           <nav className="flex gap-2 p-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-full pointer-events-auto shadow-2xl">
               {[ {id: 'chat', label: 'IA Copilot', icon: <MessageSquare size={14}/>}, {id: 'projects', label: 'Proyectos', icon: <Briefcase size={14}/>}, {id: 'team', label: 'Talento', icon: <Users size={14}/>} ].map(tab => (
-                  <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[#7D68F6] text-white shadow-xl' : 'hover:bg-white/10 text-white/40'}`}> {tab.icon} {tab.label} </button>
+                  <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[#7D68F6] text-white' : 'hover:bg-white/10 text-white/40'}`}> {tab.icon} {tab.label} </button>
               ))}
           </nav>
         )}
@@ -171,7 +159,7 @@ function MainContent() {
                 { id: 'team', title: 'Talento', desc: 'El corazón creativo de Bogotá.', icon: <Users size={48}/>, img: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=2070' }
               ].map((card) => (
                 <motion.div key={card.id} onClick={() => setActiveTab(card.id)} className="relative flex-1 group cursor-pointer overflow-hidden border-r border-white/10 last:border-r-0">
-                  <div className="absolute inset-0 z-0"><img src={card.img} className="w-full h-full object-cover grayscale brightness-50 group-hover:grayscale-0 group-hover:brightness-75 group-hover:scale-110 transition-all duration-1000 ease-out" alt="bg"/><div className="absolute inset-0 bg-black/40 group-hover:bg-transparent transition-colors duration-700" /></div>
+                  <div className="absolute inset-0 z-0 bg-black"><img src={card.img} className="w-full h-full object-cover grayscale brightness-50 group-hover:grayscale-0 group-hover:brightness-75 group-hover:scale-110 transition-all duration-1000 ease-out" alt="bg"/><div className="absolute inset-0 bg-black/40 group-hover:bg-transparent transition-colors duration-700" /></div>
                   <div className="relative z-10 h-full flex flex-col justify-end p-16 pb-24"><div className="mb-8 text-[#7D68F6] group-hover:translate-y-[-10px] transition-transform duration-500">{card.icon}</div><h3 className="text-5xl font-black uppercase tracking-tighter mb-4 leading-none">{card.title}</h3><p className="text-white/60 text-lg leading-relaxed max-w-xs mb-8 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-500">{card.desc}</p><div className="flex items-center gap-3 text-[#7D68F6] font-black text-xs uppercase tracking-[0.3em] opacity-0 group-hover:opacity-100 transition-all">Explorar <ChevronRight size={18}/></div></div>
                 </motion.div>
               ))}
@@ -184,16 +172,65 @@ function MainContent() {
                     <div ref={chatContainerRef} className="h-full overflow-y-auto pt-10 pb-4 flex flex-col gap-6 hide-scrollbar mask-fade-top scroll-smooth">
                         {chatHistory.map((msg, i) => (
                             <motion.div key={i} className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
-                                <div className={`max-w-[95%] p-5 px-6 rounded-[2rem] text-[15px] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6] rounded-tr-none' : 'bg-white/5 border-white/10 backdrop-blur-xl rounded-tl-none'}`}>
+                                <div className={`max-w-[95%] p-5 px-6 rounded-[2rem] text-[15px] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6]' : 'bg-white/5 border-white/10 backdrop-blur-xl'}`}>
                                     <p className="whitespace-pre-wrap leading-relaxed opacity-90">{msg.text}</p>
+                                    
+                                    {/* TARJETAS DE PROYECTOS EN CHAT */}
+                                    {msg.results && msg.results.length > 0 && (
+                                        <div className="mt-6 pt-6 border-t border-white/10">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mrm-sub-header">Proyectos Relacionados</h5>
+                                            </div>
+                                            <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory">
+                                                {msg.results.map((project, idx) => (
+                                                    <div key={idx} onClick={() => setSelectedProject(project)} className="min-w-[200px] bg-black/40 border border-white/10 rounded-2xl overflow-hidden cursor-pointer hover:border-[#7D68F6] transition-all">
+                                                        <div className="h-24 bg-black"><img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0" alt="img"/></div>
+                                                        <div className="p-3"><h4 className="text-[10px] font-black uppercase truncate">{project.ProjectName}</h4><p className="text-[8px] text-[#7D68F6] font-black uppercase">{project.Client}</p></div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* TARJETAS DE TALENTO EN CHAT */}
+                                    {msg.recommendedTalent && msg.recommendedTalent.length > 0 && (
+                                        <div className="mt-4 pt-4 border-t border-white/10">
+                                            <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mrm-sub-header mb-4">Squad Sugerido</h5>
+                                            <div className="flex gap-4 overflow-x-auto hide-scrollbar">
+                                                {msg.recommendedTalent.map((t, idx) => (
+                                                    <div key={idx} className="flex flex-col items-center min-w-[120px] bg-black/20 p-3 rounded-2xl border border-white/5">
+                                                        <div className="w-12 h-12 rounded-full overflow-hidden mb-2 bg-black border border-white/10"><img src={t.ImageURL} className="w-full h-full object-cover grayscale hover:grayscale-0" alt="avatar"/></div>
+                                                        <span className="text-[10px] font-black uppercase truncate w-full text-center">{t.Name}</span>
+                                                        <button onClick={() => toggleSquad(t)} className={`mt-2 w-full py-1 rounded-full text-[8px] font-black uppercase border border-[#7D68F6] ${squad.some(p => p.Name === t.Name) ? 'bg-[#7D68F6] text-white' : 'text-[#7D68F6]'}`}>
+                                                            {squad.some(p => p.Name === t.Name) ? 'En Squad' : 'Add'}
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </motion.div>
                         ))}
                     </div>
                 </div>
                 <div className="flex items-center gap-4 w-full mb-12">
-                    <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describe tu necesidad..." className="flex-1 bg-white/5 border border-white/20 rounded-[2.5rem] py-5 px-8 outline-none focus:border-[#7D68F6] transition-all text-[15px] min-h-[64px] backdrop-blur-md resize-none shadow-xl" />
-                    <button onClick={handleSend} className="bg-[#7D68F6] w-[64px] h-[64px] rounded-full hover:scale-105 shadow-xl transition-all flex items-center justify-center group"><Send size={22}/></button>
+                    <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describe tu necesidad..." className="flex-1 bg-white/5 border border-white/20 rounded-[2.5rem] py-5 px-8 outline-none focus:border-[#7D68F6] transition-all text-[15px] min-h-[64px] backdrop-blur-md resize-none" />
+                    <button onClick={handleSend} className="bg-[#7D68F6] w-[64px] h-[64px] rounded-full flex items-center justify-center flex-shrink-0"><Send size={22}/></button>
+                </div>
+            </motion.section>
+          )}
+
+          {activeTab === 'projects' && (
+            <motion.section key="projects" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-48 px-12 max-w-7xl mx-auto pb-40">
+                <div className="mb-12"><h2 className="text-7xl font-black uppercase tracking-tighter leading-none">Proyectos</h2></div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {flatProjects.map((project, i) => (
+                        <motion.div key={i} whileHover={{ y: -5 }} onClick={() => setSelectedProject(project)} className="bg-white/5 border border-white/10 rounded-[3rem] overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all shadow-xl">
+                            <div className="h-48 overflow-hidden relative bg-black"><img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt="img"/></div>
+                            <div className="p-8"><h4 className="text-xl font-black uppercase tracking-tighter mb-2 truncate">{project.ProjectName}</h4><p className="text-xs text-[#7D68F6] font-black uppercase tracking-widest mb-4">{project.Client}</p><div className="text-[10px] font-black uppercase text-white/40 flex items-center gap-2">Ver detalles <ChevronRight size={14}/></div></div>
+                        </motion.div>
+                    ))}
                 </div>
             </motion.section>
           )}
@@ -201,9 +238,9 @@ function MainContent() {
           {activeTab === 'team' && (
             <motion.section key="team" className="flex gap-16 items-start pt-48 px-12 max-w-7xl mx-auto pb-40">
                 <aside className="w-64 sticky top-48 space-y-10">
-                    <h3 className="text-[#7D68F6] text-[10px] font-black uppercase tracking-[0.3em] mb-6 mrm-sub-header"><Filter size={14}/> Filtrar Rol</h3>
+                    <h3 className="text-[#7D68F6] text-[10px] font-black uppercase mrm-sub-header">Filtrar Rol</h3>
                     <div className="flex flex-col gap-2">
-                        {uniqueRoles.map(role => (<button key={role} onClick={() => setFilterRole(role)} className={`text-left px-5 py-2.5 rounded-full text-[11px] font-black uppercase transition-all ${filterRole === role ? 'bg-[#7D68F6] text-white' : 'text-white/30 hover:text-white hover:bg-white/5'}`}>{role}</button>))}
+                        {uniqueRoles.map(role => (<button key={role} onClick={() => setFilterRole(role)} className={`text-left px-5 py-2.5 rounded-full text-[11px] font-black uppercase transition-all ${filterRole === role ? 'bg-[#7D68F6] text-white' : 'text-white/30 hover:bg-white/5'}`}>{role}</button>))}
                     </div>
                 </aside>
                 <div className="flex-1">
@@ -211,11 +248,11 @@ function MainContent() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredTalent.map((person, i) => (
                             <motion.div key={i} whileHover={{ y: -5 }} className="bg-white/5 border border-white/10 p-8 rounded-[3.5rem] text-center hover:border-[#7D68F6] transition-all group overflow-hidden">
-                                <div className="w-24 h-24 rounded-full mx-auto mb-6 overflow-hidden border-4 border-transparent group-hover:border-[#7D68F6] shadow-xl"><img src={person.ImageURL} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt="avatar"/></div>
-                                <h4 className="text-xl font-black uppercase mb-1 tracking-tighter">{person.Name}</h4>
-                                <p className="text-[10px] text-[#7D68F6] font-black uppercase mb-6 tracking-widest">{person.Role}</p>
-                                <button onClick={() => toggleSquad(person)} className={`w-full py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${squad.some(p => p.Name === person.Name) ? 'bg-[#7D68F6] text-white' : 'border border-[#7D68F6] text-[#7D68F6]'}`}>
-                                    {squad.some(p => p.Name === person.Name) ? 'En el Squad' : 'Add to Squad'}
+                                <div className="w-24 h-24 rounded-full mx-auto mb-6 overflow-hidden border-4 border-transparent group-hover:border-[#7D68F6] shadow-xl bg-black"><img src={person.ImageURL} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt="avatar"/></div>
+                                <h4 className="text-xl font-black uppercase mb-1">{person.Name}</h4>
+                                <p className="text-[10px] text-[#7D68F6] font-black uppercase mb-6">{person.Role}</p>
+                                <button onClick={() => toggleSquad(person)} className={`w-full py-3 rounded-full text-[10px] font-black uppercase border border-[#7D68F6] ${squad.some(p => p.Name === person.Name) ? 'bg-[#7D68F6] text-white' : 'text-[#7D68F6]'}`}>
+                                    {squad.some(p => p.Name === person.Name) ? 'En Squad' : 'Add to Squad'}
                                 </button>
                             </motion.div>
                         ))}
@@ -226,65 +263,39 @@ function MainContent() {
         </AnimatePresence>
       </main>
 
-      <footer className="fixed bottom-10 right-12 z-[100]"><button onClick={() => instance.logoutRedirect()} className="p-5 bg-white/5 rounded-full border border-white/10 text-white/20 hover:text-red-500 transition-all"><LogOut size={22}/></button></footer>
+      {/* MODAL DETALLES */}
+      <AnimatePresence>
+        {selectedProject && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center p-6 backdrop-blur-2xl bg-black/80">
+            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-[#0f0f0f] border border-white/10 w-full max-w-5xl h-[90vh] rounded-[3rem] overflow-hidden relative flex flex-col shadow-2xl">
+              <button onClick={() => setSelectedProject(null)} className="absolute top-6 right-6 z-10 p-4 bg-black/50 rounded-full hover:bg-[#7D68F6] transition-all"><X size={24}/></button>
+              <div className="h-[45%] bg-black relative flex overflow-x-auto snap-x snap-mandatory hide-scrollbar">
+                  {selectedProject.images.map((img, i) => (<img key={i} src={img} className="w-full h-full flex-shrink-0 snap-start object-cover" alt="gallery"/>))}
+              </div>
+              <div className="p-12 flex-1 overflow-y-auto hide-scrollbar">
+                  <p className="text-[#7D68F6] font-black uppercase tracking-[0.4em] text-xs mb-2 mrm-sub-header">{selectedProject.Client}</p>
+                  <h2 className="text-5xl font-black uppercase tracking-tighter mb-10">{selectedProject.ProjectName}</h2>
+                  <div className="text-white/80 leading-relaxed text-lg">{selectedProject.Description || 'Sin descripción disponible.'}</div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <footer className="fixed bottom-10 right-12 z-[100]"><button onClick={() => instance.logoutRedirect()} className="p-5 bg-white/5 rounded-full border border-white/10 text-white/20 hover:text-red-500 transition-all shadow-xl"><LogOut size={22}/></button></footer>
 
       <style>{`
-        @font-face {
-          font-family: 'MW Sans';
-          src: url('./fonts/MWSans-Bold.woff2') format('woff2');
-          font-weight: 700;
-          font-style: normal;
-        }
-        @font-face {
-          font-family: 'MW Sans';
-          src: url('./fonts/MWSans-Black.woff2') format('woff2');
-          font-weight: 900;
-          font-style: normal;
-        }
-
+        @font-face { font-family: 'MW Sans'; src: url('./fonts/MWSans-Bold.woff2') format('woff2'); font-weight: 700; font-style: normal; }
+        @font-face { font-family: 'MW Sans'; src: url('./fonts/MWSans-Black.woff2') format('woff2'); font-weight: 900; font-style: normal; }
         :root { --font-mrm: 'MW Sans', sans-serif; }
-
-        /* APLICACIÓN GLOBAL LIMPIA */
-        body, html {
-          font-family: var(--font-mrm) !important;
-          background-color: #0A0A0A !important; /* EL ÚNICO FONDO NEGRO SÓLIDO */
-          color: white;
-          margin: 0;
-          -webkit-font-smoothing: antialiased;
-        }
-
-        /* QUITAMOS EL FONDO NEGRO FORZADO DE LOS ELEMENTOS HIJOS */
-        *, *::before, *::after {
-          background-color: transparent; /* Permite ver el fondo del body o de los padres con transparencia */
-          font-style: normal !important;
-          box-sizing: border-box;
-        }
-
-        /* ESTILOS DE TÍTULOS */
-        h1, h2, h3, .text-5xl, .text-6xl, .text-7xl {
-          font-weight: 900 !important;
-          letter-spacing: -0.06em !important;
-          text-transform: uppercase;
-          line-height: 0.9;
-        }
-
-        /* SUB-HEADERS (Tracking abierto) */
-        .mrm-sub-header {
-          font-weight: 700 !important;
-          letter-spacing: 0.4em !important;
-          text-transform: uppercase;
-        }
-
-        /* CLASES DE APOYO */
+        body, html { font-family: var(--font-mrm) !important; background-color: #0A0A0A !important; color: white; margin: 0; -webkit-font-smoothing: antialiased; }
+        * { font-style: normal !important; box-sizing: border-box; }
+        h1, h2, h3, .text-5xl, .text-6xl, .text-7xl { font-weight: 900 !important; letter-spacing: -0.06em !important; text-transform: uppercase; line-height: 0.9; }
+        .mrm-sub-header { font-weight: 700 !important; letter-spacing: 0.4em !important; text-transform: uppercase; }
         .mask-fade-top { mask-image: linear-gradient(to bottom, transparent 0%, black 15%); -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%); }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        /* BOTONES Y INPUTS (Excepciones de fondo) */
-        button, input, textarea, .bg-white\\/5 {
-          background-color: rgba(255, 255, 255, 0.05);
-        }
-        .bg-\\[\\#7D68F6\\] { background-color: #7D68F6 !important; }
+        .bg-white\\/5 { background-color: rgba(255, 255, 255, 0.05) !important; }
       `}</style>
     </div>
   );
@@ -300,9 +311,7 @@ export default function App() {
             <div className="mrm-sub-header flex flex-col text-[14px] text-[#7D68F6] mb-20 border-l-4 border-[#7D68F6] pl-6 text-left">
                 <span>Bogota</span><span>Creative</span><span>Credentials</span>
             </div>
-            <button onClick={() => msalInstance.loginRedirect()} className="bg-[#7D68F6] text-white px-20 py-8 rounded-full font-black text-xs uppercase tracking-[0.4em] shadow-2xl hover:scale-110 transition-all">
-                Acceso Corporativo
-            </button>
+            <button onClick={() => msalInstance.loginRedirect()} className="bg-[#7D68F6] text-white px-20 py-8 rounded-full font-black text-xs uppercase tracking-[0.4em] shadow-2xl hover:scale-110 transition-all">Acceso Corporativo</button>
         </div>
       </UnauthenticatedTemplate>
     </MsalProvider>
