@@ -94,6 +94,7 @@ function MainContent() {
         });
         const data = await response.json();
         const rawContent = data.content || data.text || "";
+        
         let pIds = [], tNames = [], cleanReason = "";
         const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
@@ -104,9 +105,16 @@ function MainContent() {
                 cleanReason = parsed.reason || "";
             } catch { cleanReason = rawContent; }
         } else { cleanReason = rawContent; }
+
         const matchedP = flatProjects.filter(p => pIds.includes(p.internalID) || pIds.includes(p.ID));
         const matchedT = talentData.filter(t => tNames.includes(t.Name)).slice(0, 4);
-        setChatHistory(prev => [...prev, { type: 'ai', text: cleanReason, results: matchedP, recommendedTalent: matchedT }]);
+
+        setChatHistory(prev => [...prev, { 
+            type: 'ai', 
+            text: cleanReason, 
+            results: matchedP, 
+            recommendedTalent: matchedT 
+        }]);
     } catch (err) { 
         setChatHistory(prev => [...prev, { type: 'ai', text: "Hubo un error analizando la solicitud." }]); 
     } finally { setIsTyping(false); }
@@ -135,7 +143,7 @@ function MainContent() {
         {activeTab !== 'landing' && (
           <nav className="flex gap-2 p-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-full pointer-events-auto shadow-2xl">
               {[ {id: 'chat', label: 'IA Copilot', icon: <MessageSquare size={14}/>}, {id: 'projects', label: 'Proyectos', icon: <Briefcase size={14}/>}, {id: 'team', label: 'Talento', icon: <Users size={14}/>} ].map(tab => (
-                  <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[#7D68F6] text-white shadow-xl' : 'hover:bg-white/10 text-white/40'}`}> {tab.icon} {tab.label} </button>
+                  <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[#7D68F6] text-white' : 'hover:bg-white/10 text-white/40'}`}> {tab.icon} {tab.label} </button>
               ))}
           </nav>
         )}
@@ -161,34 +169,58 @@ function MainContent() {
           {activeTab === 'chat' && (
             <motion.section key="chat" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto pt-48 w-full px-6 flex flex-col h-screen">
                 <div className="relative flex-1 mb-8 overflow-hidden">
-                    <div ref={chatContainerRef} className="h-full overflow-y-auto pt-10 pb-4 flex flex-col gap-6 hide-scrollbar mask-fade-top scroll-smooth">
+                    <div ref={chatContainerRef} className="h-full overflow-y-auto pt-10 pb-4 flex flex-col gap-8 hide-scrollbar mask-fade-top scroll-smooth">
                         {chatHistory.map((msg, i) => (
                             <motion.div key={i} className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
                                 <div className={`max-w-[95%] p-5 px-6 rounded-[2rem] text-[15px] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6]' : 'bg-white/5 border-white/10 backdrop-blur-xl'}`}>
                                     <p className="whitespace-pre-wrap leading-relaxed opacity-90">{msg.text}</p>
+                                    
+                                    {/* PROYECTOS EN CHAT (Equilibrados) */}
                                     {msg.results && msg.results.length > 0 && (
                                         <div className="mt-6 pt-6 border-t border-white/10">
-                                            <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mrm-sub-header mb-4">Proyectos Relacionados</h5>
+                                            <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mrm-sub-header mb-4">Credenciales Sugeridas</h5>
                                             <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory">
                                                 {msg.results.map((project, idx) => (
-                                                    <div key={idx} onClick={() => setSelectedProject(project)} className="min-w-[200px] bg-black/40 border border-white/10 rounded-2xl overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all">
-                                                        <div className="h-24 bg-black overflow-hidden"><img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" alt="img"/></div>
-                                                        <div className="p-3"><h4 className="text-[10px] font-black uppercase truncate">{project.ProjectName}</h4><p className="text-[8px] text-[#7D68F6] font-black uppercase">{project.Client}</p></div>
+                                                    <div key={idx} onClick={() => setSelectedProject(project)} className="min-w-[240px] w-[240px] bg-black/40 border border-white/10 rounded-3xl overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all">
+                                                        <div className="h-32 bg-black overflow-hidden relative">
+                                                            <img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" alt="img"/>
+                                                        </div>
+                                                        <div className="p-4">
+                                                            <h4 className="text-[11px] font-black uppercase truncate mb-1">{project.ProjectName}</h4>
+                                                            <p className="text-[9px] text-[#7D68F6] font-black uppercase mb-3">{project.Client}</p>
+                                                            {/* Chips de Skills dentro de la tarjeta */}
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {project.tagsArray?.slice(0, 3).map((tag, tIdx) => (
+                                                                    <span key={tIdx} className="text-[7px] font-black uppercase px-2 py-0.5 bg-white/5 border border-white/10 rounded-full text-white/40">{tag}</span>
+                                                                ))}
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 ))}
                                             </div>
                                         </div>
                                     )}
+
+                                    {/* TALENTO EN CHAT (Equilibrados) */}
                                     {msg.recommendedTalent && msg.recommendedTalent.length > 0 && (
                                         <div className="mt-4 pt-4 border-t border-white/10">
-                                            <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mrm-sub-header mb-4">Squad Sugerido</h5>
+                                            <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mrm-sub-header mb-4">Squad Recomendado</h5>
                                             <div className="flex gap-4 overflow-x-auto hide-scrollbar">
                                                 {msg.recommendedTalent.map((t, idx) => (
-                                                    <div key={idx} className="flex flex-col items-center min-w-[120px] bg-black/20 p-3 rounded-2xl border border-white/5 group">
-                                                        <div className="w-12 h-12 rounded-full overflow-hidden mb-2 bg-black border border-white/10 group-hover:border-[#7D68F6] transition-all"><img src={t.ImageURL} className="w-full h-full object-cover grayscale group-hover:grayscale-0" alt="avatar"/></div>
-                                                        <span className="text-[10px] font-black uppercase truncate w-full text-center">{t.Name}</span>
-                                                        <button onClick={() => toggleSquad(t)} className={`mt-2 w-full py-1 rounded-full text-[8px] font-black uppercase border border-[#7D68F6] transition-all ${squad.some(p => p.Name === t.Name) ? 'bg-[#7D68F6] text-white' : 'text-[#7D68F6] hover:bg-[#7D68F6]/10'}`}>
-                                                            {squad.some(p => p.Name === t.Name) ? 'En Squad' : 'Add'}
+                                                    <div key={idx} className="flex flex-col items-center min-w-[160px] bg-black/20 p-4 rounded-3xl border border-white/5 group">
+                                                        <div className="w-16 h-16 rounded-full overflow-hidden mb-3 bg-black border border-white/10 group-hover:border-[#7D68F6] transition-all">
+                                                            <img src={t.ImageURL} className="w-full h-full object-cover grayscale group-hover:grayscale-0" alt="avatar"/>
+                                                        </div>
+                                                        <span className="text-[10px] font-black uppercase truncate w-full text-center mb-1">{t.Name}</span>
+                                                        <p className="text-[8px] text-white/40 font-black uppercase mb-3">{t.Role}</p>
+                                                        {/* Chips de Skills en Talento */}
+                                                        <div className="flex flex-wrap justify-center gap-1 mb-4">
+                                                            {t.skillsArray?.slice(0, 2).map((skill, sIdx) => (
+                                                                <span key={sIdx} className="text-[7px] font-black uppercase px-2 py-0.5 bg-[#7D68F6]/10 text-[#7D68F6] rounded-full">{skill}</span>
+                                                            ))}
+                                                        </div>
+                                                        <button onClick={() => toggleSquad(t)} className={`w-full py-2 rounded-full text-[9px] font-black uppercase border border-[#7D68F6] transition-all ${squad.some(p => p.Name === t.Name) ? 'bg-[#7D68F6] text-white' : 'text-[#7D68F6] hover:bg-[#7D68F6]/10'}`}>
+                                                            {squad.some(p => p.Name === t.Name) ? 'En Squad' : 'Add Squad'}
                                                         </button>
                                                     </div>
                                                 ))}
@@ -201,8 +233,8 @@ function MainContent() {
                     </div>
                 </div>
                 <div className="flex items-center gap-4 w-full mb-12">
-                    <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describe tu necesidad..." className="flex-1 bg-white/5 border border-white/20 rounded-[2.5rem] py-5 px-8 outline-none focus:border-[#7D68F6] transition-all text-[15px] min-h-[64px] backdrop-blur-md resize-none" />
-                    <button onClick={handleSend} className="bg-[#7D68F6] w-[64px] h-[64px] rounded-full flex items-center justify-center flex-shrink-0 hover:scale-105 transition-all shadow-lg"><Send size={22}/></button>
+                    <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describe tu necesidad..." className="flex-1 bg-white/5 border border-white/20 rounded-[2.5rem] py-5 px-8 outline-none focus:border-[#7D68F6] transition-all text-[15px] min-h-[64px] backdrop-blur-md resize-none shadow-2xl" />
+                    <button onClick={handleSend} className="bg-[#7D68F6] w-[64px] h-[64px] rounded-full flex items-center justify-center flex-shrink-0 hover:scale-105 transition-all shadow-lg shadow-[#7D68F6]/20"><Send size={22}/></button>
                 </div>
             </motion.section>
           )}
@@ -238,7 +270,7 @@ function MainContent() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredTalent.map((person, i) => (
                             <motion.div key={i} whileHover={{ y: -5 }} className="bg-white/5 border border-white/10 p-8 rounded-[3.5rem] text-center hover:border-[#7D68F6] transition-all group overflow-hidden">
-                                <div className="w-24 h-24 rounded-full mx-auto mb-6 overflow-hidden border-4 border-transparent group-hover:border-[#7D68F6] shadow-xl bg-black"><img src={person.ImageURL} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" alt="avatar"/></div>
+                                <div className="w-24 h-24 rounded-full mx-auto mb-6 overflow-hidden border-4 border-transparent group-hover:border-[#7D68F6] shadow-xl bg-black"><img src={person.ImageURL} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt="avatar"/></div>
                                 <h4 className="text-xl font-black uppercase mb-1">{person.Name}</h4>
                                 <p className="text-[10px] text-[#7D68F6] font-black uppercase mb-6">{person.Role}</p>
                                 <button onClick={() => toggleSquad(person)} className={`w-full py-3 rounded-full text-[10px] font-black uppercase border border-[#7D68F6] transition-all ${squad.some(p => p.Name === person.Name) ? 'bg-[#7D68F6] text-white' : 'text-[#7D68F6] hover:bg-[#7D68F6]/10'}`}>
@@ -253,7 +285,7 @@ function MainContent() {
         </AnimatePresence>
       </main>
 
-      {/* MODAL DETALLES */}
+      {/* MODAL DETALLES (Simplicado) */}
       <AnimatePresence>
         {selectedProject && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center p-6 backdrop-blur-2xl bg-black/80">
@@ -265,13 +297,7 @@ function MainContent() {
               <div className="p-12 flex-1 overflow-y-auto hide-scrollbar">
                   <p className="text-[#7D68F6] font-black uppercase tracking-[0.4em] text-xs mb-2 mrm-sub-header">{selectedProject.Client}</p>
                   <h2 className="text-5xl font-black uppercase tracking-tighter mb-10">{selectedProject.ProjectName}</h2>
-                  <div className="text-white/80 leading-relaxed text-lg mb-8">{selectedProject.Description || 'Sin descripción disponible.'}</div>
-                  {/* CHIPS DE SKILLS RESTAURADOS EN MODAL */}
-                  <div className="flex flex-wrap gap-2">
-                      {selectedProject.tagsArray?.map((tag, idx) => (
-                          <span key={idx} className="bg-[#7D68F6]/10 border border-[#7D68F6]/20 px-4 py-2 rounded-full text-[10px] font-black uppercase text-[#7D68F6] hover:bg-[#7D68F6] hover:text-white transition-all cursor-default">{tag}</span>
-                      ))}
-                  </div>
+                  <div className="text-white/80 leading-relaxed text-lg">{selectedProject.Description || 'Sin descripción disponible.'}</div>
               </div>
             </motion.div>
           </motion.div>
