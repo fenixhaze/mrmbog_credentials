@@ -140,7 +140,7 @@ function MainContent() {
   const filteredTalent = useMemo(() => talentData.filter(p => (filterRole === 'All' || p.Role === filterRole) && (filterSkill === 'All' || p.skillsArray.includes(filterSkill))), [talentData, filterRole, filterSkill]);
   const uniqueRoles = useMemo(() => ['All', ...new Set(talentData.map(t => t.Role))], [talentData]);
 
-  if (loading) return <div className="h-screen bg-[#0A0A0A] flex items-center justify-center text-[#7D68F6] font-black tracking-[0.5em] animate-pulse uppercase mrm-sub-header">MRM BOGOTÁ</div>;
+  if (loading) return <div className="h-screen bg-[#0A0A0A] flex items-center justify-center text-[#7D68F6] font-bold tracking-[0.5em] animate-pulse uppercase mrm-sub-header">MRM BOGOTÁ</div>;
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white font-sans selection:bg-[#7D68F6]/30 overflow-x-hidden">
@@ -156,7 +156,7 @@ function MainContent() {
         {activeTab !== 'landing' && (
           <nav className="flex gap-2 p-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-full pointer-events-auto shadow-2xl">
               {[ {id: 'chat', label: 'IA Copilot', icon: <MessageSquare size={14}/>}, {id: 'projects', label: 'Proyectos', icon: <Briefcase size={14}/>}, {id: 'team', label: 'Talento', icon: <Users size={14}/>} ].map(tab => (
-                  <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[#7D68F6] text-white shadow-xl' : 'hover:bg-white/10 text-white/40'}`}> {tab.icon} {tab.label} </button>
+                  <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[#7D68F6] text-white shadow-xl' : 'hover:bg-white/10 text-white/40'}`}> {tab.icon} {tab.label} </button>
               ))}
           </nav>
         )}
@@ -173,7 +173,7 @@ function MainContent() {
               ].map((card) => (
                 <motion.div key={card.id} onClick={() => setActiveTab(card.id)} className="relative flex-1 group cursor-pointer overflow-hidden border-r border-white/10 last:border-r-0">
                   <div className="absolute inset-0 z-0"><img src={card.img} className="w-full h-full object-cover grayscale brightness-50 group-hover:grayscale-0 group-hover:brightness-75 group-hover:scale-110 transition-all duration-1000 ease-out" alt="bg"/><div className="absolute inset-0 bg-black/40 group-hover:bg-transparent transition-colors duration-700" /></div>
-                  <div className="relative z-10 h-full flex flex-col justify-end p-16 pb-24"><div className="mb-8 text-[#7D68F6] group-hover:translate-y-[-10px] transition-transform duration-500">{card.icon}</div><h3 className="text-5xl font-black uppercase italic tracking-tighter mb-4 leading-none">{card.title}</h3><p className="text-white/60 text-lg leading-relaxed max-w-xs mb-8 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-500">{card.desc}</p><div className="flex items-center gap-3 text-[#7D68F6] font-black text-xs uppercase tracking-[0.3em] opacity-0 group-hover:opacity-100 transition-all">Explorar <ChevronRight size={18}/></div></div>
+                  <div className="relative z-10 h-full flex flex-col justify-end p-16 pb-24"><div className="mb-8 text-[#7D68F6] group-hover:translate-y-[-10px] transition-transform duration-500">{card.icon}</div><h3 className="text-5xl font-black uppercase tracking-tighter mb-4 leading-none">{card.title}</h3><p className="text-white/60 text-lg leading-relaxed max-w-xs mb-8 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-500">{card.desc}</p><div className="flex items-center gap-3 text-[#7D68F6] font-bold text-xs uppercase tracking-[0.3em] opacity-0 group-hover:opacity-100 transition-all">Explorar <ChevronRight size={18}/></div></div>
                 </motion.div>
               ))}
             </motion.section>
@@ -191,14 +191,14 @@ function MainContent() {
                                     {msg.results && msg.results.length > 0 && (
                                         <div className="mt-6 pt-6 border-t border-white/5">
                                             <div className="flex items-center justify-between mb-4">
-                                                <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6] flex items-center gap-2 mrm-sub-header"><Briefcase size={14}/> Proyectos Asociados</h5>
+                                                <h5 className="text-[10px] font-bold uppercase tracking-[0.4em] text-[#7D68F6] flex items-center gap-2 mrm-sub-header"><Briefcase size={14}/> Proyectos Asociados</h5>
                                                 <button onClick={() => setActiveTab('projects')} className="text-[9px] font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors flex items-center gap-1">Ver todos <ChevronRight size={10}/></button>
                                             </div>
                                             <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory">
                                                 {msg.results.map((project, idx) => (
                                                     <motion.div key={idx} whileHover={{ y: -5 }} onClick={() => setSelectedProject(project)} className="min-w-[240px] w-[240px] flex-shrink-0 snap-start bg-black/40 border border-white/10 rounded-2xl overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all">
                                                         <div className="h-32 overflow-hidden relative"><img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" alt="img"/></div>
-                                                        <div className="p-4"><h4 className="text-xs font-black uppercase tracking-tighter mb-1 truncate">{project.ProjectName}</h4><p className="text-[9px] text-[#7D68F6] font-bold uppercase tracking-widest truncate">{project.Client}</p><div className="mt-3 text-[9px] font-black uppercase tracking-[0.2em] text-white/30 group-hover:text-white transition-colors flex items-center gap-1">Detalles <ChevronRight size={12}/></div></div>
+                                                        <div className="p-4"><h4 className="text-xs font-bold uppercase tracking-tighter mb-1 truncate">{project.ProjectName}</h4><p className="text-[9px] text-[#7D68F6] font-bold uppercase tracking-widest truncate">{project.Client}</p><div className="mt-3 text-[9px] font-bold uppercase tracking-[0.2em] text-white/30 group-hover:text-white transition-colors flex items-center gap-1">Detalles <ChevronRight size={12}/></div></div>
                                                     </motion.div>
                                                 ))}
                                             </div>
@@ -207,7 +207,7 @@ function MainContent() {
 
                                     {msg.recommendedTalent && msg.recommendedTalent.length > 0 && (
                                         <div className="mt-2 pt-6 border-t border-white/5">
-                                            <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mb-5 flex items-center gap-2 mrm-sub-header"><Star size={14}/> Top 4 Equipo Sugerido</h5>
+                                            <h5 className="text-[10px] font-bold uppercase tracking-[0.4em] text-[#7D68F6] mb-5 flex items-center gap-2 mrm-sub-header"><Star size={14}/> Top 4 Equipo Sugerido</h5>
                                             <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-2">
                                                 {msg.recommendedTalent.map((t, idx) => {
                                                     const inSquad = squad.some(p => p.Name === t.Name);
@@ -216,11 +216,11 @@ function MainContent() {
                                                         <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-transparent group-hover:border-[#7D68F6] transition-all mb-3 shadow-xl">
                                                             <img src={t.ImageURL} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" alt="avatar"/>
                                                         </div>
-                                                        <span className="text-xs font-black uppercase tracking-tight truncate w-full">{t.Name}</span>
+                                                        <span className="text-xs font-bold uppercase tracking-tight truncate w-full">{t.Name}</span>
                                                         <span className="text-[9px] text-white/40 font-bold uppercase tracking-widest mb-3">{t.Role}</span>
                                                         <button 
                                                             onClick={(e) => { e.stopPropagation(); toggleSquad(t); }}
-                                                            className={`w-full py-2 rounded-full text-[8px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1 ${inSquad ? 'bg-[#7D68F6] text-white' : 'border border-[#7D68F6] text-[#7D68F6] hover:bg-[#7D68F6]/20'}`}
+                                                            className={`w-full py-2 rounded-full text-[8px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-1 ${inSquad ? 'bg-[#7D68F6] text-white' : 'border border-[#7D68F6] text-[#7D68F6] hover:bg-[#7D68F6]/20'}`}
                                                         >
                                                             {inSquad ? <><Check size={10}/> Agregado</> : <><Plus size={10}/> Add Squad</>}
                                                         </button>
@@ -257,9 +257,9 @@ function MainContent() {
                                 <img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" alt="img"/>
                             </div>
                             <div className="p-8">
-                                <h4 className="text-xl font-black uppercase tracking-tighter mb-2 truncate">{project.ProjectName}</h4>
+                                <h4 className="text-xl font-bold uppercase tracking-tighter mb-2 truncate">{project.ProjectName}</h4>
                                 <p className="text-xs text-[#7D68F6] font-bold uppercase tracking-widest truncate mb-4">{project.Client}</p>
-                                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 group-hover:text-white transition-colors flex items-center gap-2">Ver detalles <ChevronRight size={14}/></div>
+                                <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 group-hover:text-white transition-colors flex items-center gap-2">Ver detalles <ChevronRight size={14}/></div>
                             </div>
                         </motion.div>
                     ))}
@@ -271,7 +271,7 @@ function MainContent() {
             <motion.section key="team" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-16 items-start pt-48 px-12 max-w-7xl mx-auto pb-40">
                 <aside className="w-64 sticky top-48 space-y-10">
                     <div>
-                        <h3 className="text-[#7D68F6] text-[10px] font-black uppercase tracking-[0.3em] mb-6 flex items-center gap-2 mrm-sub-header"><Filter size={14}/> Filtrar Rol</h3>
+                        <h3 className="text-[#7D68F6] text-[10px] font-bold uppercase tracking-[0.3em] mb-6 flex items-center gap-2 mrm-sub-header"><Filter size={14}/> Filtrar Rol</h3>
                         <div className="flex flex-col gap-2">
                             {uniqueRoles.map(role => (<button key={role} onClick={() => setFilterRole(role)} className={`text-left px-5 py-2.5 rounded-full text-[11px] font-bold uppercase transition-all ${filterRole === role ? 'bg-[#7D68F6] text-white shadow-md' : 'text-white/30 hover:text-white hover:bg-white/5'}`}>{role}</button>))}
                         </div>
@@ -287,16 +287,16 @@ function MainContent() {
                                 <div className="w-24 h-24 rounded-full mx-auto mb-6 overflow-hidden border-4 border-transparent group-hover:border-[#7D68F6] transition-all duration-500 shadow-xl">
                                     <img src={person.ImageURL} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" alt="avatar"/>
                                 </div>
-                                <h4 className="text-xl font-black uppercase mb-1 tracking-tighter leading-none">{person.Name}</h4>
+                                <h4 className="text-xl font-bold uppercase mb-1 tracking-tighter leading-none">{person.Name}</h4>
                                 <p className="text-[10px] text-[#7D68F6] font-bold uppercase mb-6 tracking-widest">{person.Role}</p>
                                 <div className="flex flex-wrap gap-1.5 justify-center mb-6">
                                     {person.skillsArray?.slice(0, 3).map((skill, idx) => (
-                                        <span key={idx} className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-full text-[9px] font-black uppercase text-white/40 group-hover:text-white transition-colors">{skill}</span>
+                                        <span key={idx} className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-full text-[9px] font-bold uppercase text-white/40 group-hover:text-white transition-colors">{skill}</span>
                                     ))}
                                 </div>
                                 <button 
                                     onClick={() => toggleSquad(person)}
-                                    className={`w-full py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${inSquad ? 'bg-[#7D68F6] text-white' : 'border border-[#7D68F6] text-[#7D68F6] hover:bg-[#7D68F6]/20'}`}
+                                    className={`w-full py-3 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${inSquad ? 'bg-[#7D68F6] text-white' : 'border border-[#7D68F6] text-[#7D68F6] hover:bg-[#7D68F6]/20'}`}
                                 >
                                     {inSquad ? <><Check size={14}/> En el Squad</> : <><Plus size={14}/> Add to Squad</>}
                                 </button>
@@ -321,30 +321,30 @@ function MainContent() {
                       <img key={i} src={img} className="w-full h-full flex-shrink-0 snap-start object-cover opacity-90 hover:opacity-100 transition-opacity" alt="gallery"/>
                   ))}
                   {selectedProject.images.length > 1 && (
-                      <div className="absolute bottom-4 right-6 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest mrm-sub-header">
+                      <div className="absolute bottom-4 right-6 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest mrm-sub-header">
                           Scroll para ver más →
                       </div>
                   )}
               </div>
 
               <div className="p-12 flex-1 overflow-y-auto hide-scrollbar">
-                  <p className="text-[#7D68F6] font-black uppercase tracking-[0.4em] text-xs mb-2 mrm-sub-header">{selectedProject.Client}</p>
+                  <p className="text-[#7D68F6] font-bold uppercase tracking-[0.4em] text-xs mb-2 mrm-sub-header">{selectedProject.Client}</p>
                   <h2 className="text-5xl font-black italic uppercase tracking-tighter mb-10 leading-none">{selectedProject.ProjectName}</h2>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
                       <div className="md:col-span-2">
-                          <h3 className="text-xs font-black uppercase tracking-[0.3em] text-white/40 mb-4 flex items-center gap-2 mrm-sub-header">Overview</h3>
+                          <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-white/40 mb-4 flex items-center gap-2 mrm-sub-header">Overview</h3>
                           <div className="text-white/80 leading-relaxed text-lg mb-10">{selectedProject.Description || 'Sin descripción disponible para este proyecto.'}</div>
-                          <h3 className="text-xs font-black uppercase tracking-[0.3em] text-white/40 mb-4 flex items-center gap-2 mrm-sub-header">Skills Involucrados</h3>
+                          <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-white/40 mb-4 flex items-center gap-2 mrm-sub-header">Skills Involucrados</h3>
                           <div className="flex flex-wrap gap-2">
                               {selectedProject.tagsArray?.map((tag, idx) => (
-                                  <span key={idx} className="bg-white/5 border border-white/10 px-4 py-2 rounded-full text-[10px] font-black uppercase text-white/70">{tag}</span>
+                                  <span key={idx} className="bg-white/5 border border-white/10 px-4 py-2 rounded-full text-[10px] font-bold uppercase text-white/70">{tag}</span>
                               ))}
                           </div>
                       </div>
                       
                       <div className="bg-white/5 border border-white/10 rounded-[2rem] p-8 h-fit">
-                          <h3 className="text-xs font-black uppercase tracking-[0.3em] text-[#7D68F6] mb-6 flex items-center gap-2 mrm-sub-header">Personas Involucradas</h3>
+                          <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-[#7D68F6] mb-6 flex items-center gap-2 mrm-sub-header">Personas Involucradas</h3>
                           <div className="flex flex-col gap-5">
                               {selectedProject.teamArray?.length > 0 ? selectedProject.teamArray.map((name, idx) => {
                                   const person = talentData.find(t => t.Name.toLowerCase().includes(name.toLowerCase()));
@@ -354,7 +354,7 @@ function MainContent() {
                                               <img src={person?.ImageURL || 'https://picsum.photos/100'} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" alt="avatar" />
                                           </div>
                                           <div>
-                                              <p className="text-xs font-black uppercase tracking-tight">{name}</p>
+                                              <p className="text-xs font-bold uppercase tracking-tight">{name}</p>
                                               <p className="text-[9px] text-[#7D68F6] font-bold uppercase tracking-widest">{person?.Role || 'Talento MRM'}</p>
                                           </div>
                                       </div>
@@ -369,38 +369,21 @@ function MainContent() {
         )}
       </AnimatePresence>
 
-      {/* DOCK FLOTANTE DE SQUAD */}
-      <AnimatePresence>
-          {squad.length > 0 && (
-              <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="fixed bottom-10 left-12 z-[100] flex items-center gap-4 bg-[#111] border border-[#7D68F6]/50 p-2 pr-6 rounded-full shadow-[0_0_30px_rgba(125,104,246,0.2)] backdrop-blur-xl">
-                  <div className="flex -space-x-3 ml-2">
-                      {squad.map((p, i) => (
-                          <div key={i} className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#111]"><img src={p.ImageURL} className="w-full h-full object-cover" alt="squad member"/></div>
-                      ))}
-                  </div>
-                  <div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#7D68F6] mrm-sub-header">Tu Squad</p>
-                      <p className="text-[8px] text-white/60 font-bold uppercase tracking-widest">{squad.length} Mentes Creativas</p>
-                  </div>
-              </motion.div>
-          )}
-      </AnimatePresence>
-
       <footer className="fixed bottom-10 right-12 z-[100]"><button onClick={() => instance.logoutRedirect()} className="p-5 bg-white/5 rounded-full border border-white/10 text-white/20 hover:text-red-500 transition-all shadow-xl"><LogOut size={22}/></button></footer>
 
       <style>{`
         /* IMPORTACIÓN DE MW SANS */
         @font-face {
           font-family: 'MW Sans';
-          src: url('./fonts/MWSans-BlackItalic.woff2') format('woff2');
-          font-weight: 900;
-          font-style: italic;
-        }
-        @font-face {
-          font-family: 'MW Sans';
           src: url('./fonts/MWSans-Bold.woff2') format('woff2');
           font-weight: 700;
           font-style: normal;
+        }
+        @font-face {
+          font-family: 'MW Sans';
+          src: url('./fonts/MWSans-BlackItalic.woff2') format('woff2');
+          font-weight: 900;
+          font-style: italic;
         }
 
         :root { --font-mrm: 'MW Sans', sans-serif; }
@@ -411,13 +394,20 @@ function MainContent() {
           background: #0A0A0A;
         }
 
-        /* TITULOS EDITORIALES */
-        h1, h2, h3, .text-5xl, .text-6xl, .text-7xl {
+        /* TITULOS EDITORIALES: SOLO ESTOS SON ITALICOS Y BLACK */
+        h1, .text-6xl, .text-7xl {
           font-family: var(--font-mrm) !important;
           font-weight: 900 !important;
           font-style: italic !important;
           letter-spacing: -0.06em !important;
           text-transform: uppercase;
+        }
+
+        /* TEXTO GENERAL: RECTO (NO ITALICO) */
+        h2, h3, h4, h5, p, span, button, textarea {
+          font-family: var(--font-mrm) !important;
+          font-style: normal !important;
+          letter-spacing: normal;
         }
 
         /* BOGOTA CREATIVE CREDENTIALS STYLE */
@@ -426,15 +416,14 @@ function MainContent() {
           font-weight: 700 !important;
           letter-spacing: 0.4em !important;
           text-transform: uppercase;
+          font-style: normal !important;
         }
 
         .mask-fade-top { mask-image: linear-gradient(to bottom, transparent 0%, black 15%); -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%); }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* OVERRIDES DE TAILWIND PARA MW SANS */
         .font-black { font-weight: 900 !important; }
-        .italic { font-style: italic !important; }
       `}</style>
     </div>
   );
@@ -450,7 +439,7 @@ export default function App() {
             <div className="mrm-sub-header flex flex-col text-[14px] text-[#7D68F6] mt-2 ml-10 leading-[1.2] border-l-4 border-[#7D68F6] pl-6 mb-20 text-left">
                 <span>Bogota</span><span>Creative</span><span>Credentials</span>
             </div>
-            <button onClick={() => msalInstance.loginRedirect()} className="bg-[#7D68F6] text-white px-20 py-8 rounded-full font-black text-xs uppercase tracking-[0.4em] shadow-2xl hover:scale-110 transition-all mrm-sub-header">
+            <button onClick={() => msalInstance.loginRedirect()} className="bg-[#7D68F6] text-white px-20 py-8 rounded-full font-bold text-xs uppercase tracking-[0.4em] shadow-2xl hover:scale-110 transition-all mrm-sub-header">
                 Acceso Corporativo
             </button>
         </div>
