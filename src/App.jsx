@@ -137,7 +137,7 @@ function MainContent() {
         {activeTab !== 'landing' && (
           <nav className="flex gap-2 p-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-full pointer-events-auto shadow-2xl">
               {[ {id: 'chat', label: 'IA Copilot', icon: <MessageSquare size={14}/>}, {id: 'projects', label: 'Proyectos', icon: <Briefcase size={14}/>}, {id: 'team', label: 'Talento', icon: <Users size={14}/>} ].map(tab => (
-                  <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[#7D68F6] text-white shadow-xl' : 'hover:bg-white/10 text-white/40'}`}> {tab.icon} {tab.label} </button>
+                  <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[#7D68F6] text-white' : 'hover:bg-white/10 text-white/40'}`}> {tab.icon} {tab.label} </button>
               ))}
           </nav>
         )}
@@ -169,18 +169,18 @@ function MainContent() {
                                 <div className={`max-w-[95%] p-5 px-6 rounded-[2rem] text-[15px] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6]' : 'bg-white/5 border-white/10 backdrop-blur-xl'}`}>
                                     <p className="whitespace-pre-wrap leading-relaxed opacity-90">{msg.text}</p>
                                     
-                                    {/* PROYECTOS EN CHAT CON TÍTULOS */}
+                                    {/* PROYECTOS EN CHAT CON TÍTULOS VISIBLES */}
                                     {msg.results && msg.results.length > 0 && (
                                         <div className="mt-6 pt-6 border-t border-white/10">
                                             <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mrm-sub-header mb-4">Credenciales Sugeridas</h5>
                                             <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory">
                                                 {msg.results.map((project, idx) => (
-                                                    <div key={idx} onClick={() => setSelectedProject(project)} className="min-w-[240px] w-[240px] bg-black/40 border border-white/10 rounded-3xl overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all">
+                                                    <div key={idx} onClick={() => setSelectedProject(project)} className="min-w-[240px] w-[240px] bg-white/5 border border-white/10 rounded-3xl overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all relative">
                                                         <div className="h-32 bg-black overflow-hidden relative">
                                                             <img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" alt="img"/>
                                                         </div>
-                                                        <div className="p-4">
-                                                            <h4 className="text-[12px] font-black uppercase text-white leading-tight mb-1">{project.ProjectName}</h4>
+                                                        <div className="p-4 bg-black/40 backdrop-blur-sm relative z-20">
+                                                            <h4 className="text-[12px] font-black uppercase text-white leading-tight mb-1 block relative">{project.ProjectName}</h4>
                                                             <p className="text-[9px] text-[#7D68F6] font-black uppercase mb-3">{project.Client}</p>
                                                             <div className="flex flex-wrap gap-1">
                                                                 {project.tagsArray?.slice(0, 3).map((tag, tIdx) => (
@@ -200,7 +200,7 @@ function MainContent() {
                                             <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mrm-sub-header mb-4">Squad Recomendado</h5>
                                             <div className="flex gap-4 overflow-x-auto hide-scrollbar">
                                                 {msg.recommendedTalent.map((t, idx) => (
-                                                    <div key={idx} className="flex flex-col items-center min-w-[160px] bg-black/20 p-4 rounded-3xl border border-white/5 group">
+                                                    <div key={idx} className="flex flex-col items-center min-w-[160px] bg-black/20 p-4 rounded-3xl border border-white/5 group relative z-10">
                                                         <div className="w-16 h-16 rounded-full overflow-hidden mb-3 bg-black border border-white/10 group-hover:border-[#7D68F6] transition-all">
                                                             <img src={t.ImageURL} className="w-full h-full object-cover grayscale group-hover:grayscale-0" alt="avatar"/>
                                                         </div>
@@ -236,10 +236,12 @@ function MainContent() {
                 <div className="mb-12"><h2 className="text-7xl font-black uppercase tracking-tighter leading-none">Proyectos</h2></div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                     {flatProjects.map((project, i) => (
-                        <motion.div key={i} whileHover={{ y: -5 }} onClick={() => setSelectedProject(project)} className="bg-white/5 border border-white/10 rounded-[3rem] overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all shadow-xl">
-                            <div className="h-48 overflow-hidden relative bg-black"><img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" alt="img"/></div>
-                            <div className="p-8">
-                                <h4 className="text-xl font-black uppercase text-white tracking-tighter mb-2 truncate group-hover:text-[#7D68F6] transition-colors">{project.ProjectName}</h4>
+                        <motion.div key={i} whileHover={{ y: -5 }} onClick={() => setSelectedProject(project)} className="bg-white/5 border border-white/10 rounded-[3rem] overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all shadow-xl relative">
+                            <div className="h-48 overflow-hidden relative bg-black">
+                                <img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" alt="img"/>
+                            </div>
+                            <div className="p-8 bg-black/40 backdrop-blur-md relative z-20">
+                                <h4 className="text-xl font-black uppercase text-white tracking-tighter mb-2 truncate group-hover:text-[#7D68F6] transition-colors relative block">{project.ProjectName}</h4>
                                 <p className="text-xs text-[#7D68F6] font-black uppercase tracking-widest mb-4">{project.Client}</p>
                                 <div className="text-[10px] font-black uppercase text-white/40 group-hover:text-white transition-colors flex items-center gap-2">Ver detalles <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform"/></div>
                             </div>
@@ -295,6 +297,9 @@ function MainContent() {
         .mask-fade-top { mask-image: linear-gradient(to bottom, transparent 0%, black 15%); -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%); }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Forzar visibilidad de textos sobre capas oscuras */
+        h4 { display: block !important; visibility: visible !important; opacity: 1 !important; position: relative; z-index: 30; }
       `}</style>
     </div>
   );
