@@ -31,7 +31,6 @@ function MainContent() {
   const [selectedProject, setSelectedProject] = useState(null);
   const [squad, setSquad] = useState([]);
   const [filterRole, setFilterRole] = useState('All');
-  const [filterSkill, setFilterSkill] = useState('All');
 
   const chatContainerRef = useRef(null);
 
@@ -126,7 +125,7 @@ function MainContent() {
         }]);
 
     } catch (err) { 
-        setChatHistory(prev => [...prev, { type: 'ai', text: "Hubo un error analizando la solicitud. Verifica el flujo." }]); 
+        setChatHistory(prev => [...prev, { type: 'ai', text: "Hubo un error analizando la solicitud." }]); 
     } finally { setIsTyping(false); }
   };
 
@@ -137,10 +136,10 @@ function MainContent() {
       );
   };
 
-  const filteredTalent = useMemo(() => talentData.filter(p => (filterRole === 'All' || p.Role === filterRole) && (filterSkill === 'All' || p.skillsArray.includes(filterSkill))), [talentData, filterRole, filterSkill]);
+  const filteredTalent = useMemo(() => talentData.filter(p => (filterRole === 'All' || p.Role === filterRole)), [talentData, filterRole]);
   const uniqueRoles = useMemo(() => ['All', ...new Set(talentData.map(t => t.Role))], [talentData]);
 
-  if (loading) return <div className="h-screen bg-[#0A0A0A] flex items-center justify-center text-[#7D68F6] font-black tracking-[0.5em] animate-pulse uppercase mrm-sub-header">MRM BOGOTÁ</div>;
+  if (loading) return <div className="h-screen bg-[#0A0A0A] flex items-center justify-center text-[#7D68F6] font-black uppercase mrm-sub-header animate-pulse">MRM BOGOTÁ</div>;
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white font-sans selection:bg-[#7D68F6]/30 overflow-x-hidden">
@@ -184,81 +183,42 @@ function MainContent() {
                 <div className="relative flex-1 mb-8 overflow-hidden">
                     <div ref={chatContainerRef} className="h-full overflow-y-auto pt-10 pb-4 flex flex-col gap-6 hide-scrollbar mask-fade-top scroll-smooth">
                         {chatHistory.map((msg, i) => (
-                            <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
-                                <div className={`max-w-[95%] p-5 px-6 rounded-[2rem] text-[15px] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6] rounded-tr-none shadow-[#7D68F6]/20' : 'bg-white/5 border-white/10 backdrop-blur-xl rounded-tl-none shadow-2xl'}`}>
+                            <motion.div key={i} className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
+                                <div className={`max-w-[95%] p-5 px-6 rounded-[2rem] text-[15px] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6] rounded-tr-none' : 'bg-white/5 border-white/10 backdrop-blur-xl rounded-tl-none'}`}>
                                     <p className="whitespace-pre-wrap leading-relaxed opacity-90">{msg.text}</p>
-                                    {msg.results && msg.results.length > 0 && (
-                                        <div className="mt-6 pt-6 border-t border-white/5">
-                                            <div className="flex items-center justify-between mb-4">
-                                                <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6] flex items-center gap-2 mrm-sub-header"><Briefcase size={14}/> Proyectos Asociados</h5>
-                                                <button onClick={() => setActiveTab('projects')} className="text-[9px] font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors flex items-center gap-1">Ver todos <ChevronRight size={10}/></button>
-                                            </div>
-                                            <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory">
-                                                {msg.results.map((project, idx) => (
-                                                    <motion.div key={idx} whileHover={{ y: -5 }} onClick={() => setSelectedProject(project)} className="min-w-[240px] w-[240px] flex-shrink-0 snap-start bg-black/40 border border-white/10 rounded-2xl overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all">
-                                                        <div className="h-32 overflow-hidden relative"><img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" alt="img"/></div>
-                                                        <div className="p-4"><h4 className="text-xs font-black uppercase tracking-tighter mb-1 truncate">{project.ProjectName}</h4><p className="text-[9px] text-[#7D68F6] font-bold uppercase tracking-widest truncate">{project.Client}</p><div className="mt-3 text-[9px] font-black uppercase tracking-[0.2em] text-white/30 group-hover:text-white transition-colors flex items-center gap-1">Detalles <ChevronRight size={12}/></div></div>
-                                                    </motion.div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
                                 </div>
                             </motion.div>
                         ))}
-                        {isTyping && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-start"><div className="p-4 px-6 rounded-[2rem] bg-white/5 border border-white/10 backdrop-blur-xl rounded-tl-none"><Loader2 className="animate-spin text-[#7D68F6]" size={20} /></div></motion.div>}
                     </div>
                 </div>
                 <div className="flex items-center gap-4 w-full mb-12">
-                    <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describe tu necesidad creativa..." className="flex-1 bg-white/5 border border-white/20 rounded-[2.5rem] py-5 px-8 outline-none focus:border-[#7D68F6] transition-all text-[15px] min-h-[64px] backdrop-blur-md resize-none shadow-xl" />
-                    <button onClick={handleSend} className="bg-[#7D68F6] w-[64px] h-[64px] rounded-full hover:scale-105 shadow-xl transition-all flex flex-shrink-0 items-center justify-center group"><Send size={22}/></button>
-                </div>
-            </motion.section>
-          )}
-
-          {activeTab === 'projects' && (
-            <motion.section key="projects" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-48 px-12 max-w-7xl mx-auto pb-40">
-                <div className="mb-12"><h2 className="text-7xl font-black uppercase tracking-tighter leading-none">Proyectos</h2></div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {flatProjects.map((project, i) => (
-                        <motion.div key={i} whileHover={{ y: -5 }} onClick={() => setSelectedProject(project)} className="bg-white/5 border border-white/10 rounded-[3rem] overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all shadow-xl">
-                            <div className="h-48 overflow-hidden relative"><img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt="img"/></div>
-                            <div className="p-8">
-                                <h4 className="text-xl font-black uppercase tracking-tighter mb-2 truncate">{project.ProjectName}</h4>
-                                <p className="text-xs text-[#7D68F6] font-bold uppercase tracking-widest truncate mb-4">{project.Client}</p>
-                                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 group-hover:text-white transition-colors flex items-center gap-2">Ver detalles <ChevronRight size={14}/></div>
-                            </div>
-                        </motion.div>
-                    ))}
+                    <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describe tu necesidad..." className="flex-1 bg-white/5 border border-white/20 rounded-[2.5rem] py-5 px-8 outline-none focus:border-[#7D68F6] transition-all text-[15px] min-h-[64px] backdrop-blur-md resize-none shadow-xl" />
+                    <button onClick={handleSend} className="bg-[#7D68F6] w-[64px] h-[64px] rounded-full hover:scale-105 shadow-xl transition-all flex items-center justify-center group"><Send size={22}/></button>
                 </div>
             </motion.section>
           )}
 
           {activeTab === 'team' && (
-            <motion.section key="team" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-16 items-start pt-48 px-12 max-w-7xl mx-auto pb-40">
+            <motion.section key="team" className="flex gap-16 items-start pt-48 px-12 max-w-7xl mx-auto pb-40">
                 <aside className="w-64 sticky top-48 space-y-10">
-                    <div>
-                        <h3 className="text-[#7D68F6] text-[10px] font-black uppercase tracking-[0.3em] mb-6 flex items-center gap-2 mrm-sub-header"><Filter size={14}/> Filtrar Rol</h3>
-                        <div className="flex flex-col gap-2">
-                            {uniqueRoles.map(role => (<button key={role} onClick={() => setFilterRole(role)} className={`text-left px-5 py-2.5 rounded-full text-[11px] font-bold uppercase transition-all ${filterRole === role ? 'bg-[#7D68F6] text-white' : 'text-white/30 hover:text-white hover:bg-white/5'}`}>{role}</button>))}
-                        </div>
+                    <h3 className="text-[#7D68F6] text-[10px] font-black uppercase tracking-[0.3em] mb-6 mrm-sub-header"><Filter size={14}/> Filtrar Rol</h3>
+                    <div className="flex flex-col gap-2">
+                        {uniqueRoles.map(role => (<button key={role} onClick={() => setFilterRole(role)} className={`text-left px-5 py-2.5 rounded-full text-[11px] font-black uppercase transition-all ${filterRole === role ? 'bg-[#7D68F6] text-white' : 'text-white/30 hover:text-white hover:bg-white/5'}`}>{role}</button>))}
                     </div>
                 </aside>
                 <div className="flex-1">
-                    <div className="mb-12"><h2 className="text-7xl font-black uppercase tracking-tighter leading-none">Equipo Bogotá</h2></div>
+                    <h2 className="text-7xl font-black uppercase tracking-tighter leading-none mb-12">Equipo Bogotá</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {filteredTalent.map((person, i) => {
-                            const inSquad = squad.some(p => p.Name === person.Name);
-                            return (
-                            <motion.div key={i} whileHover={{ y: -5 }} className="bg-white/5 border border-white/10 p-8 rounded-[3.5rem] text-center hover:border-[#7D68F6] transition-all group overflow-hidden relative">
+                        {filteredTalent.map((person, i) => (
+                            <motion.div key={i} whileHover={{ y: -5 }} className="bg-white/5 border border-white/10 p-8 rounded-[3.5rem] text-center hover:border-[#7D68F6] transition-all group overflow-hidden">
                                 <div className="w-24 h-24 rounded-full mx-auto mb-6 overflow-hidden border-4 border-transparent group-hover:border-[#7D68F6] shadow-xl"><img src={person.ImageURL} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt="avatar"/></div>
-                                <h4 className="text-xl font-black uppercase mb-1 tracking-tighter leading-none">{person.Name}</h4>
-                                <p className="text-[10px] text-[#7D68F6] font-bold uppercase mb-6 tracking-widest">{person.Role}</p>
-                                <button onClick={() => toggleSquad(person)} className={`w-full py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${inSquad ? 'bg-[#7D68F6] text-white' : 'border border-[#7D68F6] text-[#7D68F6] hover:bg-[#7D68F6]/20'}`}>
-                                    {inSquad ? <><Check size={14}/> En el Squad</> : <><Plus size={14}/> Add to Squad</>}
+                                <h4 className="text-xl font-black uppercase mb-1 tracking-tighter">{person.Name}</h4>
+                                <p className="text-[10px] text-[#7D68F6] font-black uppercase mb-6 tracking-widest">{person.Role}</p>
+                                <button onClick={() => toggleSquad(person)} className={`w-full py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${squad.some(p => p.Name === person.Name) ? 'bg-[#7D68F6] text-white' : 'border border-[#7D68F6] text-[#7D68F6]'}`}>
+                                    {squad.some(p => p.Name === person.Name) ? 'En el Squad' : 'Add to Squad'}
                                 </button>
                             </motion.div>
-                        )})}
+                        ))}
                     </div>
                 </div>
             </motion.section>
@@ -266,8 +226,7 @@ function MainContent() {
         </AnimatePresence>
       </main>
 
-      {/* FOOTER & STYLES */}
-      <footer className="fixed bottom-10 right-12 z-[100]"><button onClick={() => instance.logoutRedirect()} className="p-5 bg-white/5 rounded-full border border-white/10 text-white/20 hover:text-red-500 transition-all shadow-xl"><LogOut size={22}/></button></footer>
+      <footer className="fixed bottom-10 right-12 z-[100]"><button onClick={() => instance.logoutRedirect()} className="p-5 bg-white/5 rounded-full border border-white/10 text-white/20 hover:text-red-500 transition-all"><LogOut size={22}/></button></footer>
 
       <style>{`
         @font-face {
@@ -285,31 +244,47 @@ function MainContent() {
 
         :root { --font-mrm: 'MW Sans', sans-serif; }
 
-        body, html, * {
+        /* APLICACIÓN GLOBAL LIMPIA */
+        body, html {
           font-family: var(--font-mrm) !important;
-          font-style: normal !important; /* FORZAR NO ITALICAS GLOBALMENTE */
+          background-color: #0A0A0A !important; /* EL ÚNICO FONDO NEGRO SÓLIDO */
+          color: white;
+          margin: 0;
           -webkit-font-smoothing: antialiased;
-          background: #0A0A0A;
         }
 
+        /* QUITAMOS EL FONDO NEGRO FORZADO DE LOS ELEMENTOS HIJOS */
+        *, *::before, *::after {
+          background-color: transparent; /* Permite ver el fondo del body o de los padres con transparencia */
+          font-style: normal !important;
+          box-sizing: border-box;
+        }
+
+        /* ESTILOS DE TÍTULOS */
         h1, h2, h3, .text-5xl, .text-6xl, .text-7xl {
           font-weight: 900 !important;
           letter-spacing: -0.06em !important;
           text-transform: uppercase;
+          line-height: 0.9;
         }
 
+        /* SUB-HEADERS (Tracking abierto) */
         .mrm-sub-header {
           font-weight: 700 !important;
           letter-spacing: 0.4em !important;
           text-transform: uppercase;
         }
 
+        /* CLASES DE APOYO */
         .mask-fade-top { mask-image: linear-gradient(to bottom, transparent 0%, black 15%); -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%); }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* OVERRIDE PARA CUALQUIER CLASE ITALIC DE TAILWIND */
-        .italic { font-style: normal !important; }
+        /* BOTONES Y INPUTS (Excepciones de fondo) */
+        button, input, textarea, .bg-white\\/5 {
+          background-color: rgba(255, 255, 255, 0.05);
+        }
+        .bg-\\[\\#7D68F6\\] { background-color: #7D68F6 !important; }
       `}</style>
     </div>
   );
@@ -320,12 +295,12 @@ export default function App() {
     <MsalProvider instance={msalInstance}>
       <AuthenticatedTemplate><MainContent /></AuthenticatedTemplate>
       <UnauthenticatedTemplate>
-        <div className="h-screen bg-[#0A0A0A] flex flex-col items-center justify-center text-center px-6 relative overflow-hidden">
-            <h1 className="text-[14vw] font-black text-white mb-2 tracking-tighter leading-none">MRM.</h1>
-            <div className="mrm-sub-header flex flex-col text-[14px] text-[#7D68F6] mt-2 ml-10 leading-[1.2] border-l-4 border-[#7D68F6] pl-6 mb-20 text-left">
+        <div className="h-screen bg-[#0A0A0A] flex flex-col items-center justify-center text-center px-6">
+            <h1 className="text-[14vw] font-black text-white mb-2 tracking-tighter">MRM.</h1>
+            <div className="mrm-sub-header flex flex-col text-[14px] text-[#7D68F6] mb-20 border-l-4 border-[#7D68F6] pl-6 text-left">
                 <span>Bogota</span><span>Creative</span><span>Credentials</span>
             </div>
-            <button onClick={() => msalInstance.loginRedirect()} className="bg-[#7D68F6] text-white px-20 py-8 rounded-full font-black text-xs uppercase tracking-[0.4em] shadow-2xl hover:scale-110 transition-all mrm-sub-header">
+            <button onClick={() => msalInstance.loginRedirect()} className="bg-[#7D68F6] text-white px-20 py-8 rounded-full font-black text-xs uppercase tracking-[0.4em] shadow-2xl hover:scale-110 transition-all">
                 Acceso Corporativo
             </button>
         </div>
