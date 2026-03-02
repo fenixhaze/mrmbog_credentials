@@ -44,13 +44,20 @@ function MainContent() {
     const fetchData = async () => {
       try {
         const tokenRes = await instance.acquireTokenSilent({
-          scopes: ["Files.Read", "User.Read"],
+          // NUEVOS PERMISOS PARA LEER LA NUBE COMPARTIDA
+          scopes: ["Files.Read.All", "Sites.Read.All", "User.Read"],
           account: accounts[0]
         });
         const headers = { 'Authorization': `Bearer ${tokenRes.accessToken}` };
+
+        // --- TUS NUEVOS IDs DE SHAREPOINT / TEAMS ---
+        const DRIVE_ID = "PEGA_AQUI_EL_DRIVE_ID_QUE_EMPIEZA_CON_b!"; // Reemplaza esto con el ID larguísimo
+        const TALENTOS_ID = "01MJ36C7LCZVLM5BKCGBC3QCUTUPSDIIAN";
+        const PROYECTOS_ID = "01MJ36C7JL7X73A7TRORC35MCFKBUBI5HI";
+
         const [tRes, pRes] = await Promise.all([
-          fetch(`https://graph.microsoft.com/v1.0/me/drive/items/01M53CARQG2KHMRUDB7NHK4ARNCRUIXTNX/content`, { headers }),
-          fetch(`https://graph.microsoft.com/v1.0/me/drive/items/01M53CARURZZPIO6GCCBG3SJUDAKN5OX7T/content`, { headers })
+          fetch(`https://graph.microsoft.com/v1.0/drives/${DRIVE_ID}/items/${TALENTOS_ID}/content`, { headers }),
+          fetch(`https://graph.microsoft.com/v1.0/drives/${DRIVE_ID}/items/${PROYECTOS_ID}/content`, { headers })
         ]);
         
         const talentCSV = await tRes.text();
@@ -66,13 +73,15 @@ function MainContent() {
           internalID: `ID_${index}`, 
           images: p.ImageURLs ? p.ImageURLs.split(',').map(i => i.trim()) : ["https://picsum.photos/1200/800"],
           tagsArray: (p.Tags || p.tags || "").split(',').map(t => t.trim()).filter(Boolean),
-          // SE AGREGA TeamIDs para coincidir con tu CSV
           teamArray: (p.TeamIDs || p.Team || p.team || "").split(',').map(t => t.trim()).filter(Boolean)
         })));
 
         setLoading(false);
         setChatHistory([{ type: 'ai', text: `Consultoría Estratégica MRM. ¿Qué equipo de élite vamos a conformar hoy?` }]);
-      } catch (e) { console.error(e); setLoading(false); }
+      } catch (e) { 
+        console.error("Error al cargar datos desde SharePoint:", e); 
+        setLoading(false); 
+      }
     };
     fetchData();
   }, [instance, accounts]);
@@ -84,7 +93,7 @@ function MainContent() {
     setInput('');
     setIsTyping(true);
     
-    // SE ACTUALIZÓ PARA LEER p.Title DE TU CSV
+    // LECTURA DE COLUMNAS (Title, Category)
     const invLite = JSON.stringify(flatProjects.slice(0, 12).map(p => ({ id: p.ID || p.internalID, n: p.Title || p.ProjectName })));
     const talLite = JSON.stringify(talentData.slice(0, 15).map(t => ({ n: t.Name, r: t.Role, s: t.skillsArray?.slice(0,3).join(',') })));
 
@@ -177,7 +186,6 @@ function MainContent() {
                                             <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mrm-sub-header mb-4">Credenciales Sugeridas</h5>
                                             <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory">
                                                 {msg.results.map((project, idx) => {
-                                                    // LEYENDO DATOS DEL CSV (Title y Category)
                                                     const displayTitle = project.Title || project.ProjectName || 'Proyecto Destacado';
                                                     const displayCategory = project.Category || project.Client || 'MRM Work';
 
@@ -245,7 +253,6 @@ function MainContent() {
                 <div className="mb-12"><h2 className="text-7xl font-black uppercase tracking-tighter leading-none">Proyectos</h2></div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                     {flatProjects.map((project, i) => {
-                        // LEYENDO DATOS DEL CSV (Title y Category)
                         const displayTitle = project.Title || project.ProjectName || 'Proyecto Destacado';
                         const displayCategory = project.Category || project.Client || 'MRM Work';
 
@@ -308,7 +315,6 @@ function MainContent() {
         </AnimatePresence>
       </main>
 
-      {/* MODAL DETALLES */}
       <AnimatePresence>
         {selectedProject && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center p-6 backdrop-blur-2xl bg-black/80">
@@ -344,6 +350,7 @@ function MainContent() {
         .mask-fade-top { mask-image: linear-gradient(to bottom, transparent 0%, black 15%); -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%); }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        h4 { color: #FFFFFF !important; display: block !important; opacity: 1 !important; position: relative !important; z-index: 50 !important; }
       `}</style>
     </div>
   );
