@@ -109,15 +109,9 @@ function MainContent() {
         const matchedP = flatProjects.filter(p => pIds.includes(p.internalID) || pIds.includes(p.ID));
         const matchedT = talentData.filter(t => tNames.includes(t.Name)).slice(0, 4);
 
-        setChatHistory(prev => [...prev, { 
-            type: 'ai', 
-            text: cleanReason, 
-            results: matchedP, 
-            recommendedTalent: matchedT 
-        }]);
-    } catch (err) { 
-        setChatHistory(prev => [...prev, { type: 'ai', text: "Hubo un error analizando la solicitud." }]); 
-    } finally { setIsTyping(false); }
+        setChatHistory(prev => [...prev, { type: 'ai', text: cleanReason, results: matchedP, recommendedTalent: matchedT }]);
+    } catch (err) { setChatHistory(prev => [...prev, { type: 'ai', text: "Hubo un error analizando la solicitud." }]); } 
+    finally { setIsTyping(false); }
   };
 
   const toggleSquad = (person) => {
@@ -143,7 +137,7 @@ function MainContent() {
         {activeTab !== 'landing' && (
           <nav className="flex gap-2 p-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-full pointer-events-auto shadow-2xl">
               {[ {id: 'chat', label: 'IA Copilot', icon: <MessageSquare size={14}/>}, {id: 'projects', label: 'Proyectos', icon: <Briefcase size={14}/>}, {id: 'team', label: 'Talento', icon: <Users size={14}/>} ].map(tab => (
-                  <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[#7D68F6] text-white' : 'hover:bg-white/10 text-white/40'}`}> {tab.icon} {tab.label} </button>
+                  <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[#7D68F6] text-white shadow-xl' : 'hover:bg-white/10 text-white/40'}`}> {tab.icon} {tab.label} </button>
               ))}
           </nav>
         )}
@@ -175,7 +169,7 @@ function MainContent() {
                                 <div className={`max-w-[95%] p-5 px-6 rounded-[2rem] text-[15px] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6]' : 'bg-white/5 border-white/10 backdrop-blur-xl'}`}>
                                     <p className="whitespace-pre-wrap leading-relaxed opacity-90">{msg.text}</p>
                                     
-                                    {/* PROYECTOS EN CHAT (Equilibrados) */}
+                                    {/* PROYECTOS EN CHAT */}
                                     {msg.results && msg.results.length > 0 && (
                                         <div className="mt-6 pt-6 border-t border-white/10">
                                             <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mrm-sub-header mb-4">Credenciales Sugeridas</h5>
@@ -186,12 +180,11 @@ function MainContent() {
                                                             <img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" alt="img"/>
                                                         </div>
                                                         <div className="p-4">
-                                                            <h4 className="text-[11px] font-black uppercase truncate mb-1">{project.ProjectName}</h4>
+                                                            <h4 className="text-[12px] font-black uppercase text-white leading-tight mb-1">{project.ProjectName}</h4>
                                                             <p className="text-[9px] text-[#7D68F6] font-black uppercase mb-3">{project.Client}</p>
-                                                            {/* Chips de Skills dentro de la tarjeta */}
                                                             <div className="flex flex-wrap gap-1">
                                                                 {project.tagsArray?.slice(0, 3).map((tag, tIdx) => (
-                                                                    <span key={tIdx} className="text-[7px] font-black uppercase px-2 py-0.5 bg-white/5 border border-white/10 rounded-full text-white/40">{tag}</span>
+                                                                    <span key={tIdx} className="text-[7px] font-black uppercase px-2 py-0.5 bg-white/10 border border-white/5 rounded-full text-white/60">{tag}</span>
                                                                 ))}
                                                             </div>
                                                         </div>
@@ -201,7 +194,7 @@ function MainContent() {
                                         </div>
                                     )}
 
-                                    {/* TALENTO EN CHAT (Equilibrados) */}
+                                    {/* TALENTO EN CHAT */}
                                     {msg.recommendedTalent && msg.recommendedTalent.length > 0 && (
                                         <div className="mt-4 pt-4 border-t border-white/10">
                                             <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mrm-sub-header mb-4">Squad Recomendado</h5>
@@ -213,10 +206,9 @@ function MainContent() {
                                                         </div>
                                                         <span className="text-[10px] font-black uppercase truncate w-full text-center mb-1">{t.Name}</span>
                                                         <p className="text-[8px] text-white/40 font-black uppercase mb-3">{t.Role}</p>
-                                                        {/* Chips de Skills en Talento */}
-                                                        <div className="flex flex-wrap justify-center gap-1 mb-4">
-                                                            {t.skillsArray?.slice(0, 2).map((skill, sIdx) => (
-                                                                <span key={sIdx} className="text-[7px] font-black uppercase px-2 py-0.5 bg-[#7D68F6]/10 text-[#7D68F6] rounded-full">{skill}</span>
+                                                        <div className="flex flex-wrap justify-center gap-1 mb-4 h-10 min-h-[40px] content-start overflow-hidden">
+                                                            {t.skillsArray?.slice(0, 4).map((skill, sIdx) => (
+                                                                <span key={sIdx} className="text-[7px] font-black uppercase px-2 py-0.5 bg-white/10 border border-white/5 text-white/60 rounded-full">{skill}</span>
                                                             ))}
                                                         </div>
                                                         <button onClick={() => toggleSquad(t)} className={`w-full py-2 rounded-full text-[9px] font-black uppercase border border-[#7D68F6] transition-all ${squad.some(p => p.Name === t.Name) ? 'bg-[#7D68F6] text-white' : 'text-[#7D68F6] hover:bg-[#7D68F6]/10'}`}>
@@ -234,7 +226,7 @@ function MainContent() {
                 </div>
                 <div className="flex items-center gap-4 w-full mb-12">
                     <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describe tu necesidad..." className="flex-1 bg-white/5 border border-white/20 rounded-[2.5rem] py-5 px-8 outline-none focus:border-[#7D68F6] transition-all text-[15px] min-h-[64px] backdrop-blur-md resize-none shadow-2xl" />
-                    <button onClick={handleSend} className="bg-[#7D68F6] w-[64px] h-[64px] rounded-full flex items-center justify-center flex-shrink-0 hover:scale-105 transition-all shadow-lg shadow-[#7D68F6]/20"><Send size={22}/></button>
+                    <button onClick={handleSend} className="bg-[#7D68F6] w-[64px] h-[64px] rounded-full flex items-center justify-center flex-shrink-0 hover:scale-105 transition-all shadow-lg"><Send size={22}/></button>
                 </div>
             </motion.section>
           )}
@@ -247,7 +239,7 @@ function MainContent() {
                         <motion.div key={i} whileHover={{ y: -5 }} onClick={() => setSelectedProject(project)} className="bg-white/5 border border-white/10 rounded-[3rem] overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all shadow-xl">
                             <div className="h-48 overflow-hidden relative bg-black"><img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" alt="img"/></div>
                             <div className="p-8">
-                                <h4 className="text-xl font-black uppercase tracking-tighter mb-2 truncate group-hover:text-[#7D68F6] transition-colors">{project.ProjectName}</h4>
+                                <h4 className="text-xl font-black uppercase text-white tracking-tighter mb-2 truncate group-hover:text-[#7D68F6] transition-colors">{project.ProjectName}</h4>
                                 <p className="text-xs text-[#7D68F6] font-black uppercase tracking-widest mb-4">{project.Client}</p>
                                 <div className="text-[10px] font-black uppercase text-white/40 group-hover:text-white transition-colors flex items-center gap-2">Ver detalles <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform"/></div>
                             </div>
@@ -262,7 +254,7 @@ function MainContent() {
                 <aside className="w-64 sticky top-48 space-y-10">
                     <h3 className="text-[#7D68F6] text-[10px] font-black uppercase mrm-sub-header">Filtrar Rol</h3>
                     <div className="flex flex-col gap-2">
-                        {uniqueRoles.map(role => (<button key={role} onClick={() => setFilterRole(role)} className={`text-left px-5 py-2.5 rounded-full text-[11px] font-black uppercase transition-all ${filterRole === role ? 'bg-[#7D68F6] text-white' : 'text-white/30 hover:text-white hover:bg-white/5'}`}>{role}</button>))}
+                        {uniqueRoles.map(role => (<button key={role} onClick={() => setFilterRole(role)} className={`text-left px-5 py-2.5 rounded-full text-[11px] font-black uppercase transition-all ${filterRole === role ? 'bg-[#7D68F6] text-white shadow-md' : 'text-white/30 hover:text-white hover:bg-white/5'}`}>{role}</button>))}
                     </div>
                 </aside>
                 <div className="flex-1">
@@ -273,7 +265,12 @@ function MainContent() {
                                 <div className="w-24 h-24 rounded-full mx-auto mb-6 overflow-hidden border-4 border-transparent group-hover:border-[#7D68F6] shadow-xl bg-black"><img src={person.ImageURL} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt="avatar"/></div>
                                 <h4 className="text-xl font-black uppercase mb-1">{person.Name}</h4>
                                 <p className="text-[10px] text-[#7D68F6] font-black uppercase mb-6">{person.Role}</p>
-                                <button onClick={() => toggleSquad(person)} className={`w-full py-3 rounded-full text-[10px] font-black uppercase border border-[#7D68F6] transition-all ${squad.some(p => p.Name === person.Name) ? 'bg-[#7D68F6] text-white' : 'text-[#7D68F6] hover:bg-[#7D68F6]/10'}`}>
+                                <div className="flex flex-wrap justify-center gap-1 mb-6 h-10 min-h-[40px] content-start overflow-hidden">
+                                    {person.skillsArray?.slice(0, 4).map((skill, sIdx) => (
+                                        <span key={sIdx} className="text-[7px] font-black uppercase px-2 py-0.5 bg-white/10 border border-white/5 text-white/60 rounded-full">{skill}</span>
+                                    ))}
+                                </div>
+                                <button onClick={() => toggleSquad(person)} className={`w-full py-3 rounded-full text-[10px] font-black uppercase border border-[#7D68F6] transition-all ${squad.some(p => p.Name === person.Name) ? 'bg-[#7D68F6] text-white shadow-lg shadow-[#7D68F6]/20' : 'text-[#7D68F6] hover:bg-[#7D68F6]/10'}`}>
                                     {squad.some(p => p.Name === person.Name) ? 'En Squad' : 'Add to Squad'}
                                 </button>
                             </motion.div>
@@ -284,25 +281,6 @@ function MainContent() {
           )}
         </AnimatePresence>
       </main>
-
-      {/* MODAL DETALLES (Simplicado) */}
-      <AnimatePresence>
-        {selectedProject && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center p-6 backdrop-blur-2xl bg-black/80">
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-[#0f0f0f] border border-white/10 w-full max-w-5xl h-[90vh] rounded-[3rem] overflow-hidden relative flex flex-col shadow-2xl">
-              <button onClick={() => setSelectedProject(null)} className="absolute top-6 right-6 z-10 p-4 bg-black/50 rounded-full hover:bg-[#7D68F6] transition-all"><X size={24}/></button>
-              <div className="h-[45%] bg-black relative flex overflow-x-auto snap-x snap-mandatory hide-scrollbar">
-                  {selectedProject.images.map((img, i) => (<img key={i} src={img} className="w-full h-full flex-shrink-0 snap-start object-cover" alt="gallery"/>))}
-              </div>
-              <div className="p-12 flex-1 overflow-y-auto hide-scrollbar">
-                  <p className="text-[#7D68F6] font-black uppercase tracking-[0.4em] text-xs mb-2 mrm-sub-header">{selectedProject.Client}</p>
-                  <h2 className="text-5xl font-black uppercase tracking-tighter mb-10">{selectedProject.ProjectName}</h2>
-                  <div className="text-white/80 leading-relaxed text-lg">{selectedProject.Description || 'Sin descripción disponible.'}</div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       <footer className="fixed bottom-10 right-12 z-[100]"><button onClick={() => instance.logoutRedirect()} className="p-5 bg-white/5 rounded-full border border-white/10 text-white/20 hover:text-red-500 transition-all shadow-xl"><LogOut size={22}/></button></footer>
 
@@ -317,7 +295,6 @@ function MainContent() {
         .mask-fade-top { mask-image: linear-gradient(to bottom, transparent 0%, black 15%); -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%); }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .bg-white\\/5 { background-color: rgba(255, 255, 255, 0.05) !important; }
       `}</style>
     </div>
   );
@@ -329,7 +306,7 @@ export default function App() {
       <AuthenticatedTemplate><MainContent /></AuthenticatedTemplate>
       <UnauthenticatedTemplate>
         <div className="h-screen bg-[#0A0A0A] flex flex-col items-center justify-center text-center px-6">
-            <h1 className="text-[14vw] font-black text-white mb-2 tracking-tighter">MRM.</h1>
+            <h1 className="text-[14vw] font-black text-white mb-2 tracking-tighter leading-none">MRM.</h1>
             <div className="mrm-sub-header flex flex-col text-[14px] text-[#7D68F6] mb-20 border-l-4 border-[#7D68F6] pl-6 text-left">
                 <span>Bogota</span><span>Creative</span><span>Credentials</span>
             </div>
