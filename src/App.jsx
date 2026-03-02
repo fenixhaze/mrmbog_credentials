@@ -169,22 +169,22 @@ function MainContent() {
                                 <div className={`max-w-[95%] p-5 px-6 rounded-[2rem] text-[15px] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6]' : 'bg-white/5 border-white/10 backdrop-blur-xl'}`}>
                                     <p className="whitespace-pre-wrap leading-relaxed opacity-90">{msg.text}</p>
                                     
-                                    {/* PROYECTOS EN CHAT CON TÍTULOS VISIBLES */}
+                                    {/* PROYECTOS EN CHAT */}
                                     {msg.results && msg.results.length > 0 && (
                                         <div className="mt-6 pt-6 border-t border-white/10">
                                             <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mrm-sub-header mb-4">Credenciales Sugeridas</h5>
                                             <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory">
                                                 {msg.results.map((project, idx) => (
-                                                    <div key={idx} onClick={() => setSelectedProject(project)} className="min-w-[240px] w-[240px] bg-white/5 border border-white/10 rounded-3xl overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all relative">
+                                                    <div key={idx} onClick={() => setSelectedProject(project)} className="min-w-[240px] w-[240px] bg-[#111] border border-white/10 rounded-3xl overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all">
                                                         <div className="h-32 bg-black overflow-hidden relative">
                                                             <img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" alt="img"/>
                                                         </div>
-                                                        <div className="p-4 bg-black/40 backdrop-blur-sm relative z-20">
-                                                            <h4 className="text-[12px] font-black uppercase text-white leading-tight mb-1 block relative">{project.ProjectName}</h4>
-                                                            <p className="text-[9px] text-[#7D68F6] font-black uppercase mb-3">{project.Client}</p>
+                                                        <div className="p-5 bg-[#111]">
+                                                            <h4 className="text-[14px] font-black uppercase text-white leading-tight mb-2 block">{project.ProjectName}</h4>
+                                                            <p className="text-[10px] text-[#7D68F6] font-black uppercase mb-4">{project.Client}</p>
                                                             <div className="flex flex-wrap gap-1">
                                                                 {project.tagsArray?.slice(0, 3).map((tag, tIdx) => (
-                                                                    <span key={tIdx} className="text-[7px] font-black uppercase px-2 py-0.5 bg-white/10 border border-white/5 rounded-full text-white/60">{tag}</span>
+                                                                    <span key={tIdx} className="text-[8px] font-black uppercase px-2 py-1 bg-white/10 rounded-full text-white/60">{tag}</span>
                                                                 ))}
                                                             </div>
                                                         </div>
@@ -200,18 +200,18 @@ function MainContent() {
                                             <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mrm-sub-header mb-4">Squad Recomendado</h5>
                                             <div className="flex gap-4 overflow-x-auto hide-scrollbar">
                                                 {msg.recommendedTalent.map((t, idx) => (
-                                                    <div key={idx} className="flex flex-col items-center min-w-[160px] bg-black/20 p-4 rounded-3xl border border-white/5 group relative z-10">
+                                                    <div key={idx} className="flex flex-col items-center min-w-[170px] bg-black/20 p-5 rounded-3xl border border-white/5 group">
                                                         <div className="w-16 h-16 rounded-full overflow-hidden mb-3 bg-black border border-white/10 group-hover:border-[#7D68F6] transition-all">
                                                             <img src={t.ImageURL} className="w-full h-full object-cover grayscale group-hover:grayscale-0" alt="avatar"/>
                                                         </div>
-                                                        <span className="text-[10px] font-black uppercase truncate w-full text-center mb-1">{t.Name}</span>
-                                                        <p className="text-[8px] text-white/40 font-black uppercase mb-3">{t.Role}</p>
-                                                        <div className="flex flex-wrap justify-center gap-1 mb-4 h-10 min-h-[40px] content-start overflow-hidden">
+                                                        <span className="text-[11px] font-black uppercase truncate w-full text-center mb-1">{t.Name}</span>
+                                                        <p className="text-[9px] text-white/40 font-black uppercase mb-4">{t.Role}</p>
+                                                        <div className="flex flex-wrap justify-center gap-1 mb-5 h-10 min-h-[40px] content-start overflow-hidden">
                                                             {t.skillsArray?.slice(0, 4).map((skill, sIdx) => (
-                                                                <span key={sIdx} className="text-[7px] font-black uppercase px-2 py-0.5 bg-white/10 border border-white/5 text-white/60 rounded-full">{skill}</span>
+                                                                <span key={sIdx} className="text-[8px] font-black uppercase px-2 py-1 bg-white/10 text-white/60 rounded-full">{skill}</span>
                                                             ))}
                                                         </div>
-                                                        <button onClick={() => toggleSquad(t)} className={`w-full py-2 rounded-full text-[9px] font-black uppercase border border-[#7D68F6] transition-all ${squad.some(p => p.Name === t.Name) ? 'bg-[#7D68F6] text-white' : 'text-[#7D68F6] hover:bg-[#7D68F6]/10'}`}>
+                                                        <button onClick={() => toggleSquad(t)} className={`w-full py-2.5 rounded-full text-[10px] font-black uppercase border border-[#7D68F6] transition-all ${squad.some(p => p.Name === t.Name) ? 'bg-[#7D68F6] text-white' : 'text-[#7D68F6] hover:bg-[#7D68F6]/10'}`}>
                                                             {squad.some(p => p.Name === t.Name) ? 'En Squad' : 'Add Squad'}
                                                         </button>
                                                     </div>
@@ -236,14 +236,14 @@ function MainContent() {
                 <div className="mb-12"><h2 className="text-7xl font-black uppercase tracking-tighter leading-none">Proyectos</h2></div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                     {flatProjects.map((project, i) => (
-                        <motion.div key={i} whileHover={{ y: -5 }} onClick={() => setSelectedProject(project)} className="bg-white/5 border border-white/10 rounded-[3rem] overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all shadow-xl relative">
-                            <div className="h-48 overflow-hidden relative bg-black">
+                        <motion.div key={i} whileHover={{ y: -5 }} onClick={() => setSelectedProject(project)} className="bg-[#111] border border-white/10 rounded-[3rem] overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all shadow-xl">
+                            <div className="h-56 overflow-hidden relative bg-black">
                                 <img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" alt="img"/>
                             </div>
-                            <div className="p-8 bg-black/40 backdrop-blur-md relative z-20">
-                                <h4 className="text-xl font-black uppercase text-white tracking-tighter mb-2 truncate group-hover:text-[#7D68F6] transition-colors relative block">{project.ProjectName}</h4>
-                                <p className="text-xs text-[#7D68F6] font-black uppercase tracking-widest mb-4">{project.Client}</p>
-                                <div className="text-[10px] font-black uppercase text-white/40 group-hover:text-white transition-colors flex items-center gap-2">Ver detalles <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform"/></div>
+                            <div className="p-8 bg-[#111]">
+                                <h4 className="text-[22px] font-black uppercase text-white tracking-tighter mb-2 block">{project.ProjectName}</h4>
+                                <p className="text-sm text-[#7D68F6] font-black uppercase tracking-widest mb-6">{project.Client}</p>
+                                <div className="text-[12px] font-black uppercase text-white/40 group-hover:text-white transition-colors flex items-center gap-2">Ver detalles <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform"/></div>
                             </div>
                         </motion.div>
                     ))}
@@ -269,7 +269,7 @@ function MainContent() {
                                 <p className="text-[10px] text-[#7D68F6] font-black uppercase mb-6">{person.Role}</p>
                                 <div className="flex flex-wrap justify-center gap-1 mb-6 h-10 min-h-[40px] content-start overflow-hidden">
                                     {person.skillsArray?.slice(0, 4).map((skill, sIdx) => (
-                                        <span key={sIdx} className="text-[7px] font-black uppercase px-2 py-0.5 bg-white/10 border border-white/5 text-white/60 rounded-full">{skill}</span>
+                                        <span key={sIdx} className="text-[8px] font-black uppercase px-2 py-1 bg-white/10 border border-white/5 text-white/60 rounded-full">{skill}</span>
                                     ))}
                                 </div>
                                 <button onClick={() => toggleSquad(person)} className={`w-full py-3 rounded-full text-[10px] font-black uppercase border border-[#7D68F6] transition-all ${squad.some(p => p.Name === person.Name) ? 'bg-[#7D68F6] text-white shadow-lg shadow-[#7D68F6]/20' : 'text-[#7D68F6] hover:bg-[#7D68F6]/10'}`}>
@@ -298,8 +298,14 @@ function MainContent() {
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* Forzar visibilidad de textos sobre capas oscuras */
-        h4 { display: block !important; visibility: visible !important; opacity: 1 !important; position: relative; z-index: 30; }
+        /* Garantizar visibilidad de títulos */
+        h4 { 
+            color: #FFFFFF !important; 
+            display: block !important; 
+            opacity: 1 !important; 
+            position: relative !important; 
+            z-index: 50 !important; 
+        }
       `}</style>
     </div>
   );
