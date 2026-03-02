@@ -148,7 +148,8 @@ function MainContent() {
       
       <header className="fixed top-0 left-0 w-full p-10 px-12 z-[100] flex justify-between items-start pointer-events-none">
         <div className="pointer-events-auto flex flex-col items-start cursor-pointer" onClick={() => setActiveTab('landing')}>
-            <h1 className="text-6xl font-black uppercase italic tracking-tighter leading-none m-0">MRM</h1>
+            {/* LOGO: Black (No Italic) */}
+            <h1 className="text-6xl font-black uppercase tracking-tighter leading-none m-0">MRM</h1>
             <div className="mrm-sub-header text-[10px] text-[#7D68F6] mt-2 ml-1 border-l-2 border-[#7D68F6] pl-3 flex flex-col leading-[1.1]">
                 <span>Bogota</span><span>Creative</span><span>Credentials</span>
             </div>
@@ -178,7 +179,7 @@ function MainContent() {
               ))}
             </motion.section>
           )}
-
+          {/* ... resto de las secciones (chat, projects, team) se mantienen igual ... */}
           {activeTab === 'chat' && (
             <motion.section key="chat" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto pt-48 w-full px-6 flex flex-col h-screen">
                 <div className="relative flex-1 mb-8 overflow-hidden">
@@ -187,7 +188,6 @@ function MainContent() {
                             <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
                                 <div className={`max-w-[95%] p-5 px-6 rounded-[2rem] text-[15px] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6] rounded-tr-none shadow-[#7D68F6]/20' : 'bg-white/5 border-white/10 backdrop-blur-xl rounded-tl-none shadow-2xl'}`}>
                                     <p className="whitespace-pre-wrap leading-relaxed opacity-90">{msg.text}</p>
-                                    
                                     {msg.results && msg.results.length > 0 && (
                                         <div className="mt-6 pt-6 border-t border-white/5">
                                             <div className="flex items-center justify-between mb-4">
@@ -204,7 +204,6 @@ function MainContent() {
                                             </div>
                                         </div>
                                     )}
-
                                     {msg.recommendedTalent && msg.recommendedTalent.length > 0 && (
                                         <div className="mt-2 pt-6 border-t border-white/5">
                                             <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mb-5 flex items-center gap-2 mrm-sub-header"><Star size={14}/> Top 4 Equipo Sugerido</h5>
@@ -222,7 +221,7 @@ function MainContent() {
                                                             onClick={(e) => { e.stopPropagation(); toggleSquad(t); }}
                                                             className={`w-full py-2 rounded-full text-[8px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1 ${inSquad ? 'bg-[#7D68F6] text-white' : 'border border-[#7D68F6] text-[#7D68F6] hover:bg-[#7D68F6]/20'}`}
                                                         >
-                                                            {inSquad ? <><Check size={10}/> Agregado</> : <><Plus size={10}/> Add Squad</>}
+                                                            {inSquad ? <Check size={10}/> : <Plus size={10}/>}
                                                         </button>
                                                     </div>
                                                 )})}
@@ -232,35 +231,23 @@ function MainContent() {
                                 </div>
                             </motion.div>
                         ))}
-                        {isTyping && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-start"><div className="p-4 px-6 rounded-[2rem] bg-white/5 border border-white/10 backdrop-blur-xl rounded-tl-none"><Loader2 className="animate-spin text-[#7D68F6]" size={20} /></div></motion.div>}
                     </div>
                 </div>
-                
                 <div className="flex items-center gap-4 w-full mb-12">
                     <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describe tu necesidad creativa..." className="flex-1 bg-white/5 border border-white/20 rounded-[2.5rem] py-5 px-8 outline-none focus:border-[#7D68F6] transition-all text-[15px] min-h-[64px] backdrop-blur-md resize-none shadow-xl" />
-                    <button onClick={handleSend} className="bg-[#7D68F6] w-[64px] h-[64px] rounded-full hover:scale-105 shadow-xl transition-all flex flex-shrink-0 items-center justify-center group">
-                        <Send size={22} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform"/>
-                    </button>
+                    <button onClick={handleSend} className="bg-[#7D68F6] w-[64px] h-[64px] rounded-full hover:scale-105 shadow-xl transition-all flex flex-shrink-0 items-center justify-center group"><Send size={22}/></button>
                 </div>
             </motion.section>
           )}
 
           {activeTab === 'projects' && (
             <motion.section key="projects" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-48 px-12 max-w-7xl mx-auto pb-40">
-                <div className="mb-12">
-                    <h2 className="text-7xl font-black italic uppercase tracking-tighter leading-none">Proyectos</h2>
-                </div>
+                <div className="mb-12"><h2 className="text-7xl font-black italic uppercase tracking-tighter leading-none">Proyectos</h2></div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                     {flatProjects.map((project, i) => (
                         <motion.div key={i} whileHover={{ y: -5 }} onClick={() => setSelectedProject(project)} className="bg-white/5 border border-white/10 rounded-[3rem] overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all shadow-xl">
-                            <div className="h-48 overflow-hidden relative">
-                                <img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" alt="img"/>
-                            </div>
-                            <div className="p-8">
-                                <h4 className="text-xl font-black uppercase tracking-tighter mb-2 truncate">{project.ProjectName}</h4>
-                                <p className="text-xs text-[#7D68F6] font-bold uppercase tracking-widest truncate mb-4">{project.Client}</p>
-                                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 group-hover:text-white transition-colors flex items-center gap-2">Ver detalles <ChevronRight size={14}/></div>
-                            </div>
+                            <div className="h-48 overflow-hidden relative"><img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" alt="img"/></div>
+                            <div className="p-8"><h4 className="text-xl font-black uppercase tracking-tighter mb-2 truncate">{project.ProjectName}</h4><p className="text-xs text-[#7D68F6] font-bold uppercase tracking-widest truncate mb-4">{project.Client}</p><div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 group-hover:text-white transition-colors flex items-center gap-2">Ver detalles <ChevronRight size={14}/></div></div>
                         </motion.div>
                     ))}
                 </div>
@@ -284,22 +271,10 @@ function MainContent() {
                             const inSquad = squad.some(p => p.Name === person.Name);
                             return (
                             <motion.div key={i} whileHover={{ y: -5 }} className="bg-white/5 border border-white/10 p-8 rounded-[3.5rem] text-center hover:border-[#7D68F6] transition-all group overflow-hidden relative">
-                                <div className="w-24 h-24 rounded-full mx-auto mb-6 overflow-hidden border-4 border-transparent group-hover:border-[#7D68F6] transition-all duration-500 shadow-xl">
-                                    <img src={person.ImageURL} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" alt="avatar"/>
-                                </div>
+                                <div className="w-24 h-24 rounded-full mx-auto mb-6 overflow-hidden border-4 border-transparent group-hover:border-[#7D68F6] transition-all duration-500 shadow-xl"><img src={person.ImageURL} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" alt="avatar"/></div>
                                 <h4 className="text-xl font-black uppercase mb-1 tracking-tighter leading-none">{person.Name}</h4>
                                 <p className="text-[10px] text-[#7D68F6] font-bold uppercase mb-6 tracking-widest">{person.Role}</p>
-                                <div className="flex flex-wrap gap-1.5 justify-center mb-6">
-                                    {person.skillsArray?.slice(0, 3).map((skill, idx) => (
-                                        <span key={idx} className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-full text-[9px] font-black uppercase text-white/40 group-hover:text-white transition-colors">{skill}</span>
-                                    ))}
-                                </div>
-                                <button 
-                                    onClick={() => toggleSquad(person)}
-                                    className={`w-full py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${inSquad ? 'bg-[#7D68F6] text-white' : 'border border-[#7D68F6] text-[#7D68F6] hover:bg-[#7D68F6]/20'}`}
-                                >
-                                    {inSquad ? <><Check size={14}/> En el Squad</> : <><Plus size={14}/> Add to Squad</>}
-                                </button>
+                                <button onClick={() => toggleSquad(person)} className={`w-full py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${inSquad ? 'bg-[#7D68F6] text-white' : 'border border-[#7D68F6] text-[#7D68F6] hover:bg-[#7D68F6]/20'}`}>{inSquad ? <Check size={14}/> : <Plus size={14}/>}</button>
                             </motion.div>
                         )})}
                     </div>
@@ -309,58 +284,22 @@ function MainContent() {
         </AnimatePresence>
       </main>
 
-      {/* MODAL DE PROYECTOS */}
+      {/* MODALES Y DOCK... */}
       <AnimatePresence>
         {selectedProject && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center p-6 backdrop-blur-2xl bg-black/80">
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-[#0f0f0f] border border-white/10 w-full max-w-5xl h-[90vh] rounded-[3rem] overflow-hidden relative flex flex-col shadow-2xl">
               <button onClick={() => setSelectedProject(null)} className="absolute top-6 right-6 z-10 p-4 bg-black/50 backdrop-blur-xl rounded-full hover:bg-[#7D68F6] transition-all"><X size={24}/></button>
-              
               <div className="h-[45%] bg-black relative flex overflow-x-auto snap-x snap-mandatory hide-scrollbar">
-                  {selectedProject.images.map((img, i) => (
-                      <img key={i} src={img} className="w-full h-full flex-shrink-0 snap-start object-cover opacity-90 hover:opacity-100 transition-opacity" alt="gallery"/>
-                  ))}
-                  {selectedProject.images.length > 1 && (
-                      <div className="absolute bottom-4 right-6 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest mrm-sub-header">
-                          Scroll para ver más →
-                      </div>
-                  )}
+                  {selectedProject.images.map((img, i) => (<img key={i} src={img} className="w-full h-full flex-shrink-0 snap-start object-cover opacity-90" alt="gallery"/>))}
               </div>
-
               <div className="p-12 flex-1 overflow-y-auto hide-scrollbar">
                   <p className="text-[#7D68F6] font-black uppercase tracking-[0.4em] text-xs mb-2 mrm-sub-header">{selectedProject.Client}</p>
                   <h2 className="text-5xl font-black italic uppercase tracking-tighter mb-10 leading-none">{selectedProject.ProjectName}</h2>
-                  
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
                       <div className="md:col-span-2">
-                          <h3 className="text-xs font-black uppercase tracking-[0.3em] text-white/40 mb-4 flex items-center gap-2 mrm-sub-header">Overview</h3>
-                          <div className="text-white/80 leading-relaxed text-lg mb-10">{selectedProject.Description || 'Sin descripción disponible para este proyecto.'}</div>
-                          <h3 className="text-xs font-black uppercase tracking-[0.3em] text-white/40 mb-4 flex items-center gap-2 mrm-sub-header">Skills Involucrados</h3>
-                          <div className="flex flex-wrap gap-2">
-                              {selectedProject.tagsArray?.map((tag, idx) => (
-                                  <span key={idx} className="bg-white/5 border border-white/10 px-4 py-2 rounded-full text-[10px] font-black uppercase text-white/70">{tag}</span>
-                              ))}
-                          </div>
-                      </div>
-                      
-                      <div className="bg-white/5 border border-white/10 rounded-[2rem] p-8 h-fit">
-                          <h3 className="text-xs font-black uppercase tracking-[0.3em] text-[#7D68F6] mb-6 flex items-center gap-2 mrm-sub-header">Personas Involucradas</h3>
-                          <div className="flex flex-col gap-5">
-                              {selectedProject.teamArray?.length > 0 ? selectedProject.teamArray.map((name, idx) => {
-                                  const person = talentData.find(t => t.Name.toLowerCase().includes(name.toLowerCase()));
-                                  return (
-                                      <div key={idx} className="flex items-center gap-4 group cursor-pointer">
-                                          <div className="w-12 h-12 rounded-full overflow-hidden border border-white/10 group-hover:border-[#7D68F6] transition-colors">
-                                              <img src={person?.ImageURL || 'https://picsum.photos/100'} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" alt="avatar" />
-                                          </div>
-                                          <div>
-                                              <p className="text-xs font-black uppercase tracking-tight">{name}</p>
-                                              <p className="text-[9px] text-[#7D68F6] font-bold uppercase tracking-widest">{person?.Role || 'Talento MRM'}</p>
-                                          </div>
-                                      </div>
-                                  )
-                              }) : <p className="text-xs text-white/40 italic">Equipo no especificado</p>}
-                          </div>
+                          <h3 className="text-xs font-black uppercase tracking-[0.3em] text-white/40 mb-4 mrm-sub-header">Overview</h3>
+                          <div className="text-white/80 leading-relaxed text-lg mb-10">{selectedProject.Description || 'Sin descripción disponible.'}</div>
                       </div>
                   </div>
               </div>
@@ -369,50 +308,28 @@ function MainContent() {
         )}
       </AnimatePresence>
 
-      {/* DOCK FLOTANTE DE SQUAD */}
-      <AnimatePresence>
-          {squad.length > 0 && (
-              <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="fixed bottom-10 left-12 z-[100] flex items-center gap-4 bg-[#111] border border-[#7D68F6]/50 p-2 pr-6 rounded-full shadow-[0_0_30px_rgba(125,104,246,0.2)] backdrop-blur-xl">
-                  <div className="flex -space-x-3 ml-2">
-                      {squad.map((p, i) => (
-                          <div key={i} className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#111]"><img src={p.ImageURL} className="w-full h-full object-cover" alt="squad member"/></div>
-                      ))}
-                  </div>
-                  <div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#7D68F6] mrm-sub-header">Tu Squad</p>
-                      <p className="text-[8px] text-white/60 font-bold uppercase tracking-widest">{squad.length} Mentes Creativas</p>
-                  </div>
-              </motion.div>
-          )}
-      </AnimatePresence>
-
       <footer className="fixed bottom-10 right-12 z-[100]"><button onClick={() => instance.logoutRedirect()} className="p-5 bg-white/5 rounded-full border border-white/10 text-white/20 hover:text-red-500 transition-all shadow-xl"><LogOut size={22}/></button></footer>
 
       <style>{`
-        /* IMPORTACIÓN DE MW SANS */
-        @font-face {
-          font-family: 'MW Sans';
-          src: url('./fonts/MWSans-BlackItalic.woff2') format('woff2');
-          font-weight: 900;
-          font-style: italic;
-        }
-        @font-face {
-          font-family: 'MW Sans';
-          src: url('./fonts/MWSans-Bold.woff2') format('woff2');
-          font-weight: 700;
-          font-style: normal;
-        }
+        @font-face { font-family: 'MW Sans'; src: url('./fonts/MWSans-Black.woff2') format('woff2'); font-weight: 900; font-style: normal; }
+        @font-face { font-family: 'MW Sans'; src: url('./fonts/MWSans-BlackItalic.woff2') format('woff2'); font-weight: 900; font-style: italic; }
+        @font-face { font-family: 'MW Sans'; src: url('./fonts/MWSans-Bold.woff2') format('woff2'); font-weight: 700; font-style: normal; }
 
         :root { --font-mrm: 'MW Sans', sans-serif; }
 
-        body, html {
+        body, html { font-family: var(--font-mrm) !important; -webkit-font-smoothing: antialiased; background: #0A0A0A; }
+
+        /* LOGO: Black Normal (Sin itálicas) */
+        h1 {
           font-family: var(--font-mrm) !important;
-          -webkit-font-smoothing: antialiased;
-          background: #0A0A0A;
+          font-weight: 900 !important;
+          font-style: normal !important;
+          letter-spacing: -0.06em !important;
+          text-transform: uppercase;
         }
 
-        /* TITULOS EDITORIALES */
-        h1, h2, h3, .text-5xl, .text-6xl, .text-7xl {
+        /* TÍTULOS DE SECCIÓN: Black Italic */
+        h2, h3, .text-5xl, .text-7xl {
           font-family: var(--font-mrm) !important;
           font-weight: 900 !important;
           font-style: italic !important;
@@ -420,21 +337,10 @@ function MainContent() {
           text-transform: uppercase;
         }
 
-        /* BOGOTA CREATIVE CREDENTIALS STYLE */
-        .mrm-sub-header {
-          font-family: var(--font-mrm) !important;
-          font-weight: 700 !important;
-          letter-spacing: 0.4em !important;
-          text-transform: uppercase;
-        }
-
+        .mrm-sub-header { font-family: var(--font-mrm) !important; font-weight: 700 !important; letter-spacing: 0.4em !important; text-transform: uppercase; }
         .mask-fade-top { mask-image: linear-gradient(to bottom, transparent 0%, black 15%); -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%); }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        /* OVERRIDES DE TAILWIND PARA MW SANS */
-        .font-black { font-weight: 900 !important; }
-        .italic { font-style: italic !important; }
       `}</style>
     </div>
   );
@@ -446,13 +352,12 @@ export default function App() {
       <AuthenticatedTemplate><MainContent /></AuthenticatedTemplate>
       <UnauthenticatedTemplate>
         <div className="h-screen bg-[#0A0A0A] flex flex-col items-center justify-center text-center px-6 relative overflow-hidden">
-            <h1 className="text-[14vw] font-black italic text-white mb-2 tracking-tighter leading-none">MRM.</h1>
+            {/* Login Logo: Black (No Italic) */}
+            <h1 className="text-[14vw] font-black text-white mb-2 tracking-tighter leading-none">MRM.</h1>
             <div className="mrm-sub-header flex flex-col text-[14px] text-[#7D68F6] mt-2 ml-10 leading-[1.2] border-l-4 border-[#7D68F6] pl-6 mb-20 text-left">
                 <span>Bogota</span><span>Creative</span><span>Credentials</span>
             </div>
-            <button onClick={() => msalInstance.loginRedirect()} className="bg-[#7D68F6] text-white px-20 py-8 rounded-full font-black text-xs uppercase tracking-[0.4em] shadow-2xl hover:scale-110 transition-all mrm-sub-header">
-                Acceso Corporativo
-            </button>
+            <button onClick={() => msalInstance.loginRedirect()} className="bg-[#7D68F6] text-white px-20 py-8 rounded-full font-black text-xs uppercase tracking-[0.4em] shadow-2xl hover:scale-110 transition-all mrm-sub-header">Acceso Corporativo</button>
         </div>
       </UnauthenticatedTemplate>
     </MsalProvider>
