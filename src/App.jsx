@@ -169,7 +169,7 @@ function MainContent() {
                                 <div className={`max-w-[95%] p-5 px-6 rounded-[2rem] text-[15px] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6]' : 'bg-white/5 border-white/10 backdrop-blur-xl'}`}>
                                     <p className="whitespace-pre-wrap leading-relaxed opacity-90">{msg.text}</p>
                                     
-                                    {/* PROYECTOS EN CHAT */}
+                                    {/* PROYECTOS EN CHAT CON TÍTULOS */}
                                     {msg.results && msg.results.length > 0 && (
                                         <div className="mt-6 pt-6 border-t border-white/10">
                                             <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mrm-sub-header mb-4">Credenciales Sugeridas</h5>
@@ -226,7 +226,7 @@ function MainContent() {
                 </div>
                 <div className="flex items-center gap-4 w-full mb-12">
                     <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describe tu necesidad..." className="flex-1 bg-white/5 border border-white/20 rounded-[2.5rem] py-5 px-8 outline-none focus:border-[#7D68F6] transition-all text-[15px] min-h-[64px] backdrop-blur-md resize-none shadow-2xl" />
-                    <button onClick={handleSend} className="bg-[#7D68F6] w-[64px] h-[64px] rounded-full flex items-center justify-center flex-shrink-0 hover:scale-105 transition-all shadow-lg"><Send size={22}/></button>
+                    <button onClick={handleSend} className="bg-[#7D68F6] w-[64px] h-[64px] rounded-full flex items-center justify-center flex-shrink-0 hover:scale-105 transition-all shadow-lg shadow-[#7D68F6]/20"><Send size={22}/></button>
                 </div>
             </motion.section>
           )}
