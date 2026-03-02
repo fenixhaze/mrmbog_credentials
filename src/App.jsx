@@ -66,7 +66,8 @@ function MainContent() {
           internalID: `ID_${index}`, 
           images: p.ImageURLs ? p.ImageURLs.split(',').map(i => i.trim()) : ["https://picsum.photos/1200/800"],
           tagsArray: (p.Tags || p.tags || "").split(',').map(t => t.trim()).filter(Boolean),
-          teamArray: (p.Team || p.team || "").split(',').map(t => t.trim()).filter(Boolean)
+          // SE AGREGA TeamIDs para coincidir con tu CSV
+          teamArray: (p.TeamIDs || p.Team || p.team || "").split(',').map(t => t.trim()).filter(Boolean)
         })));
 
         setLoading(false);
@@ -83,7 +84,8 @@ function MainContent() {
     setInput('');
     setIsTyping(true);
     
-    const invLite = JSON.stringify(flatProjects.slice(0, 12).map(p => ({ id: p.ID || p.internalID, n: p.ProjectName })));
+    // SE ACTUALIZÓ PARA LEER p.Title DE TU CSV
+    const invLite = JSON.stringify(flatProjects.slice(0, 12).map(p => ({ id: p.ID || p.internalID, n: p.Title || p.ProjectName })));
     const talLite = JSON.stringify(talentData.slice(0, 15).map(t => ({ n: t.Name, r: t.Role, s: t.skillsArray?.slice(0,3).join(',') })));
 
     try {
@@ -137,7 +139,7 @@ function MainContent() {
         {activeTab !== 'landing' && (
           <nav className="flex gap-2 p-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-full pointer-events-auto shadow-2xl">
               {[ {id: 'chat', label: 'IA Copilot', icon: <MessageSquare size={14}/>}, {id: 'projects', label: 'Proyectos', icon: <Briefcase size={14}/>}, {id: 'team', label: 'Talento', icon: <Users size={14}/>} ].map(tab => (
-                  <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[#7D68F6] text-white' : 'hover:bg-white/10 text-white/40'}`}> {tab.icon} {tab.label} </button>
+                  <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[#7D68F6] text-white shadow-xl' : 'hover:bg-white/10 text-white/40'}`}> {tab.icon} {tab.label} </button>
               ))}
           </nav>
         )}
@@ -174,22 +176,27 @@ function MainContent() {
                                         <div className="mt-6 pt-6 border-t border-white/10">
                                             <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mrm-sub-header mb-4">Credenciales Sugeridas</h5>
                                             <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory">
-                                                {msg.results.map((project, idx) => (
-                                                    <div key={idx} onClick={() => setSelectedProject(project)} className="min-w-[240px] w-[240px] bg-[#111] border border-white/10 rounded-3xl overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all">
-                                                        <div className="h-32 bg-black overflow-hidden relative">
-                                                            <img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" alt="img"/>
+                                                {msg.results.map((project, idx) => {
+                                                    // LEYENDO DATOS DEL CSV (Title y Category)
+                                                    const displayTitle = project.Title || project.ProjectName || 'Proyecto Destacado';
+                                                    const displayCategory = project.Category || project.Client || 'MRM Work';
+
+                                                    return (
+                                                    <div key={idx} onClick={() => setSelectedProject(project)} className="min-w-[280px] w-[280px] bg-[#141414] border border-white/5 rounded-[2rem] overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all flex flex-col">
+                                                        <div className="h-40 bg-black overflow-hidden relative">
+                                                            <img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700" alt="img"/>
                                                         </div>
-                                                        <div className="p-5 bg-[#111]">
-                                                            <h4 className="text-[14px] font-black uppercase text-white leading-tight mb-2 block">{project.ProjectName}</h4>
-                                                            <p className="text-[10px] text-[#7D68F6] font-black uppercase mb-4">{project.Client}</p>
-                                                            <div className="flex flex-wrap gap-1">
+                                                        <div className="p-5 flex-1 flex flex-col">
+                                                            <h4 className="text-[15px] font-black uppercase text-white leading-tight mb-1">{displayTitle}</h4>
+                                                            <p className="text-[10px] text-[#7D68F6] font-black uppercase mb-4">{displayCategory}</p>
+                                                            <div className="flex flex-wrap gap-2 mt-auto">
                                                                 {project.tagsArray?.slice(0, 3).map((tag, tIdx) => (
-                                                                    <span key={tIdx} className="text-[8px] font-black uppercase px-2 py-1 bg-white/10 rounded-full text-white/60">{tag}</span>
+                                                                    <span key={tIdx} className="text-[9px] font-black uppercase px-3 py-1.5 bg-white/10 rounded-full text-white/60">{tag}</span>
                                                                 ))}
                                                             </div>
                                                         </div>
                                                     </div>
-                                                ))}
+                                                )})}
                                             </div>
                                         </div>
                                     )}
@@ -198,19 +205,21 @@ function MainContent() {
                                     {msg.recommendedTalent && msg.recommendedTalent.length > 0 && (
                                         <div className="mt-4 pt-4 border-t border-white/10">
                                             <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mrm-sub-header mb-4">Squad Recomendado</h5>
-                                            <div className="flex gap-4 overflow-x-auto hide-scrollbar">
+                                            <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-2">
                                                 {msg.recommendedTalent.map((t, idx) => (
-                                                    <div key={idx} className="flex flex-col items-center min-w-[170px] bg-black/20 p-5 rounded-3xl border border-white/5 group">
+                                                    <div key={idx} className="flex flex-col items-center min-w-[170px] bg-[#141414] p-5 rounded-[2rem] border border-white/5 group relative">
                                                         <div className="w-16 h-16 rounded-full overflow-hidden mb-3 bg-black border border-white/10 group-hover:border-[#7D68F6] transition-all">
                                                             <img src={t.ImageURL} className="w-full h-full object-cover grayscale group-hover:grayscale-0" alt="avatar"/>
                                                         </div>
-                                                        <span className="text-[11px] font-black uppercase truncate w-full text-center mb-1">{t.Name}</span>
-                                                        <p className="text-[9px] text-white/40 font-black uppercase mb-4">{t.Role}</p>
-                                                        <div className="flex flex-wrap justify-center gap-1 mb-5 h-10 min-h-[40px] content-start overflow-hidden">
+                                                        <span className="text-[12px] font-black uppercase truncate w-full text-center mb-1 text-white">{t.Name}</span>
+                                                        <p className="text-[9px] text-[#7D68F6] font-black uppercase mb-4">{t.Role}</p>
+                                                        
+                                                        <div className="flex flex-wrap justify-center gap-1.5 mb-5 h-12 min-h-[48px] content-start overflow-hidden">
                                                             {t.skillsArray?.slice(0, 4).map((skill, sIdx) => (
                                                                 <span key={sIdx} className="text-[8px] font-black uppercase px-2 py-1 bg-white/10 text-white/60 rounded-full">{skill}</span>
                                                             ))}
                                                         </div>
+                                                        
                                                         <button onClick={() => toggleSquad(t)} className={`w-full py-2.5 rounded-full text-[10px] font-black uppercase border border-[#7D68F6] transition-all ${squad.some(p => p.Name === t.Name) ? 'bg-[#7D68F6] text-white' : 'text-[#7D68F6] hover:bg-[#7D68F6]/10'}`}>
                                                             {squad.some(p => p.Name === t.Name) ? 'En Squad' : 'Add Squad'}
                                                         </button>
@@ -235,18 +244,32 @@ function MainContent() {
             <motion.section key="projects" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-48 px-12 max-w-7xl mx-auto pb-40">
                 <div className="mb-12"><h2 className="text-7xl font-black uppercase tracking-tighter leading-none">Proyectos</h2></div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {flatProjects.map((project, i) => (
-                        <motion.div key={i} whileHover={{ y: -5 }} onClick={() => setSelectedProject(project)} className="bg-[#111] border border-white/10 rounded-[3rem] overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all shadow-xl">
-                            <div className="h-56 overflow-hidden relative bg-black">
-                                <img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" alt="img"/>
+                    {flatProjects.map((project, i) => {
+                        // LEYENDO DATOS DEL CSV (Title y Category)
+                        const displayTitle = project.Title || project.ProjectName || 'Proyecto Destacado';
+                        const displayCategory = project.Category || project.Client || 'MRM Work';
+
+                        return (
+                        <motion.div key={i} whileHover={{ y: -5 }} onClick={() => setSelectedProject(project)} className="bg-[#141414] border border-white/5 rounded-[2.5rem] overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all shadow-xl flex flex-col">
+                            <div className="h-64 overflow-hidden relative bg-black">
+                                <img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700" alt="img"/>
                             </div>
-                            <div className="p-8 bg-[#111]">
-                                <h4 className="text-[22px] font-black uppercase text-white tracking-tighter mb-2 block">{project.ProjectName}</h4>
-                                <p className="text-sm text-[#7D68F6] font-black uppercase tracking-widest mb-6">{project.Client}</p>
-                                <div className="text-[12px] font-black uppercase text-white/40 group-hover:text-white transition-colors flex items-center gap-2">Ver detalles <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform"/></div>
+                            <div className="p-8 flex-1 flex flex-col">
+                                <h4 className="text-[20px] font-black uppercase text-white tracking-tighter mb-2 group-hover:text-[#7D68F6] transition-colors">{displayTitle}</h4>
+                                <p className="text-[12px] text-[#7D68F6] font-black uppercase tracking-widest mb-6">{displayCategory}</p>
+                                
+                                <div className="flex flex-wrap gap-2 mb-6 mt-auto">
+                                    {project.tagsArray?.slice(0, 4).map((tag, tIdx) => (
+                                        <span key={tIdx} className="text-[9px] font-black uppercase px-3 py-1.5 bg-white/10 rounded-full text-white/60">{tag}</span>
+                                    ))}
+                                </div>
+                                
+                                <div className="text-[11px] font-black uppercase text-white/40 group-hover:text-white transition-colors flex items-center gap-2 pt-4 border-t border-white/5">
+                                    Ver detalles <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform"/>
+                                </div>
                             </div>
                         </motion.div>
-                    ))}
+                    )})}
                 </div>
             </motion.section>
           )}
@@ -263,13 +286,14 @@ function MainContent() {
                     <h2 className="text-7xl font-black uppercase tracking-tighter leading-none mb-12">Equipo Bogotá</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredTalent.map((person, i) => (
-                            <motion.div key={i} whileHover={{ y: -5 }} className="bg-white/5 border border-white/10 p-8 rounded-[3.5rem] text-center hover:border-[#7D68F6] transition-all group overflow-hidden">
+                            <motion.div key={i} whileHover={{ y: -5 }} className="bg-[#141414] border border-white/5 p-8 rounded-[3.5rem] text-center hover:border-[#7D68F6] transition-all group overflow-hidden flex flex-col">
                                 <div className="w-24 h-24 rounded-full mx-auto mb-6 overflow-hidden border-4 border-transparent group-hover:border-[#7D68F6] shadow-xl bg-black"><img src={person.ImageURL} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt="avatar"/></div>
-                                <h4 className="text-xl font-black uppercase mb-1">{person.Name}</h4>
+                                <h4 className="text-[18px] font-black text-white uppercase mb-1">{person.Name}</h4>
                                 <p className="text-[10px] text-[#7D68F6] font-black uppercase mb-6">{person.Role}</p>
-                                <div className="flex flex-wrap justify-center gap-1 mb-6 h-10 min-h-[40px] content-start overflow-hidden">
+                                
+                                <div className="flex flex-wrap justify-center gap-1.5 mb-6 h-12 min-h-[48px] content-start overflow-hidden mt-auto">
                                     {person.skillsArray?.slice(0, 4).map((skill, sIdx) => (
-                                        <span key={sIdx} className="text-[8px] font-black uppercase px-2 py-1 bg-white/10 border border-white/5 text-white/60 rounded-full">{skill}</span>
+                                        <span key={sIdx} className="text-[8px] font-black uppercase px-2.5 py-1 bg-white/10 text-white/60 rounded-full">{skill}</span>
                                     ))}
                                 </div>
                                 <button onClick={() => toggleSquad(person)} className={`w-full py-3 rounded-full text-[10px] font-black uppercase border border-[#7D68F6] transition-all ${squad.some(p => p.Name === person.Name) ? 'bg-[#7D68F6] text-white shadow-lg shadow-[#7D68F6]/20' : 'text-[#7D68F6] hover:bg-[#7D68F6]/10'}`}>
@@ -284,6 +308,29 @@ function MainContent() {
         </AnimatePresence>
       </main>
 
+      {/* MODAL DETALLES */}
+      <AnimatePresence>
+        {selectedProject && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center p-6 backdrop-blur-2xl bg-black/80">
+            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-[#0f0f0f] border border-white/10 w-full max-w-5xl h-[90vh] rounded-[3rem] overflow-hidden relative flex flex-col shadow-2xl">
+              <button onClick={() => setSelectedProject(null)} className="absolute top-6 right-6 z-10 p-4 bg-black/50 rounded-full hover:bg-[#7D68F6] transition-all text-white"><X size={24}/></button>
+              <div className="h-[45%] bg-black relative flex overflow-x-auto snap-x snap-mandatory hide-scrollbar">
+                  {selectedProject.images.map((img, i) => (<img key={i} src={img} className="w-full h-full flex-shrink-0 snap-start object-cover" alt="gallery"/>))}
+              </div>
+              <div className="p-12 flex-1 overflow-y-auto hide-scrollbar">
+                  <p className="text-[#7D68F6] font-black uppercase tracking-[0.4em] text-xs mb-2 mrm-sub-header">
+                      {selectedProject.Category || selectedProject.Client || 'Category'}
+                  </p>
+                  <h2 className="text-5xl font-black uppercase tracking-tighter mb-10 text-white">
+                      {selectedProject.Title || selectedProject.ProjectName || 'Proyecto Sin Nombre'}
+                  </h2>
+                  <div className="text-white/80 leading-relaxed text-lg">{selectedProject.Description || 'Sin descripción disponible.'}</div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <footer className="fixed bottom-10 right-12 z-[100]"><button onClick={() => instance.logoutRedirect()} className="p-5 bg-white/5 rounded-full border border-white/10 text-white/20 hover:text-red-500 transition-all shadow-xl"><LogOut size={22}/></button></footer>
 
       <style>{`
@@ -297,15 +344,6 @@ function MainContent() {
         .mask-fade-top { mask-image: linear-gradient(to bottom, transparent 0%, black 15%); -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%); }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        /* Garantizar visibilidad de títulos */
-        h4 { 
-            color: #FFFFFF !important; 
-            display: block !important; 
-            opacity: 1 !important; 
-            position: relative !important; 
-            z-index: 50 !important; 
-        }
       `}</style>
     </div>
   );
