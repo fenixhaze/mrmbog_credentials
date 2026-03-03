@@ -82,7 +82,7 @@ function MainContent() {
           teamArray: (p.TeamIDs || "").split(',').map(t => t.trim()).filter(Boolean) 
         })));
 
-        setChatHistory([{ type: 'ai', text: `Bienvenido, al sistema de credenciales de MRM Bogotá. ¿Qué equipo proyecto vamos a conformar hoy?` }]);
+        setChatHistory([{ type: 'ai', text: `Bienvenido al sistema de credenciales de MRM Bogotá. ¿Qué equipo proyecto vamos a conformar hoy?` }]);
         setLoading(false);
       } catch (e) { console.error(e); setLoading(false); }
     };
