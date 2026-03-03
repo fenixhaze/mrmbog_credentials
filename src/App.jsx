@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { PublicClientApplication } from "@azure/msal-browser";
 import { MsalProvider, AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from "@azure/msal-react";
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, LogOut, Users, Briefcase, MessageSquare, Filter, ChevronRight, Loader2, X, Star, Plus, Check } from 'lucide-react';
+import { Send, LogOut, Users, Briefcase, MessageSquare, ChevronRight, X } from 'lucide-react';
 import Papa from 'papaparse';
 
 // --- CONFIGURACIÓN ---
@@ -44,64 +44,51 @@ function MainContent() {
     const fetchData = async () => {
       try {
         const request = {
-          // PERMISOS PARA LEER LA NUBE COMPARTIDA DE LA AGENCIA
-          scopes: ["Files.Read.All", "Sites.Read.All", "User.Read"],
+          scopes: ["User.Read"],
           account: accounts[0]
         };
 
-        let tokenRes;
         try {
-            // Intenta conectar en segundo plano
-            tokenRes = await instance.acquireTokenSilent(request);
+            await instance.acquireTokenSilent(request);
         } catch (authError) {
-            console.warn("Se requiere interacción del usuario para aprobar permisos:", authError);
-            // Si el compañero no tiene los permisos, lo manda a la pantalla de Microsoft para aceptar
+            console.warn("Se requiere interacción del usuario:", authError);
             if (authError.name === "InteractionRequiredAuthError" || authError.message.includes("interaction_required") || authError.message.includes("consent_required")) {
                 await instance.acquireTokenRedirect(request);
                 return; 
-            } else {
-                throw authError;
             }
         }
 
-        const headers = { 'Authorization': `Bearer ${tokenRes.accessToken}` };
-
-        // --- LOS IDs CORRECTOS DE TU EQUIPO (CREDENCIALES BOGOTA) ---
-        const DRIVE_ID = "b!Fm3YSVP5G0iYLb7EdWgsMsxrBVTLpuhGh7hYb8Y6VUlhiASou21aQIzX5R7HH3BQ";
-        const TALENTOS_ID = "01MJ36C7LCZVLM5BKCGBC3QCUTUPSDIIAN";
-        const PROYECTOS_ID = "01MJ36C7JL7X73A7TRORC35MCFKBUBI5HI";
-
+        // LECTURA DIRECTA DE LA CARPETA PUBLIC
         const [tRes, pRes] = await Promise.all([
-          fetch(`https://graph.microsoft.com/v1.0/drives/${DRIVE_ID}/items/${TALENTOS_ID}/content`, { headers }),
-          fetch(`https://graph.microsoft.com/v1.0/drives/${DRIVE_ID}/items/${PROYECTOS_ID}/content`, { headers })
+          fetch('./Talent_Database.csv'), 
+          fetch('./Projects_Database.csv') 
         ]);
 
-        // PROTECCIÓN ANTI-CRASH
         if (!tRes.ok || !pRes.ok) {
-            console.error(`Error de Descarga. Estado Talentos: ${tRes.status}, Estado Proyectos: ${pRes.status}`);
-            throw new Error("Fallo la descarga. Verifica que los IDs sean correctos o que el Admin de IT haya dado el 'Grant Consent' en Azure.");
+            console.error(`Error cargando CSVs locales. Talentos: ${tRes.status}, Proyectos: ${pRes.status}`);
+            throw new Error("No se encontraron los archivos CSV en la carpeta public.");
         }
         
         const talentCSV = await tRes.text();
         const rawTalent = Papa.parse(talentCSV, { header: true, skipEmptyLines: true, delimiter: ";" }).data;
         setTalentData(rawTalent.map(p => ({
             ...p,
-            skillsArray: (p.Tags || p.tags || "").split(/[,;]/).map(s => s.trim()).filter(s => s !== "")
+            skillsArray: (p.Tags || "").split(',').map(s => s.trim()).filter(Boolean)
         })));
 
         const projectsCSV = await pRes.text();
-        setFlatProjects(Papa.parse(projectsCSV, { header: true, skipEmptyLines: true, delimiter: ";" }).data.map((p, index) => ({
+        const rawProjects = Papa.parse(projectsCSV, { header: true, skipEmptyLines: true, delimiter: ";" }).data;
+        setFlatProjects(rawProjects.map(p => ({
           ...p,
-          internalID: `ID_${index}`, 
           images: p.ImageURLs ? p.ImageURLs.split(',').map(i => i.trim()) : ["https://picsum.photos/1200/800"],
-          tagsArray: (p.Tags || p.tags || "").split(',').map(t => t.trim()).filter(Boolean),
-          teamArray: (p.TeamIDs || p.Team || p.team || "").split(',').map(t => t.trim()).filter(Boolean)
+          tagsArray: (p.Tags || "").split(',').map(t => t.trim()).filter(Boolean),
+          teamArray: (p.TeamIDs || "").split(',').map(t => t.trim()).filter(Boolean)
         })));
 
         setLoading(false);
         setChatHistory([{ type: 'ai', text: `Consultoría Estratégica MRM. ¿Qué equipo de élite vamos a conformar hoy?` }]);
       } catch (e) { 
-        console.error("Error crítico al cargar datos desde SharePoint:", e); 
+        console.error("Error crítico al cargar datos:", e); 
         setLoading(false); 
       }
     };
@@ -115,8 +102,8 @@ function MainContent() {
     setInput('');
     setIsTyping(true);
     
-    // Mapeo adaptado a las columnas de tu CSV (Title)
-    const invLite = JSON.stringify(flatProjects.slice(0, 12).map(p => ({ id: p.ID || p.internalID, n: p.Title || p.ProjectName })));
+    // Le mandamos a Power Automate los IDs y Nombres exactos
+    const invLite = JSON.stringify(flatProjects.slice(0, 12).map(p => ({ id: p.ID, n: p.Title })));
     const talLite = JSON.stringify(talentData.slice(0, 15).map(t => ({ n: t.Name, r: t.Role, s: t.skillsArray?.slice(0,3).join(',') })));
 
     try {
@@ -139,7 +126,7 @@ function MainContent() {
             } catch { cleanReason = rawContent; }
         } else { cleanReason = rawContent; }
 
-        const matchedP = flatProjects.filter(p => pIds.includes(p.internalID) || pIds.includes(p.ID));
+        const matchedP = flatProjects.filter(p => pIds.includes(p.ID));
         const matchedT = talentData.filter(t => tNames.includes(t.Name)).slice(0, 4);
 
         setChatHistory(prev => [...prev, { type: 'ai', text: cleanReason, results: matchedP, recommendedTalent: matchedT }]);
@@ -207,18 +194,14 @@ function MainContent() {
                                         <div className="mt-6 pt-6 border-t border-white/10">
                                             <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mrm-sub-header mb-4">Credenciales Sugeridas</h5>
                                             <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory">
-                                                {msg.results.map((project, idx) => {
-                                                    const displayTitle = project.Title || project.ProjectName || 'Proyecto Destacado';
-                                                    const displayCategory = project.Category || project.Client || 'MRM Work';
-
-                                                    return (
+                                                {msg.results.map((project, idx) => (
                                                     <div key={idx} onClick={() => setSelectedProject(project)} className="min-w-[280px] w-[280px] bg-[#141414] border border-white/5 rounded-[2rem] overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all flex flex-col">
                                                         <div className="h-40 bg-black overflow-hidden relative">
                                                             <img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700" alt="img"/>
                                                         </div>
                                                         <div className="p-5 flex-1 flex flex-col">
-                                                            <h4 className="text-[15px] font-black uppercase text-white leading-tight mb-1">{displayTitle}</h4>
-                                                            <p className="text-[10px] text-[#7D68F6] font-black uppercase mb-4">{displayCategory}</p>
+                                                            <h4 className="text-[15px] font-black uppercase text-white leading-tight mb-1">{project.Title}</h4>
+                                                            <p className="text-[10px] text-[#7D68F6] font-black uppercase mb-4">{project.Category}</p>
                                                             <div className="flex flex-wrap gap-2 mt-auto">
                                                                 {project.tagsArray?.slice(0, 3).map((tag, tIdx) => (
                                                                     <span key={tIdx} className="text-[9px] font-black uppercase px-3 py-1.5 bg-white/10 rounded-full text-white/60">{tag}</span>
@@ -226,7 +209,7 @@ function MainContent() {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                )})}
+                                                ))}
                                             </div>
                                         </div>
                                     )}
@@ -274,18 +257,14 @@ function MainContent() {
             <motion.section key="projects" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-48 px-12 max-w-7xl mx-auto pb-40">
                 <div className="mb-12"><h2 className="text-7xl font-black uppercase tracking-tighter leading-none">Proyectos</h2></div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {flatProjects.map((project, i) => {
-                        const displayTitle = project.Title || project.ProjectName || 'Proyecto Destacado';
-                        const displayCategory = project.Category || project.Client || 'MRM Work';
-
-                        return (
+                    {flatProjects.map((project, i) => (
                         <motion.div key={i} whileHover={{ y: -5 }} onClick={() => setSelectedProject(project)} className="bg-[#141414] border border-white/5 rounded-[2.5rem] overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all shadow-xl flex flex-col">
                             <div className="h-64 overflow-hidden relative bg-black">
                                 <img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700" alt="img"/>
                             </div>
                             <div className="p-8 flex-1 flex flex-col">
-                                <h4 className="text-[20px] font-black uppercase text-white tracking-tighter mb-2 group-hover:text-[#7D68F6] transition-colors">{displayTitle}</h4>
-                                <p className="text-[12px] text-[#7D68F6] font-black uppercase tracking-widest mb-6">{displayCategory}</p>
+                                <h4 className="text-[20px] font-black uppercase text-white tracking-tighter mb-2 group-hover:text-[#7D68F6] transition-colors">{project.Title}</h4>
+                                <p className="text-[12px] text-[#7D68F6] font-black uppercase tracking-widest mb-6">{project.Category}</p>
                                 
                                 <div className="flex flex-wrap gap-2 mb-6 mt-auto">
                                     {project.tagsArray?.slice(0, 4).map((tag, tIdx) => (
@@ -298,7 +277,7 @@ function MainContent() {
                                 </div>
                             </div>
                         </motion.div>
-                    )})}
+                    ))}
                 </div>
             </motion.section>
           )}
@@ -347,12 +326,12 @@ function MainContent() {
               </div>
               <div className="p-12 flex-1 overflow-y-auto hide-scrollbar">
                   <p className="text-[#7D68F6] font-black uppercase tracking-[0.4em] text-xs mb-2 mrm-sub-header">
-                      {selectedProject.Category || selectedProject.Client || 'Category'}
+                      {selectedProject.Category}
                   </p>
                   <h2 className="text-5xl font-black uppercase tracking-tighter mb-10 text-white">
-                      {selectedProject.Title || selectedProject.ProjectName || 'Proyecto Sin Nombre'}
+                      {selectedProject.Title}
                   </h2>
-                  <div className="text-white/80 leading-relaxed text-lg">{selectedProject.Description || 'Sin descripción disponible.'}</div>
+                  <div className="text-white/80 leading-relaxed text-lg">{selectedProject.Description}</div>
               </div>
             </motion.div>
           </motion.div>
@@ -388,8 +367,7 @@ export default function App() {
             <div className="mrm-sub-header flex flex-col text-[14px] text-[#7D68F6] mb-20 border-l-4 border-[#7D68F6] pl-6 text-left">
                 <span>Bogota</span><span>Creative</span><span>Credentials</span>
             </div>
-            {/* ESTO FORZARÁ EL POPUP DE PERMISOS PARA LOS COMPAÑEROS NUEVOS */}
-            <button onClick={() => msalInstance.loginRedirect({ scopes: ["Files.Read.All", "Sites.Read.All", "User.Read"] })} className="bg-[#7D68F6] text-white px-20 py-8 rounded-full font-black text-xs uppercase tracking-[0.4em] shadow-2xl hover:scale-110 transition-all">Acceso Corporativo</button>
+            <button onClick={() => msalInstance.loginRedirect({ scopes: ["User.Read"] })} className="bg-[#7D68F6] text-white px-20 py-8 rounded-full font-black text-xs uppercase tracking-[0.4em] shadow-2xl hover:scale-110 transition-all">Acceso Corporativo</button>
         </div>
       </UnauthenticatedTemplate>
     </MsalProvider>
