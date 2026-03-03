@@ -58,17 +58,17 @@ function MainContent() {
             }
         }
 
-        // --- ENRUTAMIENTO SEGURO PARA GITHUB PAGES ---
-        // Extraemos la URL base pública de forma dinámica
-        const publicUrl = window.location.pathname.includes('mrmbog_credentials') ? '/mrmbog_credentials' : '';
+        // --- GPS DE RUTAS PARA VITE Y GITHUB PAGES ---
+        // Si estamos en github.io, le agregamos el nombre de tu repo. Si estamos en local, usamos la raíz '/'
+        const baseUrl = window.location.hostname.includes('github.io') ? '/mrmbog_credentials' : '';
 
         const [tRes, pRes] = await Promise.all([
-          fetch(`${publicUrl}/Talent_Database.csv`), 
-          fetch(`${publicUrl}/Projects_Database.csv`) 
+          fetch(`${baseUrl}/Talent_Database.csv`), 
+          fetch(`${baseUrl}/Projects_Database.csv`) 
         ]);
 
         if (!tRes.ok || !pRes.ok) {
-            throw new Error(`Archivos no encontrados. Talentos: HTTP ${tRes.status}, Proyectos: HTTP ${pRes.status}`);
+            throw new Error(`Talentos: HTTP ${tRes.status} | Proyectos: HTTP ${pRes.status}. Asegúrate de que estén en la carpeta 'public'.`);
         }
         
         const talentCSV = await tRes.text();
@@ -92,8 +92,7 @@ function MainContent() {
 
       } catch (e) { 
         console.error("Error crítico al cargar datos:", e); 
-        // AHORA EL CHATBOT TE AVISA SI ALGO FALLÓ EN LUGAR DE DESAPARECER
-        setChatHistory([{ type: 'ai', text: `⚠️ Alerta de Sistema: No pude encontrar los archivos CSV en la carpeta public de la página. Por favor verifica que 'Projects_Database.csv' y 'Talent_Database.csv' estén subidos a GitHub.\n\nDetalle técnico: ${e.message}` }]);
+        setChatHistory([{ type: 'ai', text: `⚠️ Error interno: No se pudieron leer los archivos CSV. Detalle: ${e.message}` }]);
         setLoading(false); 
       }
     };
@@ -134,7 +133,7 @@ function MainContent() {
         const matchedT = talentData.filter(t => tNames.includes(t.Name)).slice(0, 4);
 
         setChatHistory(prev => [...prev, { type: 'ai', text: cleanReason, results: matchedP, recommendedTalent: matchedT }]);
-    } catch (err) { setChatHistory(prev => [...prev, { type: 'ai', text: "Hubo un error conectando con la Inteligencia Artificial." }]); } 
+    } catch (err) { setChatHistory(prev => [...prev, { type: 'ai', text: "Hubo un error analizando la solicitud." }]); } 
     finally { setIsTyping(false); }
   };
 
