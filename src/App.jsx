@@ -132,7 +132,7 @@ function MainContent() {
   const filteredTalent = useMemo(() => talentData.filter(p => (filterRole === 'All' || p.Role === filterRole)), [talentData, filterRole]);
   const uniqueRoles = useMemo(() => ['All', ...new Set(talentData.map(t => t.Role))], [talentData]);
 
-  if (loading) return <div className="h-screen bg-[#0A0A0A] flex items-center justify-center text-[#7D68F6] font-black uppercase tracking-widest animate-pulse italic">MRM BOGOTÁ</div>;
+  if (loading) return <div className="h-screen bg-[#0A0A0A] flex items-center justify-center text-[#7D68F6] font-black uppercase tracking-widest animate-pulse">MRM BOGOTÁ</div>;
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white font-sans selection:bg-[#7D68F6]/30 overflow-x-hidden">
@@ -140,7 +140,7 @@ function MainContent() {
       
       <header className="fixed top-0 left-0 w-full p-10 px-12 z-[100] flex justify-between items-start">
         <div className="flex flex-col items-start cursor-pointer" onClick={() => setActiveTab('landing')}>
-            <h1 className="text-6xl font-black uppercase tracking-tighter leading-none m-0 italic">MRM</h1>
+            <h1 className="text-6xl font-black uppercase tracking-tighter leading-none m-0">MRM</h1>
             <div className="mrm-sub-header text-[10px] text-[#7D68F6] mt-2 ml-1 border-l-2 border-[#7D68F6] pl-3 flex flex-col leading-[1.1] font-bold">
                 <span>Bogota</span><span>Creative</span><span>Credentials</span>
             </div>
@@ -181,8 +181,7 @@ function MainContent() {
                         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent z-[1]" />
                         <div className="relative z-10 h-full flex flex-col justify-end p-16 pb-24">
                             <div className="mb-8 text-[#7D68F6]">{card.icon}</div>
-                            {/* TWEAK: TAMAÑO DE TEXTO REDUCIDO DE 6xl a 5xl */}
-                            <h2 className="text-5xl font-black italic uppercase tracking-tighter leading-none">{card.title}</h2>
+                            <h2 className="text-5xl font-black uppercase tracking-tighter leading-none">{card.title}</h2>
                         </div>
                     </div>
                 ))}
@@ -207,7 +206,7 @@ function MainContent() {
                                                         <div className="h-32 bg-zinc-900"><img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" alt=""/></div>
                                                         <div className="p-5">
                                                             <h4 className="text-sm font-black uppercase mb-1">{project.Title}</h4>
-                                                            <p className="text-[9px] text-[#7D68F6] font-bold uppercase tracking-widest italic">Ver Detalles</p>
+                                                            <p className="text-[9px] text-[#7D68F6] font-bold uppercase tracking-widest">Ver Detalles</p>
                                                         </div>
                                                     </div>
                                                 ))}
@@ -250,7 +249,7 @@ function MainContent() {
                 {flatProjects.map((p, i) => (
                     <motion.div key={i} whileHover={{ y: -5 }} onClick={() => setSelectedProject(p)} className="bg-zinc-900/40 border border-white/5 rounded-[2.5rem] overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all shadow-xl">
                         <div className="h-64 bg-black overflow-hidden relative"><img src={p.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt=""/></div>
-                        <div className="p-8"><h4 className="text-xl font-black uppercase text-white mb-2">{p.Title}</h4><p className="text-[10px] text-[#7D68F6] font-bold uppercase tracking-widest italic">Ver Detalles <ChevronRight size={10} className="inline ml-1"/></p></div>
+                        <div className="p-8"><h4 className="text-xl font-black uppercase text-white mb-2">{p.Title}</h4><p className="text-[10px] text-[#7D68F6] font-bold uppercase tracking-widest">Ver Detalles <ChevronRight size={10} className="inline ml-1"/></p></div>
                     </motion.div>
                 ))}
             </motion.section>
@@ -265,14 +264,14 @@ function MainContent() {
                     </div>
                 </aside>
                 <div className="flex-1">
-                    <h2 className="text-7xl font-black uppercase tracking-tighter leading-none mb-12 italic">Equipo Bogotá</h2>
+                    <h2 className="text-7xl font-black uppercase tracking-tighter leading-none mb-12">Equipo Bogotá</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredTalent.map((person, i) => (
                             <motion.div key={i} whileHover={{ y: -5 }} className="bg-zinc-900/40 border border-white/5 p-8 rounded-[3.5rem] text-center hover:border-[#7D68F6] transition-all group overflow-hidden flex flex-col shadow-lg">
                                 <div className="w-24 h-24 rounded-full mx-auto mb-6 overflow-hidden border-4 border-transparent group-hover:border-[#7D68F6] shadow-xl bg-black"><img src={person.ImageURL} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt=""/></div>
-                                <h4 className="text-[18px] font-black text-white uppercase mb-1 italic">{person.Name}</h4>
+                                <h4 className="text-[18px] font-black text-white uppercase mb-1">{person.Name}</h4>
                                 <p className="text-[10px] text-[#7D68F6] font-black uppercase mb-6 tracking-widest">{person.Role}</p>
-                                <button onClick={() => toggleSquad(person)} className={`w-full py-3 rounded-full text-[10px] font-black uppercase border border-[#7D68F6] transition-all ${squad.some(p => p.ID === person.ID) ? 'bg-[#7D68F6] text-white' : 'text-[#7D68F6] hover:bg-[#7D68F6]/10'}`}>
+                                <button onClick={() => toggleSquad(person)} className={`w-full py-3 rounded-full text-[10px] font-black uppercase border border-[#7D68F6] transition-all ${squad.some(p => p.ID === person.ID) ? 'bg-[#7D68F6] text-white shadow-lg' : 'text-[#7D68F6] hover:bg-[#7D68F6]/10'}`}>
                                     {squad.some(p => p.ID === person.ID) ? 'En Squad' : 'Add to Squad'}
                                 </button>
                             </motion.div>
@@ -293,13 +292,13 @@ function MainContent() {
               <div className="h-[40%] bg-zinc-950 overflow-hidden relative flex overflow-x-auto snap-x hide-scrollbar">
                 {selectedProject.images.map((img, i) => (<img key={i} src={img} className="w-full h-full object-cover opacity-60 flex-shrink-0 snap-start" alt=""/>))}
               </div>
-              <div className="p-16 flex-1 overflow-y-auto grid grid-cols-12 gap-16 hide-scrollbar">
-                <div className="col-span-7 text-left">
-                  <div className="flex flex-wrap gap-2 mb-6">
+              <div className="p-16 flex-1 overflow-y-auto grid grid-cols-12 gap-16 hide-scrollbar text-left">
+                <div className="col-span-7">
+                  <div className="flex flex-wrap gap-2 mb-6 text-left">
                     {selectedProject.tagsArray?.map(tag => (<span key={tag} className="text-[9px] font-black uppercase px-4 py-1.5 bg-[#7D68F6]/10 text-[#7D68F6] border border-[#7D68F6]/20 rounded-full tracking-widest font-bold">{tag}</span>))}
                   </div>
-                  <h2 className="text-6xl font-black italic uppercase mb-8 tracking-tighter leading-none text-white">{selectedProject.Title}</h2>
-                  <p className="text-xl text-white/60 leading-relaxed italic">{selectedProject.Description}</p>
+                  <h2 className="text-6xl font-black uppercase mb-8 tracking-tighter leading-none text-white">{selectedProject.Title}</h2>
+                  <p className="text-xl text-white/60 leading-relaxed">{selectedProject.Description}</p>
                 </div>
                 <div className="col-span-5 bg-white/5 p-10 rounded-[2.5rem] border border-white/5 flex flex-col">
                   <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mb-8 mrm-sub-header">Talento involucrado</h4>
@@ -308,7 +307,7 @@ function MainContent() {
                       <div key={member.ID} className="flex items-center justify-between group">
                         <div className="flex items-center gap-4">
                           <img src={member.ImageURL} className="w-12 h-12 rounded-full border border-white/10 group-hover:border-[#7D68F6] transition-all object-cover" alt=""/>
-                          <div className="text-left"><p className="font-black text-sm uppercase italic">{member.Name}</p><p className="text-[10px] text-white/40 font-bold uppercase">{member.Role}</p></div>
+                          <div className="text-left"><p className="font-black text-sm uppercase">{member.Name}</p><p className="text-[10px] text-white/40 font-bold uppercase">{member.Role}</p></div>
                         </div>
                         <button onClick={() => toggleSquad(member)} className={`p-2 rounded-full border transition-all ${squad.some(s => s.ID === member.ID) ? 'bg-[#7D68F6] border-[#7D68F6] text-white' : 'border-white/20 text-white/20 hover:text-[#7D68F6]'}`}>
                           {squad.some(s => s.ID === member.ID) ? <Check size={16}/> : <UserPlus size={16}/>}
@@ -330,16 +329,16 @@ function MainContent() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[300] flex items-center justify-center p-6 backdrop-blur-3xl bg-black/95 pointer-events-auto">
             <button onClick={() => setShowSquadModal(false)} className="absolute top-10 right-10 text-white/20 hover:text-white transition-transform hover:rotate-90"><X size={48}/></button>
             <div className="w-full max-w-5xl">
-              <input value={customProjectTitle} onChange={(e) => setCustomProjectTitle(e.target.value)} className="bg-transparent text-7xl font-black italic uppercase border-b-2 border-white/10 focus:border-[#7D68F6] outline-none w-full pb-6 mb-16 tracking-tighter leading-none" placeholder="Nombre del Proyecto..."/>
+              <input value={customProjectTitle} onChange={(e) => setCustomProjectTitle(e.target.value)} className="bg-transparent text-7xl font-black uppercase border-b-2 border-white/10 focus:border-[#7D68F6] outline-none w-full pb-6 mb-16 tracking-tighter leading-none" placeholder="Nombre del Proyecto..."/>
               <div className="grid grid-cols-12 gap-20">
-                <div className="col-span-5 bg-zinc-900/50 p-10 rounded-[3rem] border-l-4 border-[#7D68F6]">
+                <div className="col-span-5 bg-zinc-900/50 p-10 rounded-[3rem] border-l-4 border-[#7D68F6] text-left">
                   <p className="text-[#7D68F6] font-black uppercase tracking-widest text-[10px] mb-4 font-bold">Chatbot Analysis</p>
-                  <p className="text-white/60 italic text-xl leading-relaxed">"Squad optimizado para ejecución estratégica en MRM Bogotá."</p>
+                  <p className="text-white/60 leading-relaxed">"Squad optimizado para ejecución estratégica en MRM Bogotá."</p>
                 </div>
                 <div className="col-span-7">
                   <h4 className="text-[10px] font-black uppercase text-white/40 mb-8 tracking-[0.4em]">Participantes Seleccionados ({squad.length})</h4>
                   <div className="flex flex-wrap gap-6 mb-16 overflow-y-auto max-h-[300px] hide-scrollbar p-2">
-                    {squad.map(p => (<div key={p.ID} className="text-center group"><img src={p.ImageURL} className="w-20 h-20 rounded-full border-2 border-white/5 group-hover:border-[#7D68F6] transition-all mb-3 shadow-2xl object-cover" alt=""/><p className="text-[10px] font-black uppercase italic">{p.Name.split(' ')[0]}</p></div>))}
+                    {squad.map(p => (<div key={p.ID} className="text-center group"><img src={p.ImageURL} className="w-20 h-20 rounded-full border-2 border-white/5 group-hover:border-[#7D68F6] transition-all mb-3 shadow-2xl object-cover" alt=""/><p className="text-[10px] font-black uppercase">{p.Name.split(' ')[0]}</p></div>))}
                   </div>
                   <div className="flex gap-4">
                     <button className="flex-1 py-6 bg-zinc-900 border border-white/10 rounded-full font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-2 hover:bg-zinc-800 transition-all shadow-xl font-bold"><Mail size={16}/> Formulario Contacto</button>
@@ -358,10 +357,11 @@ function MainContent() {
 
       <style>{`
         body, html { font-family: 'MW Sans', sans-serif !important; background-color: #0A0A0A !important; scroll-behavior: smooth; }
-        h1, h2, h3, h4, .font-black { font-weight: 900 !important; line-height: 0.9 !important; }
-        .mrm-sub-header { letter-spacing: 0.4em !important; }
+        h1, h2, h3, h4, .font-black { font-weight: 900 !important; line-height: 0.9 !important; font-style: normal !important; }
+        .mrm-sub-header { letter-spacing: 0.4em !important; font-style: normal !important; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .mask-fade-top { mask-image: linear-gradient(to bottom, transparent 0%, black 15%); -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%); }
+        * { font-style: normal !important; }
       `}</style>
     </div>
   );
@@ -373,11 +373,11 @@ export default function App() {
       <AuthenticatedTemplate><MainContent /></AuthenticatedTemplate>
       <UnauthenticatedTemplate>
         <div className="h-screen bg-[#0A0A0A] flex flex-col items-center justify-center text-center">
-            <h1 className="text-[15vw] font-black text-white mb-2 tracking-tighter leading-none italic">MRM.</h1>
+            <h1 className="text-[15vw] font-black text-white mb-2 tracking-tighter leading-none">MRM.</h1>
             <div className="mrm-sub-header flex flex-col text-[14px] text-[#7D68F6] mb-20 border-l-4 border-[#7D68F6] pl-6 text-left uppercase font-bold">
                 <span>Bogota</span><span>Creative</span><span>Credentials</span>
             </div>
-            <button onClick={() => msalInstance.loginRedirect({ scopes: ["User.Read"] })} className="bg-[#7D68F6] text-white px-20 py-8 rounded-full font-black text-xs uppercase tracking-[0.4em] shadow-2xl hover:scale-110 transition-all italic">Acceso Corporativo</button>
+            <button onClick={() => msalInstance.loginRedirect({ scopes: ["User.Read"] })} className="bg-[#7D68F6] text-white px-20 py-8 rounded-full font-black text-xs uppercase tracking-[0.4em] shadow-2xl hover:scale-110 transition-all">Acceso Corporativo</button>
         </div>
       </UnauthenticatedTemplate>
     </MsalProvider>
