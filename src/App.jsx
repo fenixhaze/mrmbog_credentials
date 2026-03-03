@@ -43,15 +43,30 @@ function MainContent() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const tokenRes = await instance.acquireTokenSilent({
-          // NUEVOS PERMISOS PARA LEER LA NUBE COMPARTIDA
+        const request = {
           scopes: ["Files.Read.All", "Sites.Read.All", "User.Read"],
           account: accounts[0]
-        });
+        };
+
+        let tokenRes;
+        try {
+            // Intenta obtener el token silenciosamente
+            tokenRes = await instance.acquireTokenSilent(request);
+        } catch (authError) {
+            console.warn("Fallo el token silencioso. Se requiere interacción del usuario:", authError);
+            // Si el compañero no tiene los permisos aprobados, lo redirige a la pantalla de Microsoft para aceptar
+            if (authError.name === "InteractionRequiredAuthError" || authError.message.includes("interaction_required") || authError.message.includes("consent_required")) {
+                await instance.acquireTokenRedirect(request);
+                return; // Detiene la ejecución porque la página se va a recargar
+            } else {
+                throw authError;
+            }
+        }
+
         const headers = { 'Authorization': `Bearer ${tokenRes.accessToken}` };
 
-        // --- TUS NUEVOS IDs DE SHAREPOINT / TEAMS ---
-        const DRIVE_ID = "PEGA_AQUI_EL_DRIVE_ID_QUE_EMPIEZA_CON_b!"; // Reemplaza esto con el ID larguísimo
+        // TUS IDs EXACTOS (Ya configurados)
+        const DRIVE_ID = "b!Og5P-lel5kyOzCqD4m7Z_0uBFIhvfhRNpM5B2sRy2SiabClYy_ilRJL-TQ7ynykg";
         const TALENTOS_ID = "01MJ36C7LCZVLM5BKCGBC3QCUTUPSDIIAN";
         const PROYECTOS_ID = "01MJ36C7JL7X73A7TRORC35MCFKBUBI5HI";
 
@@ -59,6 +74,11 @@ function MainContent() {
           fetch(`https://graph.microsoft.com/v1.0/drives/${DRIVE_ID}/items/${TALENTOS_ID}/content`, { headers }),
           fetch(`https://graph.microsoft.com/v1.0/drives/${DRIVE_ID}/items/${PROYECTOS_ID}/content`, { headers })
         ]);
+
+        // PROTECCIÓN ANTI-CRASH: Si Microsoft rechaza la conexión, avisa en consola en lugar de colapsar
+        if (!tRes.ok || !pRes.ok) {
+            throw new Error(`Error de Graph API. Talentos: ${tRes.status}, Proyectos: ${pRes.status}. Revisa Permisos en Azure.`);
+        }
         
         const talentCSV = await tRes.text();
         const rawTalent = Papa.parse(talentCSV, { header: true, skipEmptyLines: true, delimiter: ";" }).data;
@@ -93,7 +113,6 @@ function MainContent() {
     setInput('');
     setIsTyping(true);
     
-    // LECTURA DE COLUMNAS (Title, Category)
     const invLite = JSON.stringify(flatProjects.slice(0, 12).map(p => ({ id: p.ID || p.internalID, n: p.Title || p.ProjectName })));
     const talLite = JSON.stringify(talentData.slice(0, 15).map(t => ({ n: t.Name, r: t.Role, s: t.skillsArray?.slice(0,3).join(',') })));
 
@@ -180,7 +199,6 @@ function MainContent() {
                                 <div className={`max-w-[95%] p-5 px-6 rounded-[2rem] text-[15px] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6]' : 'bg-white/5 border-white/10 backdrop-blur-xl'}`}>
                                     <p className="whitespace-pre-wrap leading-relaxed opacity-90">{msg.text}</p>
                                     
-                                    {/* PROYECTOS EN CHAT */}
                                     {msg.results && msg.results.length > 0 && (
                                         <div className="mt-6 pt-6 border-t border-white/10">
                                             <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mrm-sub-header mb-4">Credenciales Sugeridas</h5>
@@ -209,7 +227,6 @@ function MainContent() {
                                         </div>
                                     )}
 
-                                    {/* TALENTO EN CHAT */}
                                     {msg.recommendedTalent && msg.recommendedTalent.length > 0 && (
                                         <div className="mt-4 pt-4 border-t border-white/10">
                                             <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mrm-sub-header mb-4">Squad Recomendado</h5>
@@ -366,7 +383,8 @@ export default function App() {
             <div className="mrm-sub-header flex flex-col text-[14px] text-[#7D68F6] mb-20 border-l-4 border-[#7D68F6] pl-6 text-left">
                 <span>Bogota</span><span>Creative</span><span>Credentials</span>
             </div>
-            <button onClick={() => msalInstance.loginRedirect()} className="bg-[#7D68F6] text-white px-20 py-8 rounded-full font-black text-xs uppercase tracking-[0.4em] shadow-2xl hover:scale-110 transition-all">Acceso Corporativo</button>
+            {/* AQUÍ SE PIDEN LOS PERMISOS AL HACER LOGIN POR PRIMERA VEZ */}
+            <button onClick={() => msalInstance.loginRedirect({ scopes: ["Files.Read.All", "Sites.Read.All", "User.Read"] })} className="bg-[#7D68F6] text-white px-20 py-8 rounded-full font-black text-xs uppercase tracking-[0.4em] shadow-2xl hover:scale-110 transition-all">Acceso Corporativo</button>
         </div>
       </UnauthenticatedTemplate>
     </MsalProvider>
