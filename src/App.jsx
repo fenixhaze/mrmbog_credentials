@@ -141,7 +141,7 @@ function MainContent() {
       <header className="fixed top-0 left-0 w-full p-10 px-12 z-[100] flex justify-between items-start">
         <div className="flex flex-col items-start cursor-pointer" onClick={() => setActiveTab('landing')}>
             <h1 className="text-6xl font-black uppercase tracking-tighter leading-none m-0">MRM</h1>
-            <div className="mrm-sub-header text-[10px] text-[#7D68F6] mt-2 ml-1 border-l-2 border-[#7D68F6] pl-3 flex flex-col leading-[1.1] font-bold">
+            <div className="mrm-sub-header text-[10px] text-[#7D68F6] mt-1 ml-1 border-l-2 border-[#7D68F6] pl-3 flex flex-col leading-[1.1] font-bold">
                 <span>Bogota</span><span>Creative</span><span>Credentials</span>
             </div>
         </div>
@@ -390,8 +390,10 @@ export default function App() {
       <UnauthenticatedTemplate>
         <div className="h-screen bg-[#0A0A0A] flex flex-col items-center justify-center text-center">
             <h1 className="text-[15vw] font-black text-white mb-2 tracking-tighter leading-none">MRM.</h1>
-            <div className="mrm-sub-header flex flex-col text-[14px] text-[#7D68F6] mb-20 border-l-4 border-[#7D68F6] pl-6 text-left uppercase font-bold">
-                <span>Bogota</span><span>Creative</span><span>Credentials</span>
+            <div className="mrm-sub-header text-[10px] text-[#7D68F6] mt-1 ml-1 border-l-2 border-[#7D68F6] pl-3 flex flex-col leading-[0.85] tracking-[-0.02em] font-bold uppercase">
+                <span>Bogota</span>
+                <span>Creative</span>
+                <span>Credentials</span>
             </div>
             <button onClick={() => msalInstance.loginRedirect({ scopes: ["User.Read"] })} className="bg-[#7D68F6] text-white px-20 py-8 rounded-full font-black text-xs uppercase tracking-[0.4em] shadow-2xl hover:scale-110 transition-all">Acceso Corporativo</button>
         </div>
