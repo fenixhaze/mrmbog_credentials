@@ -27,7 +27,7 @@ function MainContent() {
   const [loading, setLoading] = useState(true);
   const [chatHistory, setChatHistory] = useState([]);
   const [input, setInput] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
+  const [isTyping, setIsTyping] = useState(false); // Estado para el loader
   const [selectedProject, setSelectedProject] = useState(null);
   const [squad, setSquad] = useState([]); 
   const [showSquadModal, setShowSquadModal] = useState(false); 
@@ -94,7 +94,7 @@ function MainContent() {
     const userMsg = input;
     setChatHistory(prev => [...prev, { type: 'user', text: userMsg }]);
     setInput('');
-    setIsTyping(true);
+    setIsTyping(true); // Activamos loader
     
     try {
         const invLite = JSON.stringify(flatProjects.slice(0, 15).map(p => ({ id: p.ID, n: p.Title })));
@@ -126,7 +126,7 @@ function MainContent() {
             recommendedTalent: talentData.filter(t => tNames.includes(t.Name)).slice(0, 4) 
         }]);
     } catch (err) { setChatHistory(prev => [...prev, { type: 'ai', text: "Error analizando solicitud." }]); } 
-    finally { setIsTyping(false); }
+    finally { setIsTyping(false); } // Desactivamos loader
   };
 
   const filteredTalent = useMemo(() => talentData.filter(p => (filterRole === 'All' || p.Role === filterRole)), [talentData, filterRole]);
@@ -199,7 +199,6 @@ function MainContent() {
                                     
                                     {msg.results && msg.results.length > 0 && (
                                         <div className="mt-8 pt-8 border-t border-white/10">
-                                            {/* TWEAK: TÍTULOS CON CALIGRAFÍA AGRANDADA, PESO REGULAR Y MENOS SEPARACIÓN */}
                                             <h5 className="text-[14px] font-normal uppercase tracking-[0.1em] text-[#7D68F6] mb-5">Credenciales Sugeridas</h5>
                                             <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar">
                                                 {msg.results.map((project, idx) => (
@@ -217,7 +216,6 @@ function MainContent() {
 
                                     {msg.recommendedTalent && msg.recommendedTalent.length > 0 && (
                                         <div className="mt-6">
-                                            {/* TWEAK: TÍTULOS CON CALIGRAFÍA AGRANDADA, PESO REGULAR Y MENOS SEPARACIÓN */}
                                             <h5 className="text-[14px] font-normal uppercase tracking-[0.1em] text-[#7D68F6] mb-5">Squad Recomendado</h5>
                                             <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">
                                                 {msg.recommendedTalent.map((t, idx) => (
@@ -237,11 +235,27 @@ function MainContent() {
                                 </div>
                             </motion.div>
                         ))}
+
+                        {/* LOADER DEL CHATBOT */}
+                        {isTyping && (
+                          <motion.div 
+                            initial={{ opacity: 0, x: -10 }} 
+                            animate={{ opacity: 1, x: 0 }} 
+                            className="flex items-center gap-3 bg-white/5 border border-white/10 backdrop-blur-xl p-4 px-6 rounded-full self-start"
+                          >
+                            <div className="flex gap-1.5">
+                              <span className="w-2 h-2 bg-[#7D68F6] rounded-full animate-bounce" style={{ animationDelay: '0s' }}></span>
+                              <span className="w-2 h-2 bg-[#7D68F6] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
+                              <span className="w-2 h-2 bg-[#7D68F6] rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></span>
+                            </div>
+                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#7D68F6]">MRM Copilot está analizando...</span>
+                          </motion.div>
+                        )}
                     </div>
                 </div>
                 <div className="flex items-center gap-4 w-full">
                     <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describe tu necesidad..." className="flex-1 bg-white/5 border border-white/20 rounded-[2.5rem] py-5 px-8 outline-none focus:border-[#7D68F6] transition-all text-[15px] min-h-[64px] backdrop-blur-md resize-none shadow-2xl" />
-                    <button onClick={handleSend} className="bg-[#7D68F6] w-[64px] h-[64px] rounded-full flex items-center justify-center flex-shrink-0 hover:scale-105 transition-all shadow-lg shadow-[#7D68F6]/20"><Send size={22}/></button>
+                    <button onClick={handleSend} disabled={isTyping} className="bg-[#7D68F6] w-[64px] h-[64px] rounded-full flex items-center justify-center flex-shrink-0 hover:scale-105 transition-all shadow-lg shadow-[#7D68F6]/20 disabled:opacity-50"><Send size={22}/></button>
                 </div>
             </motion.section>
           )}
@@ -266,7 +280,7 @@ function MainContent() {
                     </div>
                 </aside>
                 <div className="flex-1">
-                    <h2 className="text-7xl font-black uppercase tracking-tighter leading-none mb-12 italic">Equipo Bogotá</h2>
+                    <h2 className="text-7xl font-black uppercase tracking-tighter leading-none mb-12">Equipo Bogotá</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredTalent.map((person, i) => (
                             <motion.div key={i} whileHover={{ y: -5 }} className="bg-zinc-900/40 border border-white/5 p-8 rounded-[3.5rem] text-center hover:border-[#7D68F6] transition-all group overflow-hidden flex flex-col shadow-lg">
@@ -294,9 +308,9 @@ function MainContent() {
               <div className="h-[40%] bg-zinc-950 overflow-hidden relative flex overflow-x-auto snap-x hide-scrollbar">
                 {selectedProject.images.map((img, i) => (<img key={i} src={img} className="w-full h-full object-cover opacity-60 flex-shrink-0 snap-start" alt=""/>))}
               </div>
-              <div className="p-16 flex-1 overflow-y-auto grid grid-cols-12 gap-16 hide-scrollbar text-left">
+              <div className="p-16 flex-1 overflow-y-auto grid grid-cols-12 gap-16 hide-scrollbar text-left text-left">
                 <div className="col-span-7">
-                  <div className="flex flex-wrap gap-2 mb-6 text-left">
+                  <div className="flex flex-wrap gap-2 mb-6">
                     {selectedProject.tagsArray?.map(tag => (<span key={tag} className="text-[9px] font-black uppercase px-4 py-1.5 bg-[#7D68F6]/10 text-[#7D68F6] border border-[#7D68F6]/20 rounded-full tracking-widest font-bold">{tag}</span>))}
                   </div>
                   <h2 className="text-6xl font-black uppercase mb-8 tracking-tighter leading-none text-white">{selectedProject.Title}</h2>
@@ -335,7 +349,7 @@ function MainContent() {
               <div className="grid grid-cols-12 gap-20">
                 <div className="col-span-5 bg-zinc-900/50 p-10 rounded-[3rem] border-l-4 border-[#7D68F6] text-left">
                   <p className="text-[#7D68F6] font-black uppercase tracking-widest text-[10px] mb-4 font-bold">Chatbot Analysis</p>
-                  <p className="text-white/60 leading-relaxed">"Squad optimizado para ejecución estratégica en MRM Bogotá."</p>
+                  <p className="text-white/60 leading-relaxed text-left text-left text-left">"Squad optimizado para ejecución estratégica en MRM Bogotá."</p>
                 </div>
                 <div className="col-span-7">
                   <h4 className="text-[10px] font-black uppercase text-white/40 mb-8 tracking-[0.4em]">Participantes Seleccionados ({squad.length})</h4>
