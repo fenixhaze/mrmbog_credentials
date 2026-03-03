@@ -82,7 +82,7 @@ function MainContent() {
           teamArray: (p.TeamIDs || "").split(',').map(t => t.trim()).filter(Boolean) 
         })));
 
-        setChatHistory([{ type: 'ai', text: `Bienvenido al sistema de credenciales de MRM Bogotá. ¿Qué eproyecto vamos a desarrollar hoy?` }]);
+        setChatHistory([{ type: 'ai', text: `Bienvenido, al sistema de credenciales de MRM Bogotá. ¿Qué equipo proyecto vamos a conformar hoy?` }]);
         setLoading(false);
       } catch (e) { console.error(e); setLoading(false); }
     };
@@ -199,12 +199,13 @@ function MainContent() {
                                     
                                     {msg.results && msg.results.length > 0 && (
                                         <div className="mt-8 pt-8 border-t border-white/10">
-                                            <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mb-5">Credenciales Sugeridas</h5>
+                                            {/* TWEAK: TÍTULOS CON CALIGRAFÍA AGRANDADA, PESO REGULAR Y MENOS SEPARACIÓN */}
+                                            <h5 className="text-[14px] font-normal uppercase tracking-[0.1em] text-[#7D68F6] mb-5">Credenciales Sugeridas</h5>
                                             <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar">
                                                 {msg.results.map((project, idx) => (
                                                     <div key={idx} onClick={() => setSelectedProject(project)} className="min-w-[280px] bg-black/40 border border-white/5 rounded-[2rem] overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all shadow-2xl">
                                                         <div className="h-32 bg-zinc-900"><img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" alt=""/></div>
-                                                        <div className="p-5">
+                                                        <div className="p-5 text-left">
                                                             <h4 className="text-sm font-black uppercase mb-1">{project.Title}</h4>
                                                             <p className="text-[9px] text-[#7D68F6] font-bold uppercase tracking-widest">Ver Detalles</p>
                                                         </div>
@@ -216,7 +217,8 @@ function MainContent() {
 
                                     {msg.recommendedTalent && msg.recommendedTalent.length > 0 && (
                                         <div className="mt-6">
-                                            <h5 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mb-5">Squad Recomendado</h5>
+                                            {/* TWEAK: TÍTULOS CON CALIGRAFÍA AGRANDADA, PESO REGULAR Y MENOS SEPARACIÓN */}
+                                            <h5 className="text-[14px] font-normal uppercase tracking-[0.1em] text-[#7D68F6] mb-5">Squad Recomendado</h5>
                                             <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">
                                                 {msg.recommendedTalent.map((t, idx) => (
                                                     <div key={idx} className="min-w-[160px] bg-black/40 p-5 rounded-[2rem] border border-white/5 text-center group">
@@ -264,7 +266,7 @@ function MainContent() {
                     </div>
                 </aside>
                 <div className="flex-1">
-                    <h2 className="text-7xl font-black uppercase tracking-tighter leading-none mb-12">Equipo Bogotá</h2>
+                    <h2 className="text-7xl font-black uppercase tracking-tighter leading-none mb-12 italic">Equipo Bogotá</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredTalent.map((person, i) => (
                             <motion.div key={i} whileHover={{ y: -5 }} className="bg-zinc-900/40 border border-white/5 p-8 rounded-[3.5rem] text-center hover:border-[#7D68F6] transition-all group overflow-hidden flex flex-col shadow-lg">
