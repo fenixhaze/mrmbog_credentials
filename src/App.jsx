@@ -58,15 +58,17 @@ function MainContent() {
             }
         }
 
-        // LECTURA DIRECTA DE LA CARPETA PUBLIC
+        // --- ENRUTAMIENTO SEGURO PARA GITHUB PAGES ---
+        // Extraemos la URL base pública de forma dinámica
+        const publicUrl = window.location.pathname.includes('mrmbog_credentials') ? '/mrmbog_credentials' : '';
+
         const [tRes, pRes] = await Promise.all([
-          fetch('./Talent_Database.csv'), 
-          fetch('./Projects_Database.csv') 
+          fetch(`${publicUrl}/Talent_Database.csv`), 
+          fetch(`${publicUrl}/Projects_Database.csv`) 
         ]);
 
         if (!tRes.ok || !pRes.ok) {
-            console.error(`Error cargando CSVs locales. Talentos: ${tRes.status}, Proyectos: ${pRes.status}`);
-            throw new Error("No se encontraron los archivos CSV en la carpeta public.");
+            throw new Error(`Archivos no encontrados. Talentos: HTTP ${tRes.status}, Proyectos: HTTP ${pRes.status}`);
         }
         
         const talentCSV = await tRes.text();
@@ -85,10 +87,13 @@ function MainContent() {
           teamArray: (p.TeamIDs || "").split(',').map(t => t.trim()).filter(Boolean)
         })));
 
-        setLoading(false);
         setChatHistory([{ type: 'ai', text: `Consultoría Estratégica MRM. ¿Qué equipo de élite vamos a conformar hoy?` }]);
+        setLoading(false);
+
       } catch (e) { 
         console.error("Error crítico al cargar datos:", e); 
+        // AHORA EL CHATBOT TE AVISA SI ALGO FALLÓ EN LUGAR DE DESAPARECER
+        setChatHistory([{ type: 'ai', text: `⚠️ Alerta de Sistema: No pude encontrar los archivos CSV en la carpeta public de la página. Por favor verifica que 'Projects_Database.csv' y 'Talent_Database.csv' estén subidos a GitHub.\n\nDetalle técnico: ${e.message}` }]);
         setLoading(false); 
       }
     };
@@ -102,7 +107,6 @@ function MainContent() {
     setInput('');
     setIsTyping(true);
     
-    // Le mandamos a Power Automate los IDs y Nombres exactos
     const invLite = JSON.stringify(flatProjects.slice(0, 12).map(p => ({ id: p.ID, n: p.Title })));
     const talLite = JSON.stringify(talentData.slice(0, 15).map(t => ({ n: t.Name, r: t.Role, s: t.skillsArray?.slice(0,3).join(',') })));
 
@@ -130,7 +134,7 @@ function MainContent() {
         const matchedT = talentData.filter(t => tNames.includes(t.Name)).slice(0, 4);
 
         setChatHistory(prev => [...prev, { type: 'ai', text: cleanReason, results: matchedP, recommendedTalent: matchedT }]);
-    } catch (err) { setChatHistory(prev => [...prev, { type: 'ai', text: "Hubo un error analizando la solicitud." }]); } 
+    } catch (err) { setChatHistory(prev => [...prev, { type: 'ai', text: "Hubo un error conectando con la Inteligencia Artificial." }]); } 
     finally { setIsTyping(false); }
   };
 
