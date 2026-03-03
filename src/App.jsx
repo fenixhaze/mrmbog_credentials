@@ -141,7 +141,7 @@ function MainContent() {
       <header className="fixed top-0 left-0 w-full p-10 px-12 z-[100] flex justify-between items-start">
         <div className="flex flex-col items-start cursor-pointer" onClick={() => setActiveTab('landing')}>
             <h1 className="text-6xl font-black uppercase tracking-tighter leading-none m-0">MRM</h1>
-                <div className="mrm-sub-header text-[10px] text-[#7D68F6] mt-1 ml-1 border-l-2 border-[#7D68F6] pl-3 flex flex-col leading-[0.8] tracking-[-0.05em] font-normal uppercase">
+                <div className="mrm-sub-header text-[10px] text-[#7D68F6] mt-2 ml-1 border-l-2 border-[#7D68F6] pl-3 flex flex-col leading-[1.1] tracking-[-0.02em] font-normal uppercase"">
                     <span>BOGOTÁ</span>
                     <span>CREATIVE</span>
                      <span>CREDENTIALS</span>
