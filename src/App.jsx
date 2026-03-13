@@ -19,7 +19,6 @@ const authConfig = {
 
 const msalInstance = new PublicClientApplication(authConfig);
 
-// --- COMPONENTE PRINCIPAL (SOLO SE VE SI ESTÁS LOGUEADO) ---
 function MainContent() {
   const { instance, accounts } = useMsal();
   const [activeTab, setActiveTab] = useState('landing'); 
@@ -199,9 +198,7 @@ function MainContent() {
                         {chatHistory.map((msg, i) => (
                             <motion.div key={i} className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
                                 <div className={`max-w-[95%] p-6 px-8 rounded-[2rem] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6]' : 'bg-white/5 border-white/10 backdrop-blur-xl'}`}>
-                                    
                                     <p className="whitespace-pre-wrap leading-relaxed opacity-90 font-normal normal-case">{msg.text}</p>
-                                    
                                     {msg.results && msg.results.length > 0 && (
                                         <div className="mt-8 pt-8 border-t border-white/10">
                                             <h5 className="text-[14px] font-normal uppercase tracking-[0.1em] text-[#7D68F6] mb-5">CREDENCIALES SUGERIDAS</h5>
@@ -218,7 +215,6 @@ function MainContent() {
                                             </div>
                                         </div>
                                     )}
-
                                     {msg.recommendedTalent && msg.recommendedTalent.length > 0 && (
                                         <div className="mt-6">
                                             <h5 className="text-[14px] font-normal uppercase tracking-[0.1em] text-[#7D68F6] mb-5">SQUAD RECOMENDADO</h5>
@@ -229,7 +225,6 @@ function MainContent() {
                                                             <img src={t.ImageURL} className="w-full h-full object-cover grayscale group-hover:grayscale-0" alt=""/>
                                                         </div>
                                                         <p className="text-[11px] font-black uppercase mb-2 truncate w-full">{t.Name}</p>
-                                                        
                                                         <div className="flex flex-wrap justify-center items-center gap-1.5 mb-4">
                                                             {t.skillsArray?.slice(0, 2).map((skill, sIdx) => (
                                                                 <span key={sIdx} className="text-[7px] font-medium uppercase px-2 py-1 bg-white/10 text-white/70 rounded-full border border-white/10 whitespace-nowrap leading-none">
@@ -237,7 +232,6 @@ function MainContent() {
                                                                 </span>
                                                             ))}
                                                         </div>
-
                                                         <button onClick={() => toggleSquad(t)} className={`w-full py-2 rounded-full text-[9px] font-black uppercase border border-[#7D68F6] transition-all ${squad.some(s => s.ID === t.ID) ? 'bg-[#7D68F6] text-white' : 'text-[#7D68F6] hover:bg-[#7D68F6]/10'}`}>
                                                             {squad.some(s => s.ID === t.ID) ? 'EN SQUAD' : 'ADD SQUAD'}
                                                         </button>
@@ -295,7 +289,6 @@ function MainContent() {
                                 <div className="w-24 h-24 rounded-full mx-auto mb-6 overflow-hidden border-4 border-transparent group-hover:border-[#7D68F6] shadow-xl bg-black"><img src={person.ImageURL} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt=""/></div>
                                 <h4 className="text-[18px] font-black text-white uppercase mb-1 truncate w-full">{person.Name}</h4>
                                 <p className="text-[10px] text-[#7D68F6] font-black uppercase mb-4 tracking-widest">{person.Role}</p>
-                                
                                 <div className="flex flex-wrap justify-center items-center gap-2 mb-6 min-h-[40px]">
                                     {person.skillsArray?.slice(0, 3).map((skill, sIdx) => (
                                         <span key={sIdx} className="text-[9px] font-medium uppercase px-3 py-1.5 bg-white/10 text-white/70 rounded-full border border-white/10 whitespace-nowrap leading-none shadow-sm">
@@ -303,7 +296,6 @@ function MainContent() {
                                         </span>
                                     ))}
                                 </div>
-
                                 <button onClick={() => toggleSquad(person)} className={`w-full py-3 rounded-full text-[10px] font-black uppercase border border-[#7D68F6] transition-all mt-auto ${squad.some(p => p.ID === person.ID) ? 'bg-[#7D68F6] text-white shadow-lg' : 'text-[#7D68F6] hover:bg-[#7D68F6]/10'}`}>
                                     {squad.some(p => p.ID === person.ID) ? 'EN SQUAD' : 'ADD TO SQUAD'}
                                 </button>
@@ -316,51 +308,36 @@ function MainContent() {
         </AnimatePresence>
       </main>
 
-      {/* MODAL DE PROYECTO - DISEÑO 65/35 ACTUALIZADO */}
       <AnimatePresence>
         {selectedProject && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center p-6 backdrop-blur-2xl bg-black/80 pointer-events-auto">
             <div className="bg-[#0f0f0f] border border-white/10 w-full max-w-7xl h-[90vh] rounded-[3rem] overflow-hidden relative flex shadow-2xl">
-              
-              {/* Botón de cerrar movido para no tapar la imagen */}
               <button onClick={() => setSelectedProject(null)} className="absolute top-6 right-6 z-20 p-4 bg-black/50 backdrop-blur-md rounded-full hover:bg-white text-white hover:text-black transition-all shadow-2xl"><X size={24}/></button>
-
-              {/* COLUMNA IZQUIERDA (PROYECTO - 65%) */}
-              <div className="w-[65%] flex flex-col h-full border-r border-white/5 overflow-y-auto hide-scrollbar">
-                {/* Carrusel de imágenes en la parte superior */}
+              <div className="w-[65%] flex flex-col h-full border-r border-white/5 overflow-y-auto hide-scrollbar relative">
                 <div className="h-[45%] min-h-[350px] w-full bg-zinc-950 overflow-hidden relative flex overflow-x-auto snap-x hide-scrollbar shrink-0">
                   {selectedProject.images.map((img, i) => (<img key={i} src={img} className="w-full h-full object-cover opacity-80 flex-shrink-0 snap-start" alt=""/>))}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f0f] via-transparent to-transparent pointer-events-none" />
+                  <div className="absolute bottom-0 left-0 p-16 w-full text-left">
+                      <div className="flex flex-wrap gap-2 mb-6">
+                        {selectedProject.tagsArray?.map(tag => (<span key={tag} className="text-[9px] font-black uppercase px-4 py-1.5 bg-[#7D68F6]/20 backdrop-blur-md text-[#7D68F6] border border-[#7D68F6]/30 rounded-full tracking-widest font-bold">{tag}</span>))}
+                      </div>
+                      <h2 className="text-6xl font-black uppercase tracking-tighter leading-none text-white drop-shadow-2xl">{selectedProject.Title}</h2>
+                  </div>
                 </div>
-                {/* Detalles del proyecto abajo */}
-                <div className="p-16 text-left">
-                  <div className="flex flex-wrap gap-2 mb-6 text-left">
-                    {selectedProject.tagsArray?.map(tag => (<span key={tag} className="text-[9px] font-black uppercase px-4 py-1.5 bg-[#7D68F6]/10 text-[#7D68F6] border border-[#7D68F6]/20 rounded-full tracking-widest font-bold">{tag}</span>))}
-                  </div>
-                  
-                  {/* CORRECCIÓN: TÍTULO SUBIDO Y CON GRADIENTE DE OPACIDAD */}
-                  <div className="relative mb-8 pb-4">
-                      {/* Gradiente sutil detrás del título */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent -ml-8 -mr-8 -mt-8 -mb-4 z-0 rounded-3xl" />
-                      <h2 className="text-6xl font-black uppercase tracking-tighter leading-none text-white relative z-10">{selectedProject.Title}</h2>
-                  </div>
-
+                <div className="p-16 pt-10 text-left">
                   <p className="text-xl text-white/60 leading-relaxed font-normal normal-case">{selectedProject.Description}</p>
                 </div>
               </div>
-
-              {/* COLUMNA DERECHA (TALENTO - 35%) */}
               <div className="w-[35%] h-full bg-white/5 p-10 flex flex-col relative text-left">
                 <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mb-8 mrm-sub-header shrink-0">TALENTO INVOLUCRADO</h4>
-                
-                {/* Lista de talento con scroll independiente */}
                 <div className="flex-1 overflow-y-auto space-y-4 mb-6 hide-scrollbar pr-2">
                   {talentData.filter(t => selectedProject.teamArray?.includes(t.ID)).map(member => (
-                    <div key={member.ID} className="flex items-center justify-between group bg-black/20 p-4 rounded-3xl border border-white/5 hover:border-white/10 transition-all">
+                    <div key={member.ID} className="flex items-center justify-between group bg-black/20 p-4 rounded-3xl border border-white/5">
                       <div className="flex items-center gap-4">
-                        <img src={member.ImageURL} className="w-12 h-12 rounded-full border border-white/10 group-hover:border-[#7D68F6] transition-all object-cover" alt=""/>
+                        <img src={member.ImageURL} className="w-12 h-12 rounded-full border border-white/10 object-cover" alt=""/>
                         <div className="text-left">
                             <p className="font-black text-sm uppercase">{member.Name}</p>
-                            <p className="text-[9px] text-white/40 font-bold uppercase mb-1">{member.Role}</p>
+                            <p className="text-[9px] text-white/40 font-bold uppercase">{member.Role}</p>
                         </div>
                       </div>
                       <button onClick={() => toggleSquad(member)} className={`p-2.5 rounded-full border transition-all ${squad.some(s => s.ID === member.ID) ? 'bg-[#7D68F6] border-[#7D68F6] text-white' : 'border-white/10 text-white/30 hover:text-[#7D68F6] hover:border-[#7D68F6]'}`}>
@@ -368,17 +345,11 @@ function MainContent() {
                       </button>
                     </div>
                   ))}
-                  {(!selectedProject.teamArray || selectedProject.teamArray.length === 0) && (
-                      <p className="text-white/30 text-xs uppercase font-bold text-center mt-10">No hay talento asociado a este proyecto.</p>
-                  )}
                 </div>
-
-                {/* Botón fijo en la parte inferior */}
                 <button onClick={() => addEntireTeamToSquad(selectedProject.teamArray || [])} className="mt-auto py-5 bg-[#7D68F6] text-white font-black uppercase tracking-[0.2em] text-[11px] rounded-full hover:scale-105 transition-all flex items-center justify-center gap-3 shrink-0 shadow-lg shadow-[#7D68F6]/20">
                     <Users size={18}/> AGREGA A TODO EL EQUIPO
                 </button>
               </div>
-
             </div>
           </motion.div>
         )}
@@ -424,43 +395,26 @@ function MainContent() {
   );
 }
 
-// --- PANTALLA DE LOGIN ---
 function LoginScreen() {
   const { instance } = useMsal();
-  
   return (
     <div className="h-screen bg-[#0A0A0A] flex flex-col items-center justify-center text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,#1a0b3d_0%,transparent_50%)] z-0 pointer-events-none" />
         <div className="relative z-10 flex flex-col items-center text-center">
             <h1 className="text-[120px] font-black uppercase tracking-tighter leading-none mb-4">MRM</h1>
             <p className="text-[14px] text-[#7D68F6] font-bold uppercase tracking-[0.5em] mb-12">BOGOTÁ CREATIVE CREDENTIALS</p>
-            <button 
-                onClick={() => instance.loginRedirect()} 
-                className="bg-[#7D68F6] hover:bg-white hover:text-black transition-all duration-300 px-12 py-5 rounded-full text-[12px] font-black uppercase tracking-widest shadow-[0_0_40px_rgba(125,104,246,0.3)]"
-            >
-                INICIAR SESIÓN CON MICROSOFT
-            </button>
+            <button onClick={() => instance.loginRedirect()} className="bg-[#7D68F6] hover:bg-white hover:text-black transition-all duration-300 px-12 py-5 rounded-full text-[12px] font-black uppercase tracking-widest shadow-[0_0_40px_rgba(125,104,246,0.3)]">INICIAR SESIÓN CON MICROSOFT</button>
         </div>
-        <style>{`
-          body, html { font-family: 'MW Sans', sans-serif !important; background-color: #0A0A0A !important; }
-          h1, h2, h3, h4, .font-black { font-weight: 900 !important; font-style: normal !important; }
-          * { font-style: normal !important; }
-        `}</style>
+        <style>{`body, html { font-family: 'MW Sans', sans-serif !important; background-color: #0A0A0A !important; } h1, h2, h3, h4, .font-black { font-weight: 900 !important; font-style: normal !important; } * { font-style: normal !important; }`}</style>
     </div>
   );
 }
 
-// --- COMPONENTE RAÍZ ---
 export default function App() { 
   return (
     <MsalProvider instance={msalInstance}>
-        <AuthenticatedTemplate>
-            <MainContent />
-        </AuthenticatedTemplate>
-        
-        <UnauthenticatedTemplate>
-            <LoginScreen />
-        </UnauthenticatedTemplate>
+        <AuthenticatedTemplate><MainContent /></AuthenticatedTemplate>
+        <UnauthenticatedTemplate><LoginScreen /></UnauthenticatedTemplate>
     </MsalProvider>
   ); 
 }
