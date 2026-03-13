@@ -316,24 +316,34 @@ function MainContent() {
         </AnimatePresence>
       </main>
 
-      {/* MODAL DE PROYECTO - NUEVO DISEÑO 65/35 */}
+      {/* MODAL DE PROYECTO - DISEÑO 65/35 ACTUALIZADO */}
       <AnimatePresence>
         {selectedProject && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center p-6 backdrop-blur-2xl bg-black/80 pointer-events-auto">
             <div className="bg-[#0f0f0f] border border-white/10 w-full max-w-7xl h-[90vh] rounded-[3rem] overflow-hidden relative flex shadow-2xl">
               
+              {/* Botón de cerrar movido para no tapar la imagen */}
               <button onClick={() => setSelectedProject(null)} className="absolute top-6 right-6 z-20 p-4 bg-black/50 backdrop-blur-md rounded-full hover:bg-white text-white hover:text-black transition-all shadow-2xl"><X size={24}/></button>
 
               {/* COLUMNA IZQUIERDA (PROYECTO - 65%) */}
               <div className="w-[65%] flex flex-col h-full border-r border-white/5 overflow-y-auto hide-scrollbar">
+                {/* Carrusel de imágenes en la parte superior */}
                 <div className="h-[45%] min-h-[350px] w-full bg-zinc-950 overflow-hidden relative flex overflow-x-auto snap-x hide-scrollbar shrink-0">
                   {selectedProject.images.map((img, i) => (<img key={i} src={img} className="w-full h-full object-cover opacity-80 flex-shrink-0 snap-start" alt=""/>))}
                 </div>
+                {/* Detalles del proyecto abajo */}
                 <div className="p-16 text-left">
                   <div className="flex flex-wrap gap-2 mb-6 text-left">
                     {selectedProject.tagsArray?.map(tag => (<span key={tag} className="text-[9px] font-black uppercase px-4 py-1.5 bg-[#7D68F6]/10 text-[#7D68F6] border border-[#7D68F6]/20 rounded-full tracking-widest font-bold">{tag}</span>))}
                   </div>
-                  <h2 className="text-6xl font-black uppercase mb-8 tracking-tighter leading-none text-white">{selectedProject.Title}</h2>
+                  
+                  {/* CORRECCIÓN: TÍTULO SUBIDO Y CON GRADIENTE DE OPACIDAD */}
+                  <div className="relative mb-8 pb-4">
+                      {/* Gradiente sutil detrás del título */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent -ml-8 -mr-8 -mt-8 -mb-4 z-0 rounded-3xl" />
+                      <h2 className="text-6xl font-black uppercase tracking-tighter leading-none text-white relative z-10">{selectedProject.Title}</h2>
+                  </div>
+
                   <p className="text-xl text-white/60 leading-relaxed font-normal normal-case">{selectedProject.Description}</p>
                 </div>
               </div>
@@ -342,6 +352,7 @@ function MainContent() {
               <div className="w-[35%] h-full bg-white/5 p-10 flex flex-col relative text-left">
                 <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mb-8 mrm-sub-header shrink-0">TALENTO INVOLUCRADO</h4>
                 
+                {/* Lista de talento con scroll independiente */}
                 <div className="flex-1 overflow-y-auto space-y-4 mb-6 hide-scrollbar pr-2">
                   {talentData.filter(t => selectedProject.teamArray?.includes(t.ID)).map(member => (
                     <div key={member.ID} className="flex items-center justify-between group bg-black/20 p-4 rounded-3xl border border-white/5 hover:border-white/10 transition-all">
@@ -362,6 +373,7 @@ function MainContent() {
                   )}
                 </div>
 
+                {/* Botón fijo en la parte inferior */}
                 <button onClick={() => addEntireTeamToSquad(selectedProject.teamArray || [])} className="mt-auto py-5 bg-[#7D68F6] text-white font-black uppercase tracking-[0.2em] text-[11px] rounded-full hover:scale-105 transition-all flex items-center justify-center gap-3 shrink-0 shadow-lg shadow-[#7D68F6]/20">
                     <Users size={18}/> AGREGA A TODO EL EQUIPO
                 </button>
@@ -445,6 +457,7 @@ export default function App() {
         <AuthenticatedTemplate>
             <MainContent />
         </AuthenticatedTemplate>
+        
         <UnauthenticatedTemplate>
             <LoginScreen />
         </UnauthenticatedTemplate>
