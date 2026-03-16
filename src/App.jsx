@@ -50,7 +50,6 @@ function MainContent() {
   // --- LÓGICA DEL CTA DE SQUAD EN EL PROYECTO ---
   const activeProjectTeamIds = selectedProject?.teamArray || [];
   const activeTeamTalent = talentData.filter(t => activeProjectTeamIds.includes(t.ID));
-  // Verificamos si todo el equipo de este proyecto ya está en el Squad general
   const isEntireTeamInSquad = activeProjectTeamIds.length > 0 && activeTeamTalent.length > 0 && activeTeamTalent.every(member => squad.some(s => s.ID === member.ID));
 
   const toggleEntireTeam = () => {
@@ -78,7 +77,7 @@ function MainContent() {
         const processedTalent = rawTalent.map(p => ({
             ...p,
             ID: String(p.ID || p.Name), 
-            skillsArray: (p.Tags || p.Skills || p.Capabilities || "").split(',').map(s => s.trim()).filter(Boolean)
+            skillsArray: (p.Tags || p.Skills || p.tags || "").split(',').map(s => s.trim()).filter(Boolean)
         }));
         setTalentData(processedTalent);
 
@@ -86,15 +85,19 @@ function MainContent() {
         const rawProjects = Papa.parse(projectsCSV, { header: true, skipEmptyLines: true, delimiter: ";" }).data;
         
         setFlatProjects(rawProjects.map(p => {
-          // Buscamos en varias columnas comunes para evitar errores si el CSV cambia de nombre
-          const rawTags = p.Capabilities || p.Tags || p.Skills || "";
-          const rawTeam = p.TeamIDs || p.Team || p.TalentIDs || "";
+          // AHORA SÍ: MAPEAMOS EXACTAMENTE TUS COLUMNAS DEL CSV
+          const rawTags = p.tags || ""; 
+          const rawTeam = p.TeamsIDs || ""; 
           
           return {
             ...p,
             images: p.ImageURLs ? p.ImageURLs.split(',').map(i => i.trim()) : ["https://picsum.photos/1200/800"],
             tagsArray: rawTags.split(',').map(t => t.trim()).filter(Boolean),
-            teamArray: rawTeam.split(',').map(t => t.trim()).filter(Boolean) 
+            teamArray: rawTeam.split(',').map(t => t.trim()).filter(Boolean),
+            Category: p.Category || "Proyecto Especial",
+            LoPedido: p.LoPedido || "Ejecución de requerimientos técnicos basados en lineamientos creativos.",
+            LoHecho: p.LoHecho || "Implementación modular de la interfaz y flujos de usuario optimizados.",
+            LoLogrado: p.LoLogrado || "Plataforma desplegada exitosamente con alta respuesta interactiva."
           };
         }));
 
@@ -324,7 +327,7 @@ function MainContent() {
         </AnimatePresence>
       </main>
 
-      {/* --- DETALLE DE PROYECTO (LADO A LADO ACTUALIZADO Y CORREGIDO) --- */}
+      {/* --- DETALLE DE PROYECTO (LADO A LADO 70/30) --- */}
       <AnimatePresence>
         {selectedProject && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-start justify-center p-6 backdrop-blur-2xl bg-black/80 pointer-events-auto overflow-y-auto">
@@ -333,11 +336,10 @@ function MainContent() {
                 <X size={24}/>
             </button>
 
-            {/* Contenedor principal Side-by-Side (65/35) */}
             <div className="w-full max-w-[1600px] mx-auto my-12 flex flex-col lg:flex-row gap-8 pb-20 relative">
               
-              {/* 1. TARJETA DEL PROYECTO (IZQUIERDA - 65%) */}
-              <div className="w-full lg:w-[65%] flex-shrink-0 bg-[#0f0f0f] border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl relative text-left flex flex-col h-fit">
+              {/* 1. TARJETA DEL PROYECTO (IZQUIERDA - 70%) */}
+              <div className="w-full lg:w-[70%] flex-shrink-0 bg-[#0f0f0f] border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl relative text-left h-fit">
                 
                 {/* Carrusel */}
                 <div className="relative h-[250px] md:h-[350px] w-full bg-zinc-950 overflow-hidden flex snap-x hide-scrollbar overflow-x-auto">
@@ -353,26 +355,34 @@ function MainContent() {
 
                 <div className="p-8 md:p-12 space-y-12">
                   
-                  {/* TÍTULO Y DESCRIPCIÓN (FUERA DEL CARRUSEL PARA ASEGURAR VISIBILIDAD) */}
-                  <div className="space-y-6">
-                    <h2 className="text-5xl md:text-6xl font-black uppercase tracking-tighter text-white drop-shadow-lg leading-none">
+                  <div className="space-y-6 -mt-8 relative z-10">
+                    {/* CATEGORÍA LEÍDA DEL CSV */}
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      <span className="text-[10px] font-black uppercase px-4 py-1.5 bg-[#7D68F6]/20 text-[#7D68F6] border border-[#7D68F6]/30 rounded-full tracking-widest">
+                          {selectedProject.Category}
+                      </span>
+                    </div>
+
+                    <h2 className="text-5xl md:text-6xl font-black uppercase tracking-tighter text-white leading-none">
                       {selectedProject.Title}
                     </h2>
+
                     <p className="text-lg md:text-xl text-white/60 leading-relaxed font-normal normal-case max-w-3xl">
-                      {selectedProject.Description || "Información detallada sobre la ejecución y resultados del proyecto."}
+                      {selectedProject.Description || "Información detallada sobre el proyecto no disponible."}
                     </p>
-                    
-                    {/* CHIPS DE CAPABILITIES / TAGS (GRISES) */}
+
+                    {/* CHIPS DE TAGS 100% GRISES LEÍDOS DEL CSV */}
                     {selectedProject.tagsArray && selectedProject.tagsArray.length > 0 && (
-                        <div className="flex flex-wrap gap-2 pt-4">
+                        <div className="flex flex-wrap gap-2 pt-2">
                           {selectedProject.tagsArray.map((tag, idx) => (
-                            <span key={idx} className="px-4 py-2 bg-zinc-800 text-zinc-300 text-[10px] font-black rounded-full border border-zinc-600 uppercase tracking-widest shadow-sm">
+                            <span key={idx} className="px-4 py-2 bg-[#1A1A1A] text-zinc-400 text-[10px] font-black rounded-full border border-[#333333] uppercase tracking-widest shadow-sm">
                               {tag}
                             </span>
                           ))}
                         </div>
                     )}
-                    
+
+                    {/* FAKE LINK CTA */}
                     <a href="#" className="inline-flex items-center gap-3 px-8 py-4 bg-white/5 hover:bg-white/10 rounded-full text-white text-[11px] font-black uppercase tracking-[0.2em] transition-all border border-white/10 hover:border-white/30 group mt-4">
                       <Link2 size={16} className="text-[#7D68F6]" />
                       <span>Ver Material del Proyecto</span>
@@ -380,7 +390,7 @@ function MainContent() {
                     </a>
                   </div>
 
-                  {/* Mosaico de Imágenes */}
+                  {/* Mosaico */}
                   <div className="space-y-6">
                     <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6]">GALERÍA VISUAL DE ACTIVOS</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -392,12 +402,12 @@ function MainContent() {
                     </div>
                   </div>
 
-                  {/* 3 Columnas Verticales */}
+                  {/* 3 COLUMNAS DINÁMICAS */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-6 border-t border-white/5">
                     {[
-                      { title: "LO PEDIDO", text: "Integración estructurada de credenciales técnicos y visuales." },
-                      { title: "LO HECHO", text: "Desarrollo de una interfaz modular dinámica utilizando React y Tailwind." },
-                      { title: "LO LOGRADO", text: "Un ecosistema de consulta rápido, escalable y cinematic dark." }
+                      { title: "LO PEDIDO", text: selectedProject.LoPedido },
+                      { title: "LO HECHO", text: selectedProject.LoHecho },
+                      { title: "LO LOGRADO", text: selectedProject.LoLogrado }
                     ].map((col, i) => (
                       <div key={i} className="space-y-4">
                         <h4 className="text-[12px] font-black tracking-[0.3em] text-[#7D68F6] uppercase">{col.title}</h4>
@@ -409,14 +419,13 @@ function MainContent() {
                 </div>
               </div>
 
-              {/* 2. TARJETA DE TALENTO (DERECHA - 35% - AHORA SIEMPRE VISIBLE) */}
-              <div className="w-full lg:w-[35%] flex-shrink-0 bg-[#0f0f0f] border border-white/10 rounded-[3rem] p-8 md:p-10 shadow-2xl text-left h-fit lg:sticky top-12 flex flex-col">
+              {/* 2. TARJETA DE TALENTO (DERECHA - 30%) */}
+              <div className="w-full lg:w-[30%] flex-shrink-0 bg-[#0f0f0f] border border-white/10 rounded-[3rem] p-8 md:p-10 shadow-2xl text-left h-fit lg:sticky top-12 flex flex-col">
                 <h4 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mb-8">TALENTO INVOLUCRADO</h4>
                 
-                {/* Condición: Si el CSV no conectó bien a nadie, mostramos un mensaje para no dañar el diseño */}
                 {activeTeamTalent.length === 0 ? (
                     <div className="text-white/40 text-sm italic mb-10 pb-6 border-b border-white/5">
-                        No se ha asignado talento a este proyecto o los IDs del CSV no coinciden.
+                        No se encontró talento asociado a este proyecto en la base de datos. Verifica la columna 'TeamsIDs' en tu CSV.
                     </div>
                 ) : (
                     <div className="flex flex-col gap-4 mb-10 max-h-[50vh] overflow-y-auto hide-scrollbar pr-2">
@@ -438,7 +447,6 @@ function MainContent() {
                     </div>
                 )}
 
-                {/* CTA Inteligente (Solo se habilita si hay talento) */}
                 <button 
                     onClick={toggleEntireTeam} 
                     disabled={activeTeamTalent.length === 0}
