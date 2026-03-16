@@ -50,14 +50,13 @@ function MainContent() {
   // --- LÓGICA DEL CTA DE SQUAD EN EL PROYECTO ---
   const activeProjectTeamIds = selectedProject?.teamArray || [];
   const activeTeamTalent = talentData.filter(t => activeProjectTeamIds.includes(t.ID));
-  const isEntireTeamInSquad = activeProjectTeamIds.length > 0 && activeProjectTeamIds.every(id => squad.some(s => s.ID === id));
+  // Verificamos si todo el equipo de este proyecto ya está en el Squad general
+  const isEntireTeamInSquad = activeProjectTeamIds.length > 0 && activeTeamTalent.length > 0 && activeTeamTalent.every(member => squad.some(s => s.ID === member.ID));
 
   const toggleEntireTeam = () => {
       if (isEntireTeamInSquad) {
-          // Si ya están todos, los quitamos del squad
           setSquad(prev => prev.filter(p => !activeProjectTeamIds.includes(p.ID)));
       } else {
-          // Si faltan, agregamos los que no estén
           setSquad(prev => {
               const newOnes = activeTeamTalent.filter(p => !prev.some(s => s.ID === p.ID));
               return [...prev, ...newOnes];
@@ -79,18 +78,25 @@ function MainContent() {
         const processedTalent = rawTalent.map(p => ({
             ...p,
             ID: String(p.ID || p.Name), 
-            skillsArray: (p.Tags || "").split(',').map(s => s.trim()).filter(Boolean)
+            skillsArray: (p.Tags || p.Skills || p.Capabilities || "").split(',').map(s => s.trim()).filter(Boolean)
         }));
         setTalentData(processedTalent);
 
         const projectsCSV = await pRes.text();
         const rawProjects = Papa.parse(projectsCSV, { header: true, skipEmptyLines: true, delimiter: ";" }).data;
-        setFlatProjects(rawProjects.map(p => ({
-          ...p,
-          images: p.ImageURLs ? p.ImageURLs.split(',').map(i => i.trim()) : ["https://picsum.photos/1200/800"],
-          tagsArray: (p.Tags || "").split(',').map(t => t.trim()).filter(Boolean),
-          teamArray: (p.TeamIDs || "").split(',').map(t => t.trim()).filter(Boolean) 
-        })));
+        
+        setFlatProjects(rawProjects.map(p => {
+          // Buscamos en varias columnas comunes para evitar errores si el CSV cambia de nombre
+          const rawTags = p.Capabilities || p.Tags || p.Skills || "";
+          const rawTeam = p.TeamIDs || p.Team || p.TalentIDs || "";
+          
+          return {
+            ...p,
+            images: p.ImageURLs ? p.ImageURLs.split(',').map(i => i.trim()) : ["https://picsum.photos/1200/800"],
+            tagsArray: rawTags.split(',').map(t => t.trim()).filter(Boolean),
+            teamArray: rawTeam.split(',').map(t => t.trim()).filter(Boolean) 
+          };
+        }));
 
         setChatHistory([{ type: 'ai', text: `Bienvenido al sistema de credenciales MRM Bogotá. ¿Qué equipo y proyecto vamos a conformar hoy?` }]);
         setLoading(false);
@@ -323,61 +329,61 @@ function MainContent() {
         {selectedProject && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-start justify-center p-6 backdrop-blur-2xl bg-black/80 pointer-events-auto overflow-y-auto">
             
-            {/* Botón de cerrar fijo arriba a la derecha */}
             <button onClick={() => setSelectedProject(null)} className="fixed top-6 right-6 z-[250] p-4 bg-black/50 backdrop-blur-md rounded-full hover:bg-white text-white hover:text-black transition-all shadow-2xl border border-white/10">
                 <X size={24}/>
             </button>
 
-            {/* Contenedor principal Side-by-Side (70/30) con ancho máximo mayor */}
+            {/* Contenedor principal Side-by-Side (65/35) */}
             <div className="w-full max-w-[1600px] mx-auto my-12 flex flex-col lg:flex-row gap-8 pb-20 relative">
               
-              {/* 1. TARJETA DEL PROYECTO (IZQUIERDA - 70% Y TÍTULO REVISADO) */}
-              <div className="w-full lg:w-[70%] flex-shrink-0 bg-[#0f0f0f] border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl relative text-left h-fit">
+              {/* 1. TARJETA DEL PROYECTO (IZQUIERDA - 65%) */}
+              <div className="w-full lg:w-[65%] flex-shrink-0 bg-[#0f0f0f] border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl relative text-left flex flex-col h-fit">
                 
-                {/* Carrusel con degradado y TÍTULO CLARO SUPERPUESTO */}
-                <div className="relative h-[350px] md:h-[450px] w-full bg-zinc-950 overflow-hidden flex snap-x hide-scrollbar overflow-x-auto">
+                {/* Carrusel */}
+                <div className="relative h-[250px] md:h-[350px] w-full bg-zinc-950 overflow-hidden flex snap-x hide-scrollbar overflow-x-auto">
                   {selectedProject.images && selectedProject.images.length > 0 ? (
                       selectedProject.images.map((img, i) => (
-                          <img key={i} src={img} className="w-full h-full object-cover flex-shrink-0 snap-start opacity-80" alt="Slide" />
+                          <img key={i} src={img} className="w-full h-full object-cover flex-shrink-0 snap-start opacity-70" alt="Slide" />
                       ))
                   ) : (
                       <div className="w-full h-full bg-zinc-900" />
                   )}
-                  {/* Degradado para oscurecer el fondo y resaltar texto */}
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f0f] to-transparent pointer-events-none" />
+                </div>
+
+                <div className="p-8 md:p-12 space-y-12">
                   
-                  {/* TÍTULO Y DESCRIPCIÓN CLAROS (Superpuestos en el carrusel) */}
-                  <div className="absolute bottom-0 left-0 p-12 w-full text-left">
-                    <div className="flex flex-wrap gap-2 mb-6">
-                      <span className="text-[10px] font-black uppercase px-4 py-1.5 bg-[#7D68F6]/20 backdrop-blur-md text-[#7D68F6] border border-[#7D68F6]/30 rounded-full tracking-widest font-bold">Featured Project</span>
-                      {selectedProject.tagsArray?.map(tag => (
-                        <span key={tag} className="text-[9px] font-black uppercase px-4 py-1.5 bg-zinc-800/80backdrop-blur-md text-zinc-300 border border-zinc-700/50 rounded-full tracking-widest font-bold">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                    {/* Título Principal con máxima visibilidad (sombra sutil blanca) */}
-                    <h2 className="text-6xl md:text-7xl font-black uppercase tracking-tighter leading-none text-white drop-shadow-[0_4px_30px_rgba(255,255,255,0.1)]">
+                  {/* TÍTULO Y DESCRIPCIÓN (FUERA DEL CARRUSEL PARA ASEGURAR VISIBILIDAD) */}
+                  <div className="space-y-6">
+                    <h2 className="text-5xl md:text-6xl font-black uppercase tracking-tighter text-white drop-shadow-lg leading-none">
                       {selectedProject.Title}
                     </h2>
-                    <p className="mt-5 text-xl text-white/80 max-w-3xl leading-relaxed font-normal normal-case drop-shadow-md">
+                    <p className="text-lg md:text-xl text-white/60 leading-relaxed font-normal normal-case max-w-3xl">
                       {selectedProject.Description || "Información detallada sobre la ejecución y resultados del proyecto."}
                     </p>
-                    <a href="#" className="inline-flex items-center gap-3 px-8 py-4 bg-white/5 hover:bg-white/10 rounded-full text-white text-[11px] font-black uppercase tracking-[0.2em] transition-all border border-white/10 hover:border-white/30 group mt-8">
+                    
+                    {/* CHIPS DE CAPABILITIES / TAGS (GRISES) */}
+                    {selectedProject.tagsArray && selectedProject.tagsArray.length > 0 && (
+                        <div className="flex flex-wrap gap-2 pt-4">
+                          {selectedProject.tagsArray.map((tag, idx) => (
+                            <span key={idx} className="px-4 py-2 bg-zinc-800 text-zinc-300 text-[10px] font-black rounded-full border border-zinc-600 uppercase tracking-widest shadow-sm">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                    )}
+                    
+                    <a href="#" className="inline-flex items-center gap-3 px-8 py-4 bg-white/5 hover:bg-white/10 rounded-full text-white text-[11px] font-black uppercase tracking-[0.2em] transition-all border border-white/10 hover:border-white/30 group mt-4">
                       <Link2 size={16} className="text-[#7D68F6]" />
                       <span>Ver Material del Proyecto</span>
                       <ExternalLink size={14} className="opacity-40" />
                     </a>
                   </div>
-                </div>
 
-                <div className="p-8 md:p-12 space-y-12 mt-12">
-                  
                   {/* Mosaico de Imágenes */}
                   <div className="space-y-6">
                     <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6]">GALERÍA VISUAL DE ACTIVOS</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      {/* Generamos 4 espacios basados en las imágenes del proyecto */}
                       {[0, 1, 2, 3].map(i => (
                           <div key={i} className="aspect-square rounded-2xl overflow-hidden border border-white/5 bg-black/40">
                               <img src={selectedProject.images[i] || selectedProject.images[0] || "https://picsum.photos/600"} className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-500 hover:scale-110" alt="Mosaico"/>
@@ -403,12 +409,16 @@ function MainContent() {
                 </div>
               </div>
 
-              {/* 2. TARJETA DE TALENTO (DERECHA - 30% Y STICKY CON LÓGICA DE SQUAD COMPLETO) */}
-              {activeTeamTalent.length > 0 && (
-                  <div className="w-full lg:w-[30%] flex-shrink-0 bg-[#0f0f0f] border border-white/10 rounded-[3rem] p-8 md:p-10 shadow-2xl text-left h-fit lg:sticky top-12 flex flex-col">
-                    <h4 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mb-8">TALENTO INVOLUCRADO</h4>
-                    
-                    {/* Lista de talento con scroll si son muchos */}
+              {/* 2. TARJETA DE TALENTO (DERECHA - 35% - AHORA SIEMPRE VISIBLE) */}
+              <div className="w-full lg:w-[35%] flex-shrink-0 bg-[#0f0f0f] border border-white/10 rounded-[3rem] p-8 md:p-10 shadow-2xl text-left h-fit lg:sticky top-12 flex flex-col">
+                <h4 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mb-8">TALENTO INVOLUCRADO</h4>
+                
+                {/* Condición: Si el CSV no conectó bien a nadie, mostramos un mensaje para no dañar el diseño */}
+                {activeTeamTalent.length === 0 ? (
+                    <div className="text-white/40 text-sm italic mb-10 pb-6 border-b border-white/5">
+                        No se ha asignado talento a este proyecto o los IDs del CSV no coinciden.
+                    </div>
+                ) : (
                     <div className="flex flex-col gap-4 mb-10 max-h-[50vh] overflow-y-auto hide-scrollbar pr-2">
                       {activeTeamTalent.map(member => (
                         <div key={member.ID} className="flex items-center justify-between bg-black/40 p-5 rounded-3xl border border-white/5 hover:border-white/10 transition-colors group">
@@ -420,28 +430,30 @@ function MainContent() {
                             </div>
                           </div>
                           
-                          {/* Botón individual dinámico: Agregar (UserPlus) o Eliminar (UserMinus) */}
                           <button onClick={() => toggleSquad(member)} className={`p-3 rounded-full border transition-all ${squad.some(s => s.ID === member.ID) ? 'bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white' : 'border-white/10 text-white/30 hover:text-[#7D68F6] hover:border-[#7D68F6]'}`}>
                             {squad.some(s => s.ID === member.ID) ? <UserMinus size={16}/> : <UserPlus size={16}/>}
                           </button>
                         </div>
                       ))}
                     </div>
+                )}
 
-                    {/* CTA Inteligente de Squad Completo (Cambia de color y texto dinámicamente) */}
-                    <button 
-                        onClick={toggleEntireTeam} 
-                        className={`w-full py-5 font-black uppercase tracking-[0.15em] text-[10px] rounded-full hover:scale-105 transition-all flex items-center justify-center gap-3 shadow-lg ${
-                            isEntireTeamInSquad 
-                            ? 'bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20' 
-                            : 'bg-[#7D68F6] text-white shadow-[#7D68F6]/20'
-                        }`}
-                    >
-                        {isEntireTeamInSquad ? <UserMinus size={18}/> : <Users size={18}/>}
-                        {isEntireTeamInSquad ? 'RETIRAR SQUAD COMPLETO' : 'AGREGAR SQUAD COMPLETO'}
-                    </button>
-                  </div>
-              )}
+                {/* CTA Inteligente (Solo se habilita si hay talento) */}
+                <button 
+                    onClick={toggleEntireTeam} 
+                    disabled={activeTeamTalent.length === 0}
+                    className={`w-full py-5 font-black uppercase tracking-[0.15em] text-[10px] rounded-full transition-all flex items-center justify-center gap-3 shadow-lg ${
+                        activeTeamTalent.length === 0 ? 'bg-white/5 text-white/20 cursor-not-allowed border border-white/10' :
+                        isEntireTeamInSquad 
+                        ? 'bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20' 
+                        : 'bg-[#7D68F6] text-white hover:scale-105 shadow-[#7D68F6]/20'
+                    }`}
+                >
+                    {isEntireTeamInSquad ? <UserMinus size={18}/> : <Users size={18}/>}
+                    {isEntireTeamInSquad ? 'RETIRAR SQUAD COMPLETO' : 'AGREGAR SQUAD COMPLETO'}
+                </button>
+              </div>
+
             </div>
           </motion.div>
         )}
