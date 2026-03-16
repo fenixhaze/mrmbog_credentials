@@ -65,18 +65,17 @@ function MainContent() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const baseUrl = window.location.hostname.includes('github.io') ? '/mrmbog_credentials' : '';
+        // Mejoramos la ruta para asegurar que encuentre el CSV
         const [tRes, pRes] = await Promise.all([
-          fetch(`${baseUrl}/Talent_Database.csv`), 
-          fetch(`${baseUrl}/Projects_Database.csv`) 
+          fetch('./Talent_Database.csv'), 
+          fetch('./Projects_Database.csv') 
         ]);
 
         const talentCSV = await tRes.text();
-        // LECTOR BLINDADO CONTRA ESPACIOS Y CARACTERES RAROS EN EXCEL
+        // Quitamos el delimiter=";" para que PapaParse lo adivine solo
         const rawTalent = Papa.parse(talentCSV, { 
             header: true, 
             skipEmptyLines: true, 
-            delimiter: ";",
             transformHeader: h => h.trim().replace(/^[\u200B\uFEFF]/, '') 
         }).data;
 
@@ -93,13 +92,11 @@ function MainContent() {
         const rawProjects = Papa.parse(projectsCSV, { 
             header: true, 
             skipEmptyLines: true, 
-            delimiter: ";",
             transformHeader: h => h.trim().replace(/^[\u200B\uFEFF]/, '') 
         }).data;
         
         setFlatProjects(rawProjects.map(p => {
           const rawTags = p.tags || p.Tags || p.Capabilities || ""; 
-          // Reemplazamos posibles puntos y comas accidentales por comas normales para leer bien los IDs
           const rawTeam = String(p.TeamsIDs || p.TeamIDs || p.Team || "").replace(/;/g, ','); 
           
           return {
@@ -120,7 +117,7 @@ function MainContent() {
 
         setChatHistory([{ type: 'ai', text: `Bienvenido al sistema de credenciales MRM Bogotá. ¿Qué equipo y proyecto vamos a conformar hoy?` }]);
         setLoading(false);
-      } catch (e) { console.error(e); setLoading(false); }
+      } catch (e) { console.error("Error cargando CSVs:", e); setLoading(false); }
     };
     fetchData();
   }, [instance, accounts]);
@@ -358,7 +355,7 @@ function MainContent() {
               {/* 1. TARJETA DEL PROYECTO (IZQUIERDA - 70%) */}
               <div className="w-full lg:w-[70%] flex-shrink-0 bg-[#0f0f0f] border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl relative text-left h-fit">
                 
-                {/* Carrusel (Solo Imágenes, sin texto encima) */}
+                {/* Carrusel */}
                 <div className="relative h-[250px] md:h-[350px] w-full bg-zinc-950 overflow-hidden flex snap-x hide-scrollbar overflow-x-auto">
                   {selectedProject.images && selectedProject.images.length > 0 ? (
                       selectedProject.images.map((img, i) => (
@@ -370,7 +367,6 @@ function MainContent() {
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f0f] to-transparent pointer-events-none" />
                 </div>
 
-                {/* TEXTO Y CONTENIDO */}
                 <div className="p-8 md:p-12 space-y-12">
                   
                   <div className="space-y-6 -mt-8 relative z-10">
