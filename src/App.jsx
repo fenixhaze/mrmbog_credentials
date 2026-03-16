@@ -30,7 +30,7 @@ function App() {
     <div className="min-h-screen bg-[#0d0d0f] text-zinc-100 p-6 md:p-12 font-sans selection:bg-zinc-700">
       <div className="max-w-4xl mx-auto space-y-10">
         
-        {/* --- 1. CABECERA ORIGINAL --- */}
+        {/* --- 1. CABECERA --- */}
         <header className="flex flex-col md:flex-row items-center md:items-start gap-8 border-b border-zinc-900 pb-10">
           <div className="w-32 h-32 rounded-3xl bg-gradient-to-tr from-zinc-800 to-zinc-600 border border-zinc-700 shadow-2xl shrink-0 rotate-3" />
           <div className="space-y-4 text-center md:text-left">
@@ -45,7 +45,7 @@ function App() {
           </div>
         </header>
 
-        {/* --- 2. ABOUT / INTRO ORIGINAL --- */}
+        {/* --- 2. ABOUT ME --- */}
         <section className="bg-zinc-900/30 p-8 rounded-[2rem] border border-zinc-800/50">
           <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
             <User size={20} className="text-zinc-600"/> About Me
@@ -58,7 +58,7 @@ function App() {
         {/* --- 3. PROYECTO (EL COMPONENTE ACTUALIZADO) --- */}
         <section className="bg-zinc-900/50 rounded-[2.5rem] border border-zinc-800 overflow-hidden shadow-2xl transition-all hover:border-zinc-700">
           
-          {/* A. Carrusel Superior */}
+          {/* Carrusel */}
           <div className="relative h-72 w-full bg-zinc-800 group">
             {carouselImages.map((img, i) => (
               <img 
@@ -78,7 +78,7 @@ function App() {
           </div>
 
           <div className="p-8 md:p-10 space-y-10">
-            {/* B. Título, Descripción y Fake Link */}
+            {/* Info del Proyecto */}
             <div className="space-y-6">
               <div className="flex justify-between items-start gap-4">
                 <div className="space-y-2">
@@ -104,7 +104,7 @@ function App() {
               </div>
             </div>
 
-            {/* C. Mosaico de Imágenes */}
+            {/* Mosaico */}
             <div className="space-y-4">
               <h3 className="text-sm font-bold text-zinc-600 uppercase tracking-widest">Project Gallery</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -116,7 +116,7 @@ function App() {
               </div>
             </div>
 
-            {/* D. Tres Secciones Verticales */}
+            {/* 3 Columnas */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-4 border-t border-zinc-800/50">
               {[
                 { label: "LO PEDIDO", content: "Interfaz dinámica, tarjetas separadas y despliegue automático en GH Pages." },
@@ -130,7 +130,7 @@ function App() {
               ))}
             </div>
 
-            {/* E. Skills en Gris (Al final de la tarjeta) */}
+            {/* Skills */}
             <div className="pt-6 flex flex-wrap gap-2">
               {projectSkills.map(s => (
                 <span key={s} className="px-3 py-1 bg-zinc-800/40 text-zinc-500 text-[10px] font-bold rounded-lg border border-zinc-800/50 uppercase tracking-tighter">
@@ -141,9 +141,8 @@ function App() {
           </div>
         </section>
 
-        {/* --- 4. SECCIONES RESTANTES ORIGINALES --- */}
+        {/* --- 4. EDUCACIÓN Y REDES --- */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Educación */}
           <div className="bg-zinc-900/30 p-8 rounded-[2rem] border border-zinc-800/50 flex flex-col justify-between group hover:border-zinc-700 transition-colors">
             <div className="space-y-4">
               <div className="p-3 bg-zinc-800 w-fit rounded-2xl group-hover:bg-zinc-700 transition-colors">
@@ -157,7 +156,6 @@ function App() {
             <div className="mt-6 text-zinc-600 text-xs font-mono uppercase tracking-widest">2018 — 2022</div>
           </div>
 
-          {/* Social / Contacto */}
           <div className="bg-zinc-900/30 p-8 rounded-[2rem] border border-zinc-800/50 space-y-6">
             <h3 className="font-bold text-xl tracking-tight">Connect</h3>
             <div className="space-y-3">
@@ -177,7 +175,6 @@ function App() {
           </div>
         </div>
 
-        {/* Pie de página */}
         <footer className="text-center pt-10 pb-6">
           <p className="text-zinc-700 text-[10px] uppercase tracking-[0.4em]">MrMBog Digital Portfolio © 2026</p>
         </footer>
