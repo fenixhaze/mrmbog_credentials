@@ -47,7 +47,6 @@ function MainContent() {
       setSquad(prev => prev.some(p => p.ID === person.ID) ? prev.filter(p => p.ID !== person.ID) : [...prev, person]);
   };
 
-  // --- LÓGICA DEL CTA DE SQUAD EN EL PROYECTO ---
   const activeProjectTeamIds = selectedProject?.teamArray || [];
   const activeTeamTalent = talentData.filter(t => activeProjectTeamIds.includes(t.ID));
   const isEntireTeamInSquad = activeProjectTeamIds.length > 0 && activeTeamTalent.length > 0 && activeTeamTalent.every(member => squad.some(s => s.ID === member.ID));
@@ -73,31 +72,49 @@ function MainContent() {
         ]);
 
         const talentCSV = await tRes.text();
-        const rawTalent = Papa.parse(talentCSV, { header: true, skipEmptyLines: true, delimiter: ";" }).data;
+        // LECTOR BLINDADO CONTRA ESPACIOS Y CARACTERES RAROS EN EXCEL
+        const rawTalent = Papa.parse(talentCSV, { 
+            header: true, 
+            skipEmptyLines: true, 
+            delimiter: ";",
+            transformHeader: h => h.trim().replace(/^[\u200B\uFEFF]/, '') 
+        }).data;
+
         const processedTalent = rawTalent.map(p => ({
             ...p,
-            ID: String(p.ID || p.Name), 
-            skillsArray: (p.Tags || p.Skills || p.tags || "").split(',').map(s => s.trim()).filter(Boolean)
+            ID: String(p.ID || p.id || p.Name || "").trim(), 
+            Name: p.Name || p.name || "Talento MRM",
+            Role: p.Role || p.role || "Especialista",
+            skillsArray: String(p.Tags || p.Skills || p.tags || "").split(',').map(s => s.trim()).filter(Boolean)
         }));
         setTalentData(processedTalent);
 
         const projectsCSV = await pRes.text();
-        const rawProjects = Papa.parse(projectsCSV, { header: true, skipEmptyLines: true, delimiter: ";" }).data;
+        const rawProjects = Papa.parse(projectsCSV, { 
+            header: true, 
+            skipEmptyLines: true, 
+            delimiter: ";",
+            transformHeader: h => h.trim().replace(/^[\u200B\uFEFF]/, '') 
+        }).data;
         
         setFlatProjects(rawProjects.map(p => {
-          // AHORA SÍ: MAPEAMOS EXACTAMENTE TUS COLUMNAS DEL CSV
-          const rawTags = p.tags || ""; 
-          const rawTeam = p.TeamsIDs || ""; 
+          const rawTags = p.tags || p.Tags || p.Capabilities || ""; 
+          // Reemplazamos posibles puntos y comas accidentales por comas normales para leer bien los IDs
+          const rawTeam = String(p.TeamsIDs || p.TeamIDs || p.Team || "").replace(/;/g, ','); 
           
           return {
             ...p,
-            images: p.ImageURLs ? p.ImageURLs.split(',').map(i => i.trim()) : ["https://picsum.photos/1200/800"],
+            ID: String(p.ID || p.id || "").trim(),
+            Title: p.Title || p.title || "PROYECTO SIN TÍTULO",
+            Description: p.Description || p.description || "Sin descripción disponible.",
+            images: p.ImageURLs ? String(p.ImageURLs).split(',').map(i => i.trim()) : ["https://picsum.photos/1200/800"],
             tagsArray: rawTags.split(',').map(t => t.trim()).filter(Boolean),
             teamArray: rawTeam.split(',').map(t => t.trim()).filter(Boolean),
-            Category: p.Category || "Proyecto Especial",
-            LoPedido: p.LoPedido || "Ejecución de requerimientos técnicos basados en lineamientos creativos.",
-            LoHecho: p.LoHecho || "Implementación modular de la interfaz y flujos de usuario optimizados.",
-            LoLogrado: p.LoLogrado || "Plataforma desplegada exitosamente con alta respuesta interactiva."
+            Category: p.Category || p.category || "Proyecto Especial",
+            LoPedido: p.LoPedido || p.lopedido || "Ejecución técnica e integración visual según requerimientos.",
+            LoHecho: p.LoHecho || p.lohecho || "Desarrollo de ecosistema digital de alta performance.",
+            LoLogrado: p.LoLogrado || p.lologrado || "Plataforma desplegada con excelente interactividad de usuario.",
+            Link: p.Link || p.URL || p.ProjectURL || ""
           };
         }));
 
@@ -341,7 +358,7 @@ function MainContent() {
               {/* 1. TARJETA DEL PROYECTO (IZQUIERDA - 70%) */}
               <div className="w-full lg:w-[70%] flex-shrink-0 bg-[#0f0f0f] border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl relative text-left h-fit">
                 
-                {/* Carrusel */}
+                {/* Carrusel (Solo Imágenes, sin texto encima) */}
                 <div className="relative h-[250px] md:h-[350px] w-full bg-zinc-950 overflow-hidden flex snap-x hide-scrollbar overflow-x-auto">
                   {selectedProject.images && selectedProject.images.length > 0 ? (
                       selectedProject.images.map((img, i) => (
@@ -353,10 +370,10 @@ function MainContent() {
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f0f] to-transparent pointer-events-none" />
                 </div>
 
+                {/* TEXTO Y CONTENIDO */}
                 <div className="p-8 md:p-12 space-y-12">
                   
                   <div className="space-y-6 -mt-8 relative z-10">
-                    {/* CATEGORÍA LEÍDA DEL CSV */}
                     <div className="flex flex-wrap gap-2 mb-2">
                       <span className="text-[10px] font-black uppercase px-4 py-1.5 bg-[#7D68F6]/20 text-[#7D68F6] border border-[#7D68F6]/30 rounded-full tracking-widest">
                           {selectedProject.Category}
@@ -371,7 +388,7 @@ function MainContent() {
                       {selectedProject.Description || "Información detallada sobre el proyecto no disponible."}
                     </p>
 
-                    {/* CHIPS DE TAGS 100% GRISES LEÍDOS DEL CSV */}
+                    {/* CHIPS GRISES */}
                     {selectedProject.tagsArray && selectedProject.tagsArray.length > 0 && (
                         <div className="flex flex-wrap gap-2 pt-2">
                           {selectedProject.tagsArray.map((tag, idx) => (
@@ -382,12 +399,13 @@ function MainContent() {
                         </div>
                     )}
 
-                    {/* FAKE LINK CTA */}
-                    <a href="#" className="inline-flex items-center gap-3 px-8 py-4 bg-white/5 hover:bg-white/10 rounded-full text-white text-[11px] font-black uppercase tracking-[0.2em] transition-all border border-white/10 hover:border-white/30 group mt-4">
-                      <Link2 size={16} className="text-[#7D68F6]" />
-                      <span>Ver Material del Proyecto</span>
-                      <ExternalLink size={14} className="opacity-40" />
-                    </a>
+                    {selectedProject.Link && (
+                      <a href={selectedProject.Link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-3 px-8 py-4 bg-white/5 hover:bg-white/10 rounded-full text-white text-[11px] font-black uppercase tracking-[0.2em] transition-all border border-white/10 hover:border-white/30 group mt-4">
+                        <Link2 size={16} className="text-[#7D68F6]" />
+                        <span>Ver Material del Proyecto</span>
+                        <ExternalLink size={14} className="opacity-40" />
+                      </a>
+                    )}
                   </div>
 
                   {/* Mosaico */}
@@ -425,7 +443,7 @@ function MainContent() {
                 
                 {activeTeamTalent.length === 0 ? (
                     <div className="text-white/40 text-sm italic mb-10 pb-6 border-b border-white/5">
-                        No se encontró talento asociado a este proyecto en la base de datos. Verifica la columna 'TeamsIDs' en tu CSV.
+                        No se encontró talento asociado a este proyecto en la base de datos.
                     </div>
                 ) : (
                     <div className="flex flex-col gap-4 mb-10 max-h-[50vh] overflow-y-auto hide-scrollbar pr-2">
