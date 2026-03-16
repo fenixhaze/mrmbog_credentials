@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { PublicClientApplication } from "@azure/msal-browser";
 import { MsalProvider, AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from "@azure/msal-react";
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, LogOut, Users, Briefcase, MessageSquare, ChevronRight, X, Mail, Calendar, UserPlus, Check, Link2 } from 'lucide-react';
+import { Send, LogOut, Users, Briefcase, MessageSquare, ChevronRight, X, Mail, Calendar, UserPlus, UserMinus, Check, Link2 } from 'lucide-react';
 import Papa from 'papaparse';
 
 // --- CONFIGURACIÓN DE POWER AUTOMATE Y AZURE ---
@@ -47,12 +47,22 @@ function MainContent() {
       setSquad(prev => prev.some(p => p.ID === person.ID) ? prev.filter(p => p.ID !== person.ID) : [...prev, person]);
   };
 
-  const addEntireTeamToSquad = (teamIds) => {
-    const peopleToAdd = talentData.filter(t => teamIds.includes(t.ID));
-    setSquad(prev => {
-        const newOnes = peopleToAdd.filter(p => !prev.some(s => s.ID === p.ID));
-        return [...prev, ...newOnes];
-    });
+  // --- LÓGICA DEL CTA DE SQUAD EN EL PROYECTO ---
+  const activeProjectTeamIds = selectedProject?.teamArray || [];
+  const activeTeamTalent = talentData.filter(t => activeProjectTeamIds.includes(t.ID));
+  const isEntireTeamInSquad = activeProjectTeamIds.length > 0 && activeProjectTeamIds.every(id => squad.some(s => s.ID === id));
+
+  const toggleEntireTeam = () => {
+      if (isEntireTeamInSquad) {
+          // Si ya están todos, los quitamos del squad
+          setSquad(prev => prev.filter(p => !activeProjectTeamIds.includes(p.ID)));
+      } else {
+          // Si faltan, agregamos los que no estén
+          setSquad(prev => {
+              const newOnes = activeTeamTalent.filter(p => !prev.some(s => s.ID === p.ID));
+              return [...prev, ...newOnes];
+          });
+      }
   };
 
   useEffect(() => {
@@ -308,22 +318,20 @@ function MainContent() {
         </AnimatePresence>
       </main>
 
-      {/* AQUÍ ESTÁN TUS CAMBIOS: EL NUEVO DETALLE DE PROYECTO */}
+      {/* --- DETALLE DE PROYECTO (LADO A LADO) --- */}
       <AnimatePresence>
         {selectedProject && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-start justify-center p-6 backdrop-blur-2xl bg-black/80 pointer-events-auto overflow-y-auto">
             
-            {/* Botón de cerrar fijo arriba a la derecha */}
-            <button onClick={() => setSelectedProject(null)} className="fixed top-6 right-6 z-[250] p-4 bg-black/50 backdrop-blur-md rounded-full hover:bg-white text-white hover:text-black transition-all shadow-2xl">
+            <button onClick={() => setSelectedProject(null)} className="fixed top-6 right-6 z-[250] p-4 bg-black/50 backdrop-blur-md rounded-full hover:bg-white text-white hover:text-black transition-all shadow-2xl border border-white/10">
                 <X size={24}/>
             </button>
 
-            <div className="w-full max-w-5xl my-12 space-y-8 pb-20 relative">
+            <div className="w-full max-w-7xl mx-auto my-12 flex flex-col lg:flex-row gap-8 pb-20 relative">
               
-              {/* 1. TARJETA PRINCIPAL DEL PROYECTO */}
-              <div className="bg-[#0f0f0f] border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl relative text-left">
+              {/* 1. TARJETA DEL PROYECTO (IZQUIERDA - 65%) */}
+              <div className="w-full lg:w-[65%] bg-[#0f0f0f] border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl relative text-left h-fit">
                 
-                {/* Carrusel Superior */}
                 <div className="relative h-[350px] md:h-[450px] w-full bg-zinc-950 overflow-hidden flex snap-x hide-scrollbar overflow-x-auto">
                   {selectedProject.images && selectedProject.images.length > 0 ? (
                       selectedProject.images.map((img, i) => (
@@ -336,8 +344,6 @@ function MainContent() {
                 </div>
 
                 <div className="p-8 md:p-12 space-y-12">
-                  
-                  {/* Título, Descripción y Link */}
                   <div className="space-y-6">
                     <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-white drop-shadow-lg">
                       {selectedProject.Title}
@@ -351,11 +357,9 @@ function MainContent() {
                     </a>
                   </div>
 
-                  {/* Mosaico de Imágenes */}
                   <div className="space-y-6">
                     <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6]">GALERÍA VISUAL</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      {/* Generamos 4 espacios basados en las imágenes del proyecto */}
                       {[0, 1, 2, 3].map(i => (
                           <div key={i} className="aspect-square rounded-2xl overflow-hidden border border-white/5 bg-black/40">
                               <img src={selectedProject.images[i] || selectedProject.images[0] || "https://picsum.photos/600"} className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-500 hover:scale-110" alt="Mosaico"/>
@@ -364,12 +368,11 @@ function MainContent() {
                     </div>
                   </div>
 
-                  {/* 3 Columnas Verticales */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-6 border-t border-white/5">
                     {[
-                      { title: "LO PEDIDO", text: "Integración estructurada de credenciales con requerimientos técnicos y diseño." },
-                      { title: "LO HECHO", text: "Desarrollo de una interfaz modular dinámica utilizando React y Tailwind." },
-                      { title: "LO LOGRADO", text: "Un ecosistema de consulta rápido, escalable y con experiencia inmersiva." }
+                      { title: "LO PEDIDO", text: "Integración estructurada de credenciales con requerimientos técnicos." },
+                      { title: "LO HECHO", text: "Desarrollo de una interfaz modular dinámica y moderna." },
+                      { title: "LO LOGRADO", text: "Ecosistema de consulta rápido, escalable e inmersivo." }
                     ].map((col, i) => (
                       <div key={i} className="space-y-4">
                         <h4 className="text-[12px] font-black tracking-[0.3em] text-[#7D68F6] uppercase">{col.title}</h4>
@@ -378,7 +381,6 @@ function MainContent() {
                     ))}
                   </div>
 
-                  {/* Chips Grises de Skills abajo */}
                   <div className="pt-6 flex flex-wrap gap-2">
                     {selectedProject.tagsArray?.map(tag => (
                       <span key={tag} className="px-4 py-2 bg-zinc-800/80 text-zinc-400 text-[10px] font-black rounded-full border border-zinc-700/50 uppercase tracking-widest">
@@ -389,31 +391,43 @@ function MainContent() {
                 </div>
               </div>
 
-              {/* 2. TARJETA SEPARADA: TALENTO INVOLUCRADO */}
-              {talentData.filter(t => selectedProject.teamArray?.includes(t.ID)).length > 0 && (
-                  <div className="bg-[#0f0f0f] border border-white/10 rounded-[3rem] p-8 md:p-12 shadow-2xl text-left">
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
-                      <h4 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#7D68F6]">TALENTO INVOLUCRADO</h4>
-                      <button onClick={() => addEntireTeamToSquad(selectedProject.teamArray || [])} className="py-3 px-6 bg-[#7D68F6] text-white font-black uppercase tracking-[0.2em] text-[10px] rounded-full hover:scale-105 transition-all flex items-center gap-2 shadow-lg shadow-[#7D68F6]/20">
-                        <Users size={14}/> AGREGAR EQUIPO AL SQUAD
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {talentData.filter(t => selectedProject.teamArray?.includes(t.ID)).map(member => (
-                        <div key={member.ID} className="flex items-center justify-between bg-black/40 p-5 rounded-3xl border border-white/5 hover:border-white/10 transition-colors">
+              {/* 2. TARJETA DE TALENTO (DERECHA - 35%) */}
+              {activeTeamTalent.length > 0 && (
+                  <div className="w-full lg:w-[35%] bg-[#0f0f0f] border border-white/10 rounded-[3rem] p-8 md:p-10 shadow-2xl text-left h-fit lg:sticky top-12 flex flex-col">
+                    <h4 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mb-8">TALENTO INVOLUCRADO</h4>
+                    
+                    {/* Lista de talento con scroll si son muchos */}
+                    <div className="flex flex-col gap-4 mb-10 max-h-[50vh] overflow-y-auto hide-scrollbar pr-2">
+                      {activeTeamTalent.map(member => (
+                        <div key={member.ID} className="flex items-center justify-between bg-black/40 p-5 rounded-3xl border border-white/5 hover:border-white/10 transition-colors group">
                           <div className="flex items-center gap-4">
-                            <img src={member.ImageURL} className="w-14 h-14 rounded-full border border-white/10 object-cover" alt=""/>
+                            <img src={member.ImageURL} className="w-12 h-12 rounded-full border border-white/10 object-cover" alt=""/>
                             <div>
-                                <p className="font-black text-sm uppercase text-white">{member.Name}</p>
-                                <p className="text-[9px] text-white/40 font-bold uppercase tracking-widest">{member.Role}</p>
+                                <p className="font-black text-[13px] uppercase text-white">{member.Name}</p>
+                                <p className="text-[9px] text-white/40 font-bold uppercase tracking-widest mt-1">{member.Role}</p>
                             </div>
                           </div>
-                          <button onClick={() => toggleSquad(member)} className={`p-3 rounded-full border transition-all ${squad.some(s => s.ID === member.ID) ? 'bg-[#7D68F6] border-[#7D68F6] text-white' : 'border-white/10 text-white/30 hover:text-[#7D68F6] hover:border-[#7D68F6]'}`}>
-                            {squad.some(s => s.ID === member.ID) ? <Check size={18}/> : <UserPlus size={18}/>}
+                          
+                          {/* Botón individual: Agregar (UserPlus) o Eliminar (UserMinus) */}
+                          <button onClick={() => toggleSquad(member)} className={`p-3 rounded-full border transition-all ${squad.some(s => s.ID === member.ID) ? 'bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white' : 'border-white/10 text-white/30 hover:text-[#7D68F6] hover:border-[#7D68F6]'}`}>
+                            {squad.some(s => s.ID === member.ID) ? <UserMinus size={16}/> : <UserPlus size={16}/>}
                           </button>
                         </div>
                       ))}
                     </div>
+
+                    {/* CTA Inteligente (Todo el Squad) */}
+                    <button 
+                        onClick={toggleEntireTeam} 
+                        className={`w-full py-5 font-black uppercase tracking-[0.15em] text-[10px] rounded-full hover:scale-105 transition-all flex items-center justify-center gap-3 shadow-lg ${
+                            isEntireTeamInSquad 
+                            ? 'bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20' 
+                            : 'bg-[#7D68F6] text-white shadow-[#7D68F6]/20'
+                        }`}
+                    >
+                        {isEntireTeamInSquad ? <UserMinus size={18}/> : <Users size={18}/>}
+                        {isEntireTeamInSquad ? 'RETIRAR SQUAD COMPLETO' : 'AGREGAR SQUAD COMPLETO'}
+                    </button>
                   </div>
               )}
             </div>
