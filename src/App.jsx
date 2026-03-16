@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { PublicClientApplication } from "@azure/msal-browser";
 import { MsalProvider, AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from "@azure/msal-react";
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, LogOut, Users, Briefcase, MessageSquare, ChevronRight, X, Mail, Calendar, UserPlus, UserMinus, Check, Link2 } from 'lucide-react';
+import { Send, LogOut, Users, Briefcase, MessageSquare, ChevronRight, X, Mail, Calendar, UserPlus, UserMinus, Check, Link2, ExternalLink } from 'lucide-react';
 import Papa from 'papaparse';
 
 // --- CONFIGURACIÓN DE POWER AUTOMATE Y AZURE ---
@@ -318,20 +318,23 @@ function MainContent() {
         </AnimatePresence>
       </main>
 
-      {/* --- DETALLE DE PROYECTO (LADO A LADO) --- */}
+      {/* --- DETALLE DE PROYECTO (LADO A LADO ACTUALIZADO Y CORREGIDO) --- */}
       <AnimatePresence>
         {selectedProject && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-start justify-center p-6 backdrop-blur-2xl bg-black/80 pointer-events-auto overflow-y-auto">
             
+            {/* Botón de cerrar fijo arriba a la derecha */}
             <button onClick={() => setSelectedProject(null)} className="fixed top-6 right-6 z-[250] p-4 bg-black/50 backdrop-blur-md rounded-full hover:bg-white text-white hover:text-black transition-all shadow-2xl border border-white/10">
                 <X size={24}/>
             </button>
 
-            <div className="w-full max-w-7xl mx-auto my-12 flex flex-col lg:flex-row gap-8 pb-20 relative">
+            {/* Contenedor principal Side-by-Side (70/30) con ancho máximo mayor */}
+            <div className="w-full max-w-[1600px] mx-auto my-12 flex flex-col lg:flex-row gap-8 pb-20 relative">
               
-              {/* 1. TARJETA DEL PROYECTO (IZQUIERDA - 65%) */}
-              <div className="w-full lg:w-[65%] bg-[#0f0f0f] border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl relative text-left h-fit">
+              {/* 1. TARJETA DEL PROYECTO (IZQUIERDA - 70% Y TÍTULO REVISADO) */}
+              <div className="w-full lg:w-[70%] flex-shrink-0 bg-[#0f0f0f] border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl relative text-left h-fit">
                 
+                {/* Carrusel con degradado y TÍTULO CLARO SUPERPUESTO */}
                 <div className="relative h-[350px] md:h-[450px] w-full bg-zinc-950 overflow-hidden flex snap-x hide-scrollbar overflow-x-auto">
                   {selectedProject.images && selectedProject.images.length > 0 ? (
                       selectedProject.images.map((img, i) => (
@@ -340,26 +343,41 @@ function MainContent() {
                   ) : (
                       <div className="w-full h-full bg-zinc-900" />
                   )}
+                  {/* Degradado para oscurecer el fondo y resaltar texto */}
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f0f] to-transparent pointer-events-none" />
-                </div>
-
-                <div className="p-8 md:p-12 space-y-12">
-                  <div className="space-y-6">
-                    <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-white drop-shadow-lg">
+                  
+                  {/* TÍTULO Y DESCRIPCIÓN CLAROS (Superpuestos en el carrusel) */}
+                  <div className="absolute bottom-0 left-0 p-12 w-full text-left">
+                    <div className="flex flex-wrap gap-2 mb-6">
+                      <span className="text-[10px] font-black uppercase px-4 py-1.5 bg-[#7D68F6]/20 backdrop-blur-md text-[#7D68F6] border border-[#7D68F6]/30 rounded-full tracking-widest font-bold">Featured Project</span>
+                      {selectedProject.tagsArray?.map(tag => (
+                        <span key={tag} className="text-[9px] font-black uppercase px-4 py-1.5 bg-zinc-800/80backdrop-blur-md text-zinc-300 border border-zinc-700/50 rounded-full tracking-widest font-bold">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                    {/* Título Principal con máxima visibilidad (sombra sutil blanca) */}
+                    <h2 className="text-6xl md:text-7xl font-black uppercase tracking-tighter leading-none text-white drop-shadow-[0_4px_30px_rgba(255,255,255,0.1)]">
                       {selectedProject.Title}
                     </h2>
-                    <p className="text-lg md:text-xl text-white/60 leading-relaxed font-normal normal-case max-w-3xl">
+                    <p className="mt-5 text-xl text-white/80 max-w-3xl leading-relaxed font-normal normal-case drop-shadow-md">
                       {selectedProject.Description || "Información detallada sobre la ejecución y resultados del proyecto."}
                     </p>
-                    <a href="#" className="inline-flex items-center gap-3 px-8 py-4 bg-white/5 hover:bg-white/10 rounded-full text-white text-[11px] font-black uppercase tracking-[0.2em] transition-all border border-white/10 hover:border-white/30 group">
+                    <a href="#" className="inline-flex items-center gap-3 px-8 py-4 bg-white/5 hover:bg-white/10 rounded-full text-white text-[11px] font-black uppercase tracking-[0.2em] transition-all border border-white/10 hover:border-white/30 group mt-8">
                       <Link2 size={16} className="text-[#7D68F6]" />
                       <span>Ver Material del Proyecto</span>
+                      <ExternalLink size={14} className="opacity-40" />
                     </a>
                   </div>
+                </div>
 
+                <div className="p-8 md:p-12 space-y-12 mt-12">
+                  
+                  {/* Mosaico de Imágenes */}
                   <div className="space-y-6">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6]">GALERÍA VISUAL</h3>
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-[#7D68F6]">GALERÍA VISUAL DE ACTIVOS</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {/* Generamos 4 espacios basados en las imágenes del proyecto */}
                       {[0, 1, 2, 3].map(i => (
                           <div key={i} className="aspect-square rounded-2xl overflow-hidden border border-white/5 bg-black/40">
                               <img src={selectedProject.images[i] || selectedProject.images[0] || "https://picsum.photos/600"} className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-500 hover:scale-110" alt="Mosaico"/>
@@ -368,11 +386,12 @@ function MainContent() {
                     </div>
                   </div>
 
+                  {/* 3 Columnas Verticales */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-6 border-t border-white/5">
                     {[
-                      { title: "LO PEDIDO", text: "Integración estructurada de credenciales con requerimientos técnicos." },
-                      { title: "LO HECHO", text: "Desarrollo de una interfaz modular dinámica y moderna." },
-                      { title: "LO LOGRADO", text: "Ecosistema de consulta rápido, escalable e inmersivo." }
+                      { title: "LO PEDIDO", text: "Integración estructurada de credenciales técnicos y visuales." },
+                      { title: "LO HECHO", text: "Desarrollo de una interfaz modular dinámica utilizando React y Tailwind." },
+                      { title: "LO LOGRADO", text: "Un ecosistema de consulta rápido, escalable y cinematic dark." }
                     ].map((col, i) => (
                       <div key={i} className="space-y-4">
                         <h4 className="text-[12px] font-black tracking-[0.3em] text-[#7D68F6] uppercase">{col.title}</h4>
@@ -381,19 +400,12 @@ function MainContent() {
                     ))}
                   </div>
 
-                  <div className="pt-6 flex flex-wrap gap-2">
-                    {selectedProject.tagsArray?.map(tag => (
-                      <span key={tag} className="px-4 py-2 bg-zinc-800/80 text-zinc-400 text-[10px] font-black rounded-full border border-zinc-700/50 uppercase tracking-widest">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
                 </div>
               </div>
 
-              {/* 2. TARJETA DE TALENTO (DERECHA - 35%) */}
+              {/* 2. TARJETA DE TALENTO (DERECHA - 30% Y STICKY CON LÓGICA DE SQUAD COMPLETO) */}
               {activeTeamTalent.length > 0 && (
-                  <div className="w-full lg:w-[35%] bg-[#0f0f0f] border border-white/10 rounded-[3rem] p-8 md:p-10 shadow-2xl text-left h-fit lg:sticky top-12 flex flex-col">
+                  <div className="w-full lg:w-[30%] flex-shrink-0 bg-[#0f0f0f] border border-white/10 rounded-[3rem] p-8 md:p-10 shadow-2xl text-left h-fit lg:sticky top-12 flex flex-col">
                     <h4 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mb-8">TALENTO INVOLUCRADO</h4>
                     
                     {/* Lista de talento con scroll si son muchos */}
@@ -403,12 +415,12 @@ function MainContent() {
                           <div className="flex items-center gap-4">
                             <img src={member.ImageURL} className="w-12 h-12 rounded-full border border-white/10 object-cover" alt=""/>
                             <div>
-                                <p className="font-black text-[13px] uppercase text-white">{member.Name}</p>
+                                <p className="font-black text-[13px] uppercase text-white truncate max-w-[120px]">{member.Name}</p>
                                 <p className="text-[9px] text-white/40 font-bold uppercase tracking-widest mt-1">{member.Role}</p>
                             </div>
                           </div>
                           
-                          {/* Botón individual: Agregar (UserPlus) o Eliminar (UserMinus) */}
+                          {/* Botón individual dinámico: Agregar (UserPlus) o Eliminar (UserMinus) */}
                           <button onClick={() => toggleSquad(member)} className={`p-3 rounded-full border transition-all ${squad.some(s => s.ID === member.ID) ? 'bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white' : 'border-white/10 text-white/30 hover:text-[#7D68F6] hover:border-[#7D68F6]'}`}>
                             {squad.some(s => s.ID === member.ID) ? <UserMinus size={16}/> : <UserPlus size={16}/>}
                           </button>
@@ -416,7 +428,7 @@ function MainContent() {
                       ))}
                     </div>
 
-                    {/* CTA Inteligente (Todo el Squad) */}
+                    {/* CTA Inteligente de Squad Completo (Cambia de color y texto dinámicamente) */}
                     <button 
                         onClick={toggleEntireTeam} 
                         className={`w-full py-5 font-black uppercase tracking-[0.15em] text-[10px] rounded-full hover:scale-105 transition-all flex items-center justify-center gap-3 shadow-lg ${
