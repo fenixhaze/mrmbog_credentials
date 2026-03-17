@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Send, LogOut, Users, Briefcase, MessageSquare, ChevronRight, X, Calendar, UserPlus, UserMinus } from 'lucide-react';
 import Papa from 'papaparse';
 
-// --- CONFIGURACIÓN DE AZURE (Mantenemos tus credenciales) ---
+// --- CONFIGURACIÓN DE AZURE (MSAL) ---
 const authConfig = {
     auth: {
         clientId: "23d1168d-113b-48c0-a4fe-6e6d743f77af",
@@ -41,20 +41,20 @@ function MainContent() {
     }
   }, [chatHistory, isTyping]);
 
-  // --- LÓGICA DE DATOS (CSV) ---
+  // --- CARGA DE DATOS ---
   useEffect(() => {
     if (dataFetchedRef.current) return;
     dataFetchedRef.current = true;
 
     const fetchData = async () => {
       try {
-        // En Azure, los archivos en /public se sirven desde la raíz /
+        // Usamos rutas relativas para evitar el 404 en Azure
         const [tRes, pRes] = await Promise.all([
-          fetch('/datacenter/Talent_Database.csv'), 
-          fetch('/datacenter/Projects_Database.csv') 
+          fetch('./datacenter/Talent_Database.csv'), 
+          fetch('./datacenter/Projects_Database.csv') 
         ]);
 
-        if (!tRes.ok || !pRes.ok) throw new Error("No se encontraron los CSV en la ruta /datacenter/");
+        if (!tRes.ok || !pRes.ok) throw new Error("CSV no encontrados");
 
         const talentCSV = await tRes.text();
         const rawTalent = Papa.parse(talentCSV, { 
@@ -77,68 +77,70 @@ function MainContent() {
         setFlatProjects(rawProjects.map(p => ({
             ...p,
             ID: String(p.ID || "").trim(),
-            Title: p.Title || "PROYECTO SIN TÍTULO",
+            Title: p.Title || "PROYECTO",
             images: p.ImageURLs ? String(p.ImageURLs).split(',').map(i => i.trim()) : ["https://picsum.photos/1200/800"],
             tagsArray: String(p.tags || p.Tags || "").split(',').map(t => t.trim()).filter(Boolean),
             teamArray: String(p.TeamsIDs || "").replace(/;/g, ',').split(',').map(t => t.trim()).filter(Boolean),
-            Category: p.Category || "Proyecto Especial",
-            Description: p.Description || "",
-            LoPedido: p.LoPedido || "",
-            LoHecho: p.LoHecho || "",
-            LoLogrado: p.LoLogrado || ""
+            Category: p.Category || "General",
+            Description: p.Description || "", LoPedido: p.LoPedido || "", LoHecho: p.LoHecho || "", LoLogrado: p.LoLogrado || ""
         })));
 
-        setChatHistory([{ type: 'ai', text: `Sistema MRM Bogotá activo. Consultoría IA lista para Staffing con Gemini 2.5.` }]);
+        setChatHistory([{ type: 'ai', text: `Sistema MRM Bogotá activo. ¿En qué puedo ayudarte hoy?` }]);
         setLoading(false);
       } catch (e) { 
-        console.error("Error CSV:", e); 
+        console.error("Error CSV:", e);
         setLoading(false); 
       }
     };
     fetchData();
   }, []);
 
-  // --- LÓGICA DEL CHATBOT (FIXED) ---
+  // --- CHATBOT CORREGIDO (GEMINI 2.0 FLASH) ---
   const handleSend = async () => {
     if (!input.trim() || isTyping) return;
-    
     const userMsg = input;
     setChatHistory(prev => [...prev, { type: 'user', text: userMsg }]);
     setInput('');
     setIsTyping(true);
     
     try {
-        const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-        if (!GEMINI_API_KEY) throw new Error("API Key no configurada en el servidor.");
+        const KEY = import.meta.env.VITE_GEMINI_API_KEY;
+        if (!KEY) throw new Error("API Key no detectada.");
 
-        // Usamos el modelo estable que confirmamos en tu bash
-        const MODEL_NAME = "gemini-2.5-flash"; 
-        const GEMINI_URL = `https://generativelanguage.googleapis.com/v1/models/${MODEL_NAME}:generateContent?key=${GEMINI_API_KEY}`;
+        // Usamos Gemini 2.0 Flash (Más compatible y estable)
+        const MODEL = "gemini-2.0-flash"; 
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${KEY}`;
 
-        // Reducimos el tamaño de la data para no saturar el prompt
-        const invLite = JSON.stringify(flatProjects.slice(0, 40).map(p => ({ id: p.ID, t: p.Title, c: p.tagsArray.join(',') })));
-        const talLite = JSON.stringify(talentData.slice(0, 40).map(t => ({ n: t.Name, r: t.Role, h: t.skillsArray.join(',') })));
+        // Simplificamos la data para que el prompt sea texto puro (evita el error 400)
+        const projectList = flatProjects.slice(0, 25).map(p => `- ${p.Title} (ID: ${p.ID}, Tags: ${p.tagsArray.join(', ')})`).join('\n');
+        const talentList = talentData.slice(0, 25).map(t => `- ${t.Name} (Rol: ${t.Role}, Skills: ${t.skillsArray.join(', ')})`).join('\n');
 
-        const promptText = `Eres experto en staffing de MRM Bogotá. Necesidad: "${userMsg}". 
-        Data: Proyectos=${invLite}, Talento=${talLite}. 
-        Responde exclusivamente en JSON plano: {"match_ids":["ID1"], "talent_names":["Nombre1"], "reason":"Porque..."}`;
+        const systemPrompt = `Eres experto en Staffing para MRM Bogotá.
+        LISTA DE PROYECTOS:\n${projectList}
+        \nLISTA DE TALENTO:\n${talentList}
+        \nREGLA: Responde SIEMPRE en este formato JSON exacto:
+        {"match_ids": ["ID_DEL_PROYECTO"], "talent_names": ["NOMBRE_DEL_TALENTO"], "reason": "Tu explicación aquí"}
+        \nPregunta: ${userMsg}`;
 
-        const response = await fetch(GEMINI_URL, {
+        const response = await fetch(API_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-                contents: [{ role: "user", parts: [{ text: promptText }] }],
-                generationConfig: { responseMimeType: "application/json" }
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: systemPrompt }] }]
             })
         });
 
-        if (!response.ok) throw new Error("Error en la conexión con Gemini.");
+        if (!response.ok) {
+            const errorBody = await response.json();
+            throw new Error(errorBody.error?.message || `Error ${response.status}`);
+        }
 
         const data = await response.json();
-        let rawContent = data.candidates[0].content.parts[0].text;
-        // Limpiar posibles bloques de código markdown
-        const cleanJSON = rawContent.replace(/```json/gi, '').replace(/```/g, '').trim();
-        const parsed = JSON.parse(cleanJSON);
+        const textResponse = data.candidates[0].content.parts[0].text;
+        
+        // Limpiamos la respuesta para extraer el JSON
+        const jsonOnly = textResponse.replace(/```json/gi, '').replace(/```/g, '').trim();
+        const parsed = JSON.parse(jsonOnly);
 
         setChatHistory(prev => [...prev, { 
             type: 'ai', 
@@ -146,29 +148,27 @@ function MainContent() {
             results: flatProjects.filter(p => parsed.match_ids?.includes(p.ID)), 
             recommendedTalent: talentData.filter(t => parsed.talent_names?.includes(t.Name)) 
         }]);
+
     } catch (err) { 
-        setChatHistory(prev => [...prev, { type: 'ai', text: `⚠️ Error de sistema: ${err.message}` }]); 
+        console.error("Detalle del error:", err);
+        setChatHistory(prev => [...prev, { type: 'ai', text: `⚠️ Error: ${err.message}` }]); 
     } finally { setIsTyping(false); }
   };
 
-  // --- LÓGICA DE SQUAD ---
+  // --- RESTO DE LÓGICA (SQUAD, RENDER, ETC) ---
   const toggleSquad = (person) => {
-    if (!person) return;
     setSquad(prev => prev.some(p => p.ID === person.ID) ? prev.filter(p => p.ID !== person.ID) : [...prev, person]);
   };
 
   const activeProjectTeamIds = selectedProject?.teamArray || [];
   const activeTeamTalent = talentData.filter(t => activeProjectTeamIds.includes(t.ID));
-  const isEntireTeamInSquad = activeProjectTeamIds.length > 0 && activeTeamTalent.length > 0 && activeTeamTalent.every(member => squad.some(s => s.ID === member.ID));
+  const isEntireTeamInSquad = activeProjectTeamIds.length > 0 && activeTeamTalent.every(member => squad.some(s => s.ID === member.ID));
 
   const toggleEntireTeam = () => {
     if (isEntireTeamInSquad) {
-        setSquad(prev => prev.filter(p => !activeProjectTeamIds.includes(p.ID)));
+      setSquad(prev => prev.filter(p => !activeProjectTeamIds.includes(p.ID)));
     } else {
-        setSquad(prev => {
-            const newOnes = activeTeamTalent.filter(p => !prev.some(s => s.ID === p.ID));
-            return [...prev, ...newOnes];
-        });
+      setSquad(prev => [...prev, ...activeTeamTalent.filter(p => !prev.some(s => s.ID === p.ID))]);
     }
   };
 
@@ -181,7 +181,6 @@ function MainContent() {
     <div className="min-h-screen bg-[#0A0A0A] text-white font-sans selection:bg-[#7D68F6]/30 overflow-x-hidden">
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_20%_20%,#1a0b3d_0%,transparent_50%)] z-0 pointer-events-none" />
       
-      {/* HEADER */}
       <header className="fixed top-0 left-0 w-full p-10 px-12 z-[100] flex justify-between items-start pointer-events-none">
         <div className="flex flex-col items-start cursor-pointer pointer-events-auto" onClick={() => setActiveTab('landing')}>
             <h1 className="text-6xl font-black uppercase tracking-tighter leading-none m-0">MRM</h1>
@@ -197,7 +196,7 @@ function MainContent() {
                     ))}
                 </nav>
             )}
-            <div onClick={() => setShowSquadModal(true)} className="bg-[#7D68F6] px-6 py-4 rounded-full flex items-center gap-4 cursor-pointer shadow-lg shadow-[#7D68F6]/20 uppercase text-[10px] font-black hover:scale-105 transition-all">SQUAD ({squad.length})</div>
+            <div onClick={() => setShowSquadModal(true)} className="bg-[#7D68F6] px-6 py-4 rounded-full flex items-center gap-4 cursor-pointer shadow-lg uppercase text-[10px] font-black hover:scale-105 transition-all">SQUAD ({squad.length})</div>
         </div>
       </header>
 
@@ -269,7 +268,7 @@ function MainContent() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredTalent.map((person, i) => (
                             <div key={i} className="bg-zinc-900/40 border border-white/5 p-8 rounded-[3.5rem] text-center hover:border-[#7D68F6] flex flex-col group transition-all">
-                                <img src={person.ImageURL} className="w-24 h-24 rounded-full mx-auto mb-6 object-cover grayscale group-hover:grayscale-0 transition-all border-4 border-transparent group-hover:border-[#7D68F6] bg-black shadow-lg" alt=""/>
+                                <img src={person.ImageURL} className="w-24 h-24 rounded-full mx-auto mb-6 object-cover grayscale transition-all border-4 border-transparent group-hover:border-[#7D68F6] bg-black shadow-lg" alt=""/>
                                 <h4 className="text-[18px] font-black uppercase truncate w-full text-white">{person.Name}</h4>
                                 <p className="text-[10px] text-[#7D68F6] font-black uppercase mb-4 tracking-widest">{person.Role}</p>
                                 <button onClick={() => toggleSquad(person)} className={`w-full py-3 rounded-full text-[10px] font-black uppercase border border-[#7D68F6] mt-auto transition-all ${squad.some(p => p.ID === person.ID) ? 'bg-[#7D68F6] text-white shadow-lg' : 'text-[#7D68F6] hover:bg-[#7D68F6]/10'}`}>{squad.some(p => p.ID === person.ID) ? 'EN SQUAD' : 'ADD TO SQUAD'}</button>
@@ -282,25 +281,21 @@ function MainContent() {
         </AnimatePresence>
       </main>
 
-      {/* MODALES Y FOOTER (Mantenemos diseño) */}
+      {/* MODAL DETALLE */}
       <AnimatePresence>
         {selectedProject && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-start justify-center p-6 backdrop-blur-2xl bg-black/80 overflow-y-auto pointer-events-auto">
-            <button onClick={() => setSelectedProject(null)} className="fixed top-6 right-6 z-[250] p-4 bg-black/50 rounded-full hover:bg-white text-white hover:text-black transition-all border border-white/10"><X size={24}/></button>
-            <div className="w-full max-w-[1600px] mx-auto my-12 flex flex-col lg:flex-row gap-8 pb-20 text-left relative">
-              <div className="w-full lg:w-[70%] bg-[#0f0f0f] border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl h-fit">
-                <div className="relative h-[250px] md:h-[350px] w-full bg-zinc-950 flex overflow-x-auto snap-x hide-scrollbar">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-start justify-center p-6 backdrop-blur-2xl bg-black/80 overflow-y-auto">
+            <button onClick={() => setSelectedProject(null)} className="fixed top-6 right-6 z-[250] p-4 bg-black/50 rounded-full text-white border border-white/10 hover:bg-white hover:text-black transition-all"><X size={24}/></button>
+            <div className="w-full max-w-[1600px] mx-auto my-12 flex flex-col lg:flex-row gap-8 pb-20 text-left">
+              <div className="w-full lg:w-[70%] bg-[#0f0f0f] border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl">
+                <div className="relative h-[350px] bg-zinc-950 flex overflow-x-auto snap-x hide-scrollbar">
                   {selectedProject.images.map((img, i) => (<img key={i} src={img} className="w-full h-full object-cover flex-shrink-0 snap-start opacity-70" alt="Slide" />))}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f0f] to-transparent pointer-events-none" />
                 </div>
-                <div className="p-8 md:p-12 space-y-12">
+                <div className="p-12 space-y-12">
                   <div className="space-y-6">
                     <span className="text-[10px] font-black uppercase px-4 py-1.5 bg-[#7D68F6]/20 text-[#7D68F6] border border-[#7D68F6]/30 rounded-full tracking-widest">{selectedProject.Category}</span>
-                    <h2 className="text-5xl md:text-6xl font-black uppercase tracking-tighter text-white leading-none">{selectedProject.Title}</h2>
+                    <h2 className="text-6xl font-black uppercase tracking-tighter text-white leading-none">{selectedProject.Title}</h2>
                     <p className="text-lg text-white/60 normal-case leading-relaxed font-normal">{selectedProject.Description}</p>
-                    <div className="flex flex-wrap gap-2 pt-2">
-                      {selectedProject.tagsArray.map((tag, idx) => (<span key={idx} className="px-4 py-2 bg-zinc-800 text-zinc-300 text-[10px] font-black rounded-full border border-zinc-600 uppercase tracking-widest">{tag}</span>))}
-                    </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-6 border-t border-white/5">
                     {[{t: "LO PEDIDO", d: selectedProject.LoPedido}, {t: "LO HECHO", d: selectedProject.LoHecho}, {t: "LO LOGRADO", d: selectedProject.LoLogrado}].map((col, i) => (
@@ -315,7 +310,7 @@ function MainContent() {
               <div className="w-full lg:w-[30%] bg-[#0f0f0f] border border-white/10 rounded-[3rem] p-10 shadow-2xl h-fit lg:sticky top-12 flex flex-col">
                 <h4 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mb-8">TALENTO INVOLUCRADO</h4>
                 <div className="flex flex-col gap-4 mb-10 max-h-[50vh] overflow-y-auto hide-scrollbar">
-                  {activeTeamTalent.length === 0 ? <p className="text-white/30 text-xs normal-case italic">No se encontró talento asociado.</p> : activeTeamTalent.map(member => (
+                  {activeTeamTalent.map(member => (
                     <div key={member.ID} className="flex items-center justify-between bg-black/40 p-5 rounded-3xl border border-white/5 transition-all">
                       <div className="flex items-center gap-4"><img src={member.ImageURL} className="w-12 h-12 rounded-full object-cover border border-white/10" alt=""/><p className="font-black text-[13px] uppercase text-white truncate max-w-[100px]">{member.Name}</p></div>
                       <button onClick={() => toggleSquad(member)} className={`p-3 rounded-full border transition-all ${squad.some(s => s.ID === member.ID) ? 'text-red-400 border-red-500/30 bg-red-500/10' : 'text-white/30 border-white/10 hover:text-[#7D68F6]'}`}>{squad.some(s => s.ID === member.ID) ? <UserMinus size={16}/> : <UserPlus size={16}/>}</button>
@@ -333,7 +328,7 @@ function MainContent() {
 
       <AnimatePresence>
         {showSquadModal && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[300] flex items-center justify-center p-6 backdrop-blur-3xl bg-black/95 pointer-events-auto">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[300] flex items-center justify-center p-6 backdrop-blur-3xl bg-black/95">
             <button onClick={() => setShowSquadModal(false)} className="absolute top-10 right-10 text-white/20 hover:text-white transition-transform hover:rotate-90"><X size={48}/></button>
             <div className="w-full max-w-5xl text-left">
               <input value={customProjectTitle} onChange={(e) => setCustomProjectTitle(e.target.value)} className="bg-transparent text-7xl font-black uppercase border-b-2 border-white/10 focus:border-[#7D68F6] outline-none w-full pb-6 mb-16 tracking-tighter" placeholder="NOMBRE DEL PROYECTO..."/>
@@ -342,7 +337,7 @@ function MainContent() {
                 <div className="col-span-7">
                   <h4 className="text-[10px] font-black uppercase text-white/40 mb-8 tracking-[0.4em]">PARTICIPANTES SELECCIONADOS ({squad.length})</h4>
                   <div className="flex flex-wrap gap-6 mb-16 overflow-y-auto max-h-[300px] hide-scrollbar p-2">
-                    {squad.map(p => (<div key={p.ID} className="text-center group"><img src={p.ImageURL} className="w-20 h-20 rounded-full border-2 border-white/5 group-hover:border-[#7D68F6] transition-all mb-3 object-cover shadow-2xl" alt=""/><p className="text-[10px] font-black uppercase text-white">{p.Name.split(' ')[0]}</p></div>))}
+                    {squad.map(p => (<div key={p.ID} className="text-center group"><img src={p.ImageURL} className="w-20 h-20 rounded-full border-2 border-white/5 transition-all mb-3 object-cover shadow-2xl" alt=""/><p className="text-[10px] font-black uppercase text-white">{p.Name.split(' ')[0]}</p></div>))}
                   </div>
                   <button onClick={() => { const emails = squad.map(s => s.Email || '').join(';'); window.location.href = `mailto:${emails}?subject=Squad MRM: ${customProjectTitle}`; }} className="w-full py-6 bg-white text-black rounded-full font-black uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-[#7D68F6] hover:text-white transition-all shadow-2xl shadow-white/10"><Calendar size={18}/> COORDINAR REUNIÓN TEAMS</button>
                 </div>
@@ -382,4 +377,3 @@ export default function App() {
     </MsalProvider>
   ); 
 }
-//update chatbox
