@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Send, LogOut, Users, Briefcase, MessageSquare, ChevronRight, X, Calendar, UserPlus, UserMinus } from 'lucide-react';
 import Papa from 'papaparse';
 
-// --- CONFIGURACIÓN DE AZURE ---
+// --- CONFIGURACIÓN DE AZURE (Mantenemos tus credenciales) ---
 const authConfig = {
     auth: {
         clientId: "23d1168d-113b-48c0-a4fe-6e6d743f77af",
@@ -33,7 +33,7 @@ function MainContent() {
   const [filterRole, setFilterRole] = useState('All');
 
   const chatContainerRef = useRef(null);
-  const dataFetchedRef = useRef(false); // CANDADO 1: Evita que los CSV se carguen dos veces en React Strict Mode
+  const dataFetchedRef = useRef(false);
 
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -41,39 +41,20 @@ function MainContent() {
     }
   }, [chatHistory, isTyping]);
 
-  const toggleSquad = (person) => {
-      if (!person) return;
-      setSquad(prev => prev.some(p => p.ID === person.ID) ? prev.filter(p => p.ID !== person.ID) : [...prev, person]);
-  };
-
-  const activeProjectTeamIds = selectedProject?.teamArray || [];
-  const activeTeamTalent = talentData.filter(t => activeProjectTeamIds.includes(t.ID));
-  const isEntireTeamInSquad = activeProjectTeamIds.length > 0 && activeTeamTalent.length > 0 && activeTeamTalent.every(member => squad.some(s => s.ID === member.ID));
-
-  const toggleEntireTeam = () => {
-      if (isEntireTeamInSquad) {
-          setSquad(prev => prev.filter(p => !activeProjectTeamIds.includes(p.ID)));
-      } else {
-          setSquad(prev => {
-              const newOnes = activeTeamTalent.filter(p => !prev.some(s => s.ID === p.ID));
-              return [...prev, ...newOnes];
-          });
-      }
-  };
-
-  // --- CARGA DE DATOS DESDE /datacenter/ ---
+  // --- LÓGICA DE DATOS (CSV) ---
   useEffect(() => {
-    // Si la data ya se empezó a pedir, cancelamos la segunda vuelta
     if (dataFetchedRef.current) return;
     dataFetchedRef.current = true;
 
     const fetchData = async () => {
       try {
-        const baseUrl = window.location.hostname.includes('github.io') ? '/mrmbog_credentials' : '';
+        // En Azure, los archivos en /public se sirven desde la raíz /
         const [tRes, pRes] = await Promise.all([
-          fetch(`${baseUrl}/datacenter/Talent_Database.csv`), 
-          fetch(`${baseUrl}/datacenter/Projects_Database.csv`) 
+          fetch('/datacenter/Talent_Database.csv'), 
+          fetch('/datacenter/Projects_Database.csv') 
         ]);
+
+        if (!tRes.ok || !pRes.ok) throw new Error("No se encontraron los CSV en la ruta /datacenter/");
 
         const talentCSV = await tRes.text();
         const rawTalent = Papa.parse(talentCSV, { 
@@ -84,7 +65,7 @@ function MainContent() {
         setTalentData(rawTalent.map(p => ({
             ...p,
             ID: String(p.ID || p.Name || "").trim(), 
-            skillsArray: String(p.Tags || p.Skills || p.tags || "").split(',').map(s => s.trim()).filter(Boolean)
+            skillsArray: String(p.Tags || p.Skills || "").split(',').map(s => s.trim()).filter(Boolean)
         })));
 
         const projectsCSV = await pRes.text();
@@ -101,23 +82,25 @@ function MainContent() {
             tagsArray: String(p.tags || p.Tags || "").split(',').map(t => t.trim()).filter(Boolean),
             teamArray: String(p.TeamsIDs || "").replace(/;/g, ',').split(',').map(t => t.trim()).filter(Boolean),
             Category: p.Category || "Proyecto Especial",
-            Description: p.Description || "Sin descripción disponible.",
-            LoPedido: p.LoPedido || "Ejecución técnica según requerimientos.",
-            LoHecho: p.LoHecho || "Desarrollo de ecosistema digital de alta performance.",
-            LoLogrado: p.LoLogrado || "Plataforma desplegada con éxito."
+            Description: p.Description || "",
+            LoPedido: p.LoPedido || "",
+            LoHecho: p.LoHecho || "",
+            LoLogrado: p.LoLogrado || ""
         })));
 
-        setChatHistory([{ type: 'ai', text: `Sistema MRM Bogotá activo. Consultoría IA lista con modelo Gemini 2.5 Flash.` }]);
+        setChatHistory([{ type: 'ai', text: `Sistema MRM Bogotá activo. Consultoría IA lista para Staffing con Gemini 2.5.` }]);
         setLoading(false);
-      } catch (e) { console.error("Error carga CSV:", e); setLoading(false); }
+      } catch (e) { 
+        console.error("Error CSV:", e); 
+        setLoading(false); 
+      }
     };
     fetchData();
   }, []);
 
-  // --- FUNCIÓN DE GEMINI ---
+  // --- LÓGICA DEL CHATBOT (FIXED) ---
   const handleSend = async () => {
-    // CANDADO 2: Si está vacío o ya estamos procesando un mensaje, bloquea el doble clic o doble enter
-    if (!input.trim() || isTyping) return; 
+    if (!input.trim() || isTyping) return;
     
     const userMsg = input;
     setChatHistory(prev => [...prev, { type: 'user', text: userMsg }]);
@@ -125,19 +108,20 @@ function MainContent() {
     setIsTyping(true);
     
     try {
-        const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY; 
-        
-        if (!GEMINI_API_KEY) {
-            throw new Error("No se encontró la API Key en el archivo .env o en los Secrets de GitHub.");
-        }
+        const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+        if (!GEMINI_API_KEY) throw new Error("API Key no configurada en el servidor.");
 
+        // Usamos el modelo estable que confirmamos en tu bash
         const MODEL_NAME = "gemini-2.5-flash"; 
         const GEMINI_URL = `https://generativelanguage.googleapis.com/v1/models/${MODEL_NAME}:generateContent?key=${GEMINI_API_KEY}`;
 
-        const invLite = JSON.stringify(flatProjects.slice(0, 45).map(p => ({ id: p.ID, t: p.Title, c: p.tagsArray.join(',') })));
-        const talLite = JSON.stringify(talentData.slice(0, 45).map(t => ({ n: t.Name, r: t.Role, h: t.skillsArray.join(',') })));
+        // Reducimos el tamaño de la data para no saturar el prompt
+        const invLite = JSON.stringify(flatProjects.slice(0, 40).map(p => ({ id: p.ID, t: p.Title, c: p.tagsArray.join(',') })));
+        const talLite = JSON.stringify(talentData.slice(0, 40).map(t => ({ n: t.Name, r: t.Role, h: t.skillsArray.join(',') })));
 
-        const promptText = `Eres experto en staffing para MRM Bogotá. Necesidad: "${userMsg}". Datos: Proyectos=${invLite}, Talento=${talLite}. Responde SOLO en formato JSON estructurado: {"match_ids":["ID1"], "talent_names":["Nombre1"], "reason":"Porque..."}`;
+        const promptText = `Eres experto en staffing de MRM Bogotá. Necesidad: "${userMsg}". 
+        Data: Proyectos=${invLite}, Talento=${talLite}. 
+        Responde exclusivamente en JSON plano: {"match_ids":["ID1"], "talent_names":["Nombre1"], "reason":"Porque..."}`;
 
         const response = await fetch(GEMINI_URL, {
             method: "POST",
@@ -148,29 +132,44 @@ function MainContent() {
             })
         });
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(`Error API: ${errorData.error?.message || response.status}`);
-        }
+        if (!response.ok) throw new Error("Error en la conexión con Gemini.");
 
         const data = await response.json();
         let rawContent = data.candidates[0].content.parts[0].text;
-        rawContent = rawContent.replace(/```json/gi, '').replace(/```/g, '').trim();
-        const parsed = JSON.parse(rawContent);
+        // Limpiar posibles bloques de código markdown
+        const cleanJSON = rawContent.replace(/```json/gi, '').replace(/```/g, '').trim();
+        const parsed = JSON.parse(cleanJSON);
 
         setChatHistory(prev => [...prev, { 
             type: 'ai', 
-            text: parsed.reason || "Aquí tienes las credenciales recomendadas.", 
+            text: parsed.reason, 
             results: flatProjects.filter(p => parsed.match_ids?.includes(p.ID)), 
             recommendedTalent: talentData.filter(t => parsed.talent_names?.includes(t.Name)) 
         }]);
     } catch (err) { 
-        console.error("Fallo IA:", err);
-        setChatHistory(prev => [...prev, { 
-            type: 'ai', 
-            text: `⚠️ Error del sistema: ${err.message}` 
-        }]); 
+        setChatHistory(prev => [...prev, { type: 'ai', text: `⚠️ Error de sistema: ${err.message}` }]); 
     } finally { setIsTyping(false); }
+  };
+
+  // --- LÓGICA DE SQUAD ---
+  const toggleSquad = (person) => {
+    if (!person) return;
+    setSquad(prev => prev.some(p => p.ID === person.ID) ? prev.filter(p => p.ID !== person.ID) : [...prev, person]);
+  };
+
+  const activeProjectTeamIds = selectedProject?.teamArray || [];
+  const activeTeamTalent = talentData.filter(t => activeProjectTeamIds.includes(t.ID));
+  const isEntireTeamInSquad = activeProjectTeamIds.length > 0 && activeTeamTalent.length > 0 && activeTeamTalent.every(member => squad.some(s => s.ID === member.ID));
+
+  const toggleEntireTeam = () => {
+    if (isEntireTeamInSquad) {
+        setSquad(prev => prev.filter(p => !activeProjectTeamIds.includes(p.ID)));
+    } else {
+        setSquad(prev => {
+            const newOnes = activeTeamTalent.filter(p => !prev.some(s => s.ID === p.ID));
+            return [...prev, ...newOnes];
+        });
+    }
   };
 
   const filteredTalent = useMemo(() => talentData.filter(p => (filterRole === 'All' || p.Role === filterRole)), [talentData, filterRole]);
@@ -182,7 +181,7 @@ function MainContent() {
     <div className="min-h-screen bg-[#0A0A0A] text-white font-sans selection:bg-[#7D68F6]/30 overflow-x-hidden">
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_20%_20%,#1a0b3d_0%,transparent_50%)] z-0 pointer-events-none" />
       
-      {/* HEADER COMPLETO */}
+      {/* HEADER */}
       <header className="fixed top-0 left-0 w-full p-10 px-12 z-[100] flex justify-between items-start pointer-events-none">
         <div className="flex flex-col items-start cursor-pointer pointer-events-auto" onClick={() => setActiveTab('landing')}>
             <h1 className="text-6xl font-black uppercase tracking-tighter leading-none m-0">MRM</h1>
@@ -190,7 +189,6 @@ function MainContent() {
                 <span>BOGOTÁ</span><span>CREATIVE</span><span>CREDENTIALS</span>
             </div>
         </div>
-
         <div className="flex gap-4 items-center pointer-events-auto">
             {activeTab !== 'landing' && (
                 <nav className="flex gap-2 p-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-full shadow-2xl mr-4">
@@ -243,8 +241,8 @@ function MainContent() {
                     </div>
                 </div>
                 <div className="flex gap-4">
-                    <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describe tu necesidad de staffing..." className="flex-1 bg-white/5 border border-white/20 rounded-[2.5rem] py-5 px-8 outline-none focus:border-[#7D68F6] transition-all text-[15px] min-h-[64px] backdrop-blur-md resize-none" />
-                    <button onClick={handleSend} disabled={isTyping} className={`bg-[#7D68F6] w-[64px] h-[64px] rounded-full flex items-center justify-center transition-all shadow-lg shadow-[#7D68F6]/20 ${isTyping ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'}`}><Send size={22}/></button>
+                    <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describe tu necesidad..." className="flex-1 bg-white/5 border border-white/20 rounded-[2.5rem] py-5 px-8 outline-none focus:border-[#7D68F6] transition-all text-[15px] min-h-[64px] backdrop-blur-md resize-none" />
+                    <button onClick={handleSend} disabled={isTyping} className="bg-[#7D68F6] w-[64px] h-[64px] rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg shadow-[#7D68F6]/20 disabled:opacity-50"><Send size={22}/></button>
                 </div>
             </motion.section>
           )}
@@ -284,13 +282,12 @@ function MainContent() {
         </AnimatePresence>
       </main>
 
-      {/* DETALLE PROYECTO 70/30 */}
+      {/* MODALES Y FOOTER (Mantenemos diseño) */}
       <AnimatePresence>
         {selectedProject && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-start justify-center p-6 backdrop-blur-2xl bg-black/80 overflow-y-auto pointer-events-auto">
             <button onClick={() => setSelectedProject(null)} className="fixed top-6 right-6 z-[250] p-4 bg-black/50 rounded-full hover:bg-white text-white hover:text-black transition-all border border-white/10"><X size={24}/></button>
             <div className="w-full max-w-[1600px] mx-auto my-12 flex flex-col lg:flex-row gap-8 pb-20 text-left relative">
-              
               <div className="w-full lg:w-[70%] bg-[#0f0f0f] border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl h-fit">
                 <div className="relative h-[250px] md:h-[350px] w-full bg-zinc-950 flex overflow-x-auto snap-x hide-scrollbar">
                   {selectedProject.images.map((img, i) => (<img key={i} src={img} className="w-full h-full object-cover flex-shrink-0 snap-start opacity-70" alt="Slide" />))}
@@ -315,7 +312,6 @@ function MainContent() {
                   </div>
                 </div>
               </div>
-
               <div className="w-full lg:w-[30%] bg-[#0f0f0f] border border-white/10 rounded-[3rem] p-10 shadow-2xl h-fit lg:sticky top-12 flex flex-col">
                 <h4 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mb-8">TALENTO INVOLUCRADO</h4>
                 <div className="flex flex-col gap-4 mb-10 max-h-[50vh] overflow-y-auto hide-scrollbar">
@@ -330,13 +326,11 @@ function MainContent() {
                     {isEntireTeamInSquad ? 'RETIRAR SQUAD COMPLETO' : 'AGREGAR SQUAD COMPLETO'}
                 </button>
               </div>
-
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* MODAL DE SQUAD */}
       <AnimatePresence>
         {showSquadModal && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[300] flex items-center justify-center p-6 backdrop-blur-3xl bg-black/95 pointer-events-auto">
@@ -387,4 +381,4 @@ export default function App() {
         <UnauthenticatedTemplate><LoginScreen /></UnauthenticatedTemplate>
     </MsalProvider>
   ); 
-}//force build
+}
