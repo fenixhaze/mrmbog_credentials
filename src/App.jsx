@@ -41,7 +41,7 @@ function MainContent() {
     }
   }, [chatHistory, isTyping]);
 
-  // --- CARGA DE DATOS DESDE LOS CSV ---
+  // --- CARGA DE DATOS ---
   useEffect(() => {
     if (dataFetchedRef.current) return;
     dataFetchedRef.current = true;
@@ -52,7 +52,7 @@ function MainContent() {
           fetch('/datacenter/Talent_Database.csv'), 
           fetch('/datacenter/Projects_Database.csv') 
         ]);
-        if (!tRes.ok || !pRes.ok) throw new Error("CSV no encontrados en /datacenter/");
+        if (!tRes.ok || !pRes.ok) throw new Error("CSV no encontrados");
 
         const talentCSV = await tRes.text();
         const rawTalent = Papa.parse(talentCSV, { header: true, skipEmptyLines: true, delimiter: ";" }).data;
@@ -74,18 +74,14 @@ function MainContent() {
             Category: p.Category || "General", Description: p.Description || "", LoPedido: p.LoPedido || "", LoHecho: p.LoHecho || "", LoLogrado: p.LoLogrado || ""
         })));
 
-        setChatHistory([{ type: 'ai', text: `Sistema MRM Bogotá activo. Datacenter cargado y listo.` }]);
+        setChatHistory([{ type: 'ai', text: `Sistema MRM Bogotá activo. Datacenter cargado y listo para staffing.` }]);
         setLoading(false);
-      } catch (e) { 
-        console.error(e); 
-        setChatHistory([{ type: 'ai', text: `⚠️ Error: No se pudo conectar con el datacenter.` }]);
-        setLoading(false); 
-      }
+      } catch (e) { console.error(e); setLoading(false); }
     };
     fetchData();
   }, []);
 
-  // --- LÓGICA DEL CHATBOT (MODELO CERTIFICADO) ---
+  // --- LÓGICA DEL CHATBOT ---
   const handleSend = async () => {
     if (!input.trim() || isTyping) return;
     const userMsg = input;
@@ -95,21 +91,19 @@ function MainContent() {
     
     try {
         const KEY = import.meta.env.VITE_GEMINI_API_KEY;
-        if (!KEY) throw new Error("API Key faltante.");
-
-        // MODELO SACADO DE TU TERMINAL: gemini-2.5-flash
         const MODEL = "gemini-2.5-flash"; 
         const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${KEY}`;
 
-        // "Alimentamos" a la IA con los datos de tus archivos CSV
-        const pBrief = flatProjects.slice(0, 12).map(p => `- ${p.Title} [ID:${p.ID}]`).join("\n");
-        const tBrief = talentData.slice(0, 12).map(t => `- ${t.Name} (Rol:${t.Role})`).join("\n");
+        // Enviamos data a la IA
+        const pBrief = flatProjects.slice(0, 20).map(p => `- ${p.Title} [ID:${p.ID}]`).join("\n");
+        const tBrief = talentData.slice(0, 20).map(t => `- ${t.Name} (Rol:${t.Role})`).join("\n");
 
         const systemPrompt = `Eres experto en Staffing de MRM Bogotá.
+        DATOS:
         PROYECTOS: ${pBrief}
         TALENTO: ${tBrief}
-        Responde exclusivamente en JSON: {"match_ids":[], "talent_names":[], "reason":""}
-        Usuario pregunta: "${userMsg}"`;
+        Responde SOLO JSON: {"match_ids":[], "talent_names":[], "reason":""}
+        Pregunta: "${userMsg}"`;
 
         const response = await fetch(API_URL, {
             method: "POST",
@@ -117,19 +111,14 @@ function MainContent() {
             body: JSON.stringify({ contents: [{ parts: [{ text: systemPrompt }] }] })
         });
 
-        if (response.status === 429) throw new Error("Google alcanzó su límite de cuota. Espera 60s.");
-        if (!response.ok) throw new Error(`Google API: ${response.status}`);
-
         const data = await response.json();
-        
-        // Verificación de seguridad para evitar el error de candidatos[0]
-        if (!data.candidates || data.candidates.length === 0) throw new Error("Respuesta vacía de Google.");
-
         const rawRes = data.candidates[0].content.parts[0].text.replace(/```json/gi, '').replace(/```/g, '').trim();
         const parsed = JSON.parse(rawRes);
 
+        // Mapeamos los IDs y Nombres a objetos reales de nuestro estado
         setChatHistory(prev => [...prev, { 
-            type: 'ai', text: parsed.reason, 
+            type: 'ai', 
+            text: parsed.reason, 
             results: flatProjects.filter(p => parsed.match_ids?.includes(p.ID)), 
             recommendedTalent: talentData.filter(t => parsed.talent_names?.includes(t.Name)) 
         }]);
@@ -139,19 +128,17 @@ function MainContent() {
     } finally { setIsTyping(false); }
   };
 
-  // --- RENDERIZADO Y MODALES (Diseño original mantenido) ---
   const toggleSquad = (p) => setSquad(prev => prev.some(x => x.ID === p.ID) ? prev.filter(x => x.ID !== p.ID) : [...prev, p]);
-  const activeTeamTalent = talentData.filter(t => (selectedProject?.teamArray || []).includes(t.ID));
-  const isEntireTeamInSquad = activeTeamTalent.length > 0 && activeTeamTalent.every(m => squad.some(s => s.ID === m.ID));
-  const toggleEntireTeam = () => isEntireTeamInSquad ? setSquad(prev => prev.filter(p => !(selectedProject?.teamArray || []).includes(p.ID))) : setSquad(prev => [...prev, ...activeTeamTalent.filter(p => !prev.some(s => s.ID === p.ID))]);
+
   const filteredTalent = useMemo(() => talentData.filter(p => (filterRole === 'All' || p.Role === filterRole)), [talentData, filterRole]);
   const uniqueRoles = useMemo(() => ['All', ...new Set(talentData.map(t => t.Role))], [talentData]);
 
-  if (loading) return <div className="h-screen bg-[#0A0A0A] flex items-center justify-center text-[#7D68F6] font-black uppercase animate-pulse">Sincronizando Datacenter...</div>;
+  if (loading) return <div className="h-screen bg-[#0A0A0A] flex items-center justify-center text-[#7D68F6] font-black uppercase animate-pulse">Iniciando Credenciales MRM...</div>;
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white font-sans overflow-x-hidden">
+    <div className="min-h-screen bg-[#0A0A0A] text-white font-sans overflow-x-hidden selection:bg-[#7D68F6]/30">
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_20%_20%,#1a0b3d_0%,transparent_50%)] z-0 pointer-events-none" />
+      
       <header className="fixed top-0 left-0 w-full p-10 px-12 z-[100] flex justify-between items-start pointer-events-none">
         <div className="flex flex-col items-start cursor-pointer pointer-events-auto" onClick={() => setActiveTab('landing')}>
             <h1 className="text-6xl font-black uppercase tracking-tighter leading-none m-0">MRM</h1>
@@ -163,7 +150,7 @@ function MainContent() {
             {activeTab !== 'landing' && (
                 <nav className="flex gap-2 p-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-full shadow-2xl mr-4">
                     {[{id: 'chat', label: 'IA', icon: <MessageSquare size={14}/>}, {id: 'projects', label: 'PROYECTOS', icon: <Briefcase size={14}/>}, {id: 'team', label: 'TALENTO', icon: <Users size={14}/>}].map(tab => (
-                        <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[#7D68F6] text-white' : 'text-white/40'}`}> {tab.icon} {tab.label} </button>
+                        <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[#7D68F6] text-white shadow-lg' : 'text-white/40'}`}> {tab.icon} {tab.label} </button>
                     ))}
                 </nav>
             )}
@@ -178,9 +165,7 @@ function MainContent() {
                 {[{ id: 'chat', title: 'CONSULTORÍA IA', img: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200' }, { id: 'projects', title: 'PROYECTOS', img: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1200' }, { id: 'team', title: 'TALENTO', img: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200' }].map(card => (
                     <div key={card.id} onClick={() => setActiveTab(card.id)} className="relative flex-1 group cursor-pointer overflow-hidden border-r border-white/5 last:border-r-0">
                         <div className="absolute inset-0 bg-black"><img src={card.img} className="w-full h-full object-cover grayscale brightness-50 group-hover:grayscale-0 transition-all duration-1000" alt=""/></div>
-                        <div className="relative z-10 h-full flex flex-col justify-end p-16 pb-32 text-left">
-                            <h2 className="text-5xl font-black uppercase tracking-tighter leading-none">{card.title}</h2>
-                        </div>
+                        <div className="relative z-10 h-full flex flex-col justify-end p-16 pb-32 text-left"><h2 className="text-5xl font-black uppercase tracking-tighter leading-none">{card.title}</h2></div>
                     </div>
                 ))}
             </motion.section>
@@ -193,13 +178,33 @@ function MainContent() {
                         {chatHistory.map((msg, i) => (
                             <div key={i} className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
                                 <div className={`max-w-[95%] p-6 px-8 rounded-[2rem] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6]' : 'bg-white/5 border-white/10 backdrop-blur-xl'}`}>
-                                    <p className="whitespace-pre-wrap leading-relaxed opacity-90 normal-case">{msg.text}</p>
+                                    <p className="whitespace-pre-wrap leading-relaxed opacity-90 normal-case mb-4">{msg.text}</p>
+                                    
+                                    {/* PROYECTOS RECOMENDADOS EN EL CHAT */}
                                     {msg.results && msg.results.length > 0 && (
-                                        <div className="mt-8 pt-8 border-t border-white/10 flex gap-4 overflow-x-auto hide-scrollbar">
+                                        <div className="mb-6 flex gap-4 overflow-x-auto hide-scrollbar pb-2">
                                             {msg.results.map((p, idx) => (
-                                                <div key={idx} onClick={() => setSelectedProject(p)} className="min-w-[280px] bg-black/40 border border-white/5 rounded-[2rem] overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all">
-                                                    <img src={p.images[0]} className="h-32 w-full object-cover grayscale group-hover:grayscale-0 transition-all" alt=""/>
-                                                    <div className="p-5 text-left"><h4 className="text-sm font-black uppercase mb-1">{p.Title}</h4><p className="text-[9px] text-[#7D68F6] font-bold uppercase tracking-widest tracking-widest">DETALLES</p></div>
+                                                <div key={idx} onClick={() => setSelectedProject(p)} className="min-w-[220px] bg-black/40 border border-white/10 rounded-3xl overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all">
+                                                    <img src={p.images[0]} className="h-24 w-full object-cover grayscale group-hover:grayscale-0 transition-all" alt=""/>
+                                                    <div className="p-4"><h4 className="text-[10px] font-black uppercase mb-1 truncate text-white">{p.Title}</h4><p className="text-[8px] text-[#7D68F6] font-bold uppercase tracking-widest">VER PROYECTO</p></div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {/* TALENTO RECOMENDADO EN EL CHAT */}
+                                    {msg.recommendedTalent && msg.recommendedTalent.length > 0 && (
+                                        <div className="flex flex-wrap gap-3 mt-2 pt-4 border-t border-white/5">
+                                            {msg.recommendedTalent.map((t, idx) => (
+                                                <div key={idx} className="bg-black/40 p-3 pr-4 rounded-full border border-white/5 flex items-center gap-3">
+                                                    <img src={t.ImageURL} className="w-8 h-8 rounded-full object-cover grayscale" alt=""/>
+                                                    <div className="text-left">
+                                                        <p className="text-[9px] font-black uppercase text-white leading-none mb-1">{t.Name}</p>
+                                                        <p className="text-[7px] text-[#7D68F6] font-bold uppercase leading-none">{t.Role}</p>
+                                                    </div>
+                                                    <button onClick={() => toggleSquad(t)} className={`ml-2 p-1.5 rounded-full border transition-all ${squad.some(s => s.ID === t.ID) ? 'bg-[#7D68F6] border-[#7D68F6] text-white' : 'border-white/10 text-white/40 hover:text-white'}`}>
+                                                        {squad.some(s => s.ID === t.ID) ? <UserMinus size={10}/> : <UserPlus size={10}/>}
+                                                    </button>
                                                 </div>
                                             ))}
                                         </div>
@@ -207,7 +212,7 @@ function MainContent() {
                                 </div>
                             </div>
                         ))}
-                        {isTyping && <div className="text-[10px] font-black uppercase text-[#7D68F6] animate-pulse">Gemini 2.5 procesando...</div>}
+                        {isTyping && <div className="text-[10px] font-black uppercase text-[#7D68F6] animate-pulse">Analizando datacenter...</div>}
                     </div>
                 </div>
                 <div className="flex gap-4">
@@ -217,6 +222,7 @@ function MainContent() {
             </motion.section>
           )}
 
+          {/* ... SECCIONES DE PROYECTOS Y TALENTO SE MANTIENEN IGUAL ... */}
           {activeTab === 'projects' && (
             <motion.section key="projects" className="pt-48 px-12 max-w-7xl mx-auto pb-40 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                 {flatProjects.map((p, i) => (
@@ -232,7 +238,7 @@ function MainContent() {
             <motion.section key="team" className="flex gap-16 pt-48 px-12 max-w-7xl mx-auto pb-40 text-left">
                 <aside className="w-64 sticky top-48 flex flex-col gap-2">
                     <h3 className="text-[#7D68F6] text-[10px] font-black uppercase mb-8 tracking-widest tracking-widest">FILTRAR ROL</h3>
-                    {uniqueRoles.map(role => (<button key={role} onClick={() => setFilterRole(role)} className={`text-left px-5 py-2.5 rounded-full text-[11px] font-black uppercase transition-all ${filterRole === role ? 'bg-[#7D68F6] text-white shadow-md' : 'text-white/30 hover:text-white hover:bg-white/5'}`}>{role}</button>))}
+                    {uniqueRoles.map(role => (<button key={role} onClick={() => setFilterRole(role)} className={`text-left px-5 py-2.5 rounded-full text-[11px] font-black uppercase transition-all ${filterRole === role ? 'bg-[#7D68F6] text-white' : 'text-white/30 hover:text-white'}`}>{role}</button>))}
                 </aside>
                 <div className="flex-1">
                     <h2 className="text-7xl font-black uppercase tracking-tighter mb-12">EQUIPO BOGOTÁ</h2>
@@ -252,6 +258,26 @@ function MainContent() {
         </AnimatePresence>
       </main>
 
+      {/* MODAL DETALLES (Se mantiene igual) */}
+      <AnimatePresence>
+        {selectedProject && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-start justify-center p-6 backdrop-blur-2xl bg-black/80 overflow-y-auto pointer-events-auto">
+            <button onClick={() => setSelectedProject(null)} className="fixed top-6 right-6 z-[250] p-4 bg-black/50 rounded-full hover:bg-white text-white hover:text-black transition-all border border-white/10"><X size={24}/></button>
+            <div className="w-full max-w-[1600px] mx-auto my-12 flex flex-col lg:flex-row gap-8 pb-20 text-left relative">
+              <div className="w-full lg:w-[70%] bg-[#0f0f0f] border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl h-fit">
+                <div className="relative h-[350px] w-full bg-zinc-950 flex overflow-x-auto snap-x hide-scrollbar">
+                  {selectedProject.images.map((img, i) => (<img key={i} src={img} className="w-full h-full object-cover flex-shrink-0 snap-start opacity-70" alt="Slide" />))}
+                </div>
+                <div className="p-12 space-y-8 text-white">
+                  <h2 className="text-6xl font-black uppercase tracking-tighter leading-none">{selectedProject.Title}</h2>
+                  <p className="text-lg opacity-60 normal-case leading-relaxed">{selectedProject.Description}</p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <footer className="fixed bottom-10 right-12 z-[100] flex gap-4 pointer-events-auto">
         <button onClick={() => instance.logoutRedirect()} className="p-5 bg-white/5 rounded-full border border-white/10 text-white/20 hover:text-red-500 transition-all shadow-xl hover:bg-red-500/10"><LogOut size={22}/></button>
       </footer>
@@ -269,7 +295,7 @@ function LoginScreen() {
             <p className="text-[14px] text-[#7D68F6] font-black uppercase tracking-[0.5em] mb-12 font-bold">BOGOTÁ CREATIVE CREDENTIALS</p>
             <button onClick={() => instance.loginRedirect()} className="bg-[#7D68F6] hover:bg-white hover:text-black transition-all duration-300 px-12 py-5 rounded-full text-[12px] font-black uppercase tracking-widest shadow-[0_0_40px_rgba(125,104,246,0.3)]">INICIAR SESIÓN CON MICROSOFT</button>
         </div>
-        <style>{`body, html { font-family: 'Inter', sans-serif !important; background-color: #0A0A0A !important; } h1, h2, h3, h4, .font-black { font-weight: 900 !important; }`}</style>
+        <style>{`body, html { font-family: 'MW Sans', sans-serif !important; background-color: #0A0A0A !important; } h1, h2, h3, h4, .font-black { font-weight: 900 !important; font-style: normal !important; }`}</style>
     </div>
   );
 }
