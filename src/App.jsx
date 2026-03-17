@@ -2,10 +2,10 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { PublicClientApplication } from "@azure/msal-browser";
 import { MsalProvider, AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from "@azure/msal-react";
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, LogOut, Users, Briefcase, MessageSquare, ChevronRight, X, Mail, Calendar, UserPlus, UserMinus, Check, Link2, ExternalLink } from 'lucide-react';
+import { Send, LogOut, Users, Briefcase, MessageSquare, ChevronRight, X, Mail, Calendar, UserPlus, UserMinus, Link2, ExternalLink } from 'lucide-react';
 import Papa from 'papaparse';
 
-// --- CONFIGURACIÓN DE AZURE ---
+// --- CONFIGURACIÓN DE AZURE (SISTEMA DE CREDENCIALES) ---
 const authConfig = {
     auth: {
         clientId: "23d1168d-113b-48c0-a4fe-6e6d743f77af",
@@ -60,6 +60,7 @@ function MainContent() {
       }
   };
 
+  // --- CARGA DE DATOS DESDE /datacenter/ ---
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -92,21 +93,23 @@ function MainContent() {
             ID: String(p.ID || "").trim(),
             Title: p.Title || "PROYECTO SIN TÍTULO",
             images: p.ImageURLs ? String(p.ImageURLs).split(',').map(i => i.trim()) : ["https://picsum.photos/1200/800"],
-            tagsArray: String(p.tags || p.Tags || "").split(',').map(t => t.trim()).filter(Boolean),
+            tagsArray: String(p.tags || "").split(',').map(t => t.trim()).filter(Boolean),
             teamArray: String(p.TeamsIDs || "").replace(/;/g, ',').split(',').map(t => t.trim()).filter(Boolean),
             Category: p.Category || "Proyecto Especial",
+            Description: p.Description || "Sin descripción disponible.",
             LoPedido: p.LoPedido || "Ejecución técnica según requerimientos.",
             LoHecho: p.LoHecho || "Desarrollo de ecosistema digital de alta performance.",
             LoLogrado: p.LoLogrado || "Plataforma desplegada con éxito."
         })));
 
-        setChatHistory([{ type: 'ai', text: `Sistema MRM Bogotá activo. Gemini AI v1 conectado. ¿Qué equipo conformamos hoy?` }]);
+        setChatHistory([{ type: 'ai', text: `Sistema MRM Bogotá activo. He ajustado la conexión con Gemini. ¿Qué equipo conformamos hoy?` }]);
         setLoading(false);
       } catch (e) { console.error("Error carga CSV:", e); setLoading(false); }
     };
     fetchData();
   }, []);
 
+  // --- FUNCIÓN DE GEMINI CORREGIDA (API v1beta) ---
   const handleSend = async () => {
     if (!input.trim()) return;
     const userMsg = input;
@@ -116,12 +119,16 @@ function MainContent() {
     
     try {
         const GEMINI_API_KEY = "AIzaSyAuU7YLuBYplG8S2ZBnxiz3xx8uvg81YNQ"; 
-        const GEMINI_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+        // CAMBIO: Probamos v1beta que es más flexible con los nombres de modelos actuales
+        const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
-        const invLite = JSON.stringify(flatProjects.slice(0, 45).map(p => ({ id: p.ID, t: p.Title, c: p.tagsArray.join(',') })));
-        const talLite = JSON.stringify(talentData.slice(0, 45).map(t => ({ n: t.Name, r: t.Role, h: t.skillsArray.join(',') })));
+        // Enviamos un resumen ligero para no saturar la API
+        const invLite = JSON.stringify(flatProjects.slice(0, 40).map(p => ({ id: p.ID, t: p.Title, c: p.tagsArray.join(',') })));
+        const talLite = JSON.stringify(talentData.slice(0, 40).map(t => ({ n: t.Name, r: t.Role, h: t.skillsArray.join(',') })));
 
-        const promptText = `Eres experto en staffing para MRM Bogotá. Necesidad: "${userMsg}". Datos: Proyectos=${invLite}, Talento=${talLite}. Responde SOLO JSON: {"match_ids":["ID"], "talent_names":["Nombre"], "reason":"Porque..."}`;
+        const promptText = `Eres un experto en staffing para MRM Bogotá. Necesidad del usuario: "${userMsg}". 
+        Analiza estos datos: Proyectos=${invLite}, Talento=${talLite}. 
+        Responde exclusivamente en formato JSON: {"match_ids":["ID1"], "talent_names":["Nombre1"], "reason":"Porque..."}`;
 
         const response = await fetch(GEMINI_URL, {
             method: "POST",
@@ -131,7 +138,7 @@ function MainContent() {
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(`Google API Error ${response.status}: ${errorData.error.message}`);
+            throw new Error(errorData.error?.message || `Error ${response.status}`);
         }
 
         const data = await response.json();
@@ -145,14 +152,18 @@ function MainContent() {
             recommendedTalent: talentData.filter(t => parsed.talent_names.includes(t.Name)) 
         }]);
     } catch (err) { 
-        setChatHistory(prev => [...prev, { type: 'ai', text: `⚠️ Error: ${err.message}` }]); 
+        setChatHistory(prev => [...prev, { 
+            type: 'ai', 
+            text: `⚠️ Hubo un problema con la IA: ${err.message}. Estamos revisando la conexión con Google.` 
+        }]); 
     } finally { setIsTyping(false); }
   };
 
+  // --- FILTRADO Y RENDERIZADO ---
   const filteredTalent = useMemo(() => talentData.filter(p => (filterRole === 'All' || p.Role === filterRole)), [talentData, filterRole]);
   const uniqueRoles = useMemo(() => ['All', ...new Set(talentData.map(t => t.Role))], [talentData]);
 
-  if (loading) return <div className="h-screen bg-[#0A0A0A] flex items-center justify-center text-[#7D68F6] font-black uppercase tracking-widest animate-pulse">CARGANDO DATACENTER MRM...</div>;
+  if (loading) return <div className="h-screen bg-[#0A0A0A] flex items-center justify-center text-[#7D68F6] font-black uppercase tracking-widest animate-pulse">Iniciando Datacenter...</div>;
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white font-sans selection:bg-[#7D68F6]/30 overflow-x-hidden">
@@ -161,7 +172,7 @@ function MainContent() {
       <header className="fixed top-0 left-0 w-full p-10 px-12 z-[100] flex justify-between items-start pointer-events-none">
         <div className="flex flex-col items-start cursor-pointer pointer-events-auto" onClick={() => setActiveTab('landing')}>
             <h1 className="text-6xl font-black uppercase tracking-tighter leading-none m-0">MRM</h1>
-            <div className="text-[10px] text-[#7D68F6] mt-1 ml-1 border-l-2 border-[#7D68F6] pl-3 flex flex-col leading-[1.1] font-normal uppercase">
+            <div className="text-[10px] text-[#7D68F6] mt-1 ml-1 border-l-2 border-[#7D68F6] pl-3 flex flex-col uppercase">
                 <span>BOGOTÁ</span><span>CREATIVE</span><span>CREDENTIALS</span>
             </div>
         </div>
@@ -170,11 +181,11 @@ function MainContent() {
             {activeTab !== 'landing' && (
                 <nav className="flex gap-2 p-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-full shadow-2xl mr-4">
                     {[{id: 'chat', label: 'IA', icon: <MessageSquare size={14}/>}, {id: 'projects', label: 'PROYECTOS', icon: <Briefcase size={14}/>}, {id: 'team', label: 'TALENTO', icon: <Users size={14}/>}].map(tab => (
-                        <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[#7D68F6] text-white' : 'text-white/40'}`}> {tab.icon} {tab.label} </button>
+                        <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase transition-all ${activeTab === tab.id ? 'bg-[#7D68F6] text-white' : 'text-white/40'}`}> {tab.icon} {tab.label} </button>
                     ))}
                 </nav>
             )}
-            <div onClick={() => setShowSquadModal(true)} className="bg-[#7D68F6] px-6 py-4 rounded-full flex items-center gap-4 cursor-pointer shadow-lg shadow-[#7D68F6]/20 uppercase text-[10px] font-black">SQUAD ({squad.length})</div>
+            <div onClick={() => setShowSquadModal(true)} className="bg-[#7D68F6] px-6 py-4 rounded-full flex items-center gap-4 cursor-pointer shadow-lg uppercase text-[10px] font-black">SQUAD ({squad.length})</div>
         </div>
       </header>
 
@@ -182,11 +193,10 @@ function MainContent() {
         <AnimatePresence mode="wait">
           {activeTab === 'landing' && (
             <motion.section key="landing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex h-screen items-stretch -mt-24">
-                {[{ id: 'chat', title: 'CONSULTORÍA IA', img: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200', icon: <MessageSquare size={48}/> }, { id: 'projects', title: 'PROYECTOS', img: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1200', icon: <Briefcase size={48}/> }, { id: 'team', title: 'TALENTO', img: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200', icon: <Users size={48}/> }].map(card => (
+                {[{ id: 'chat', title: 'IA ESTRATÉGICA', img: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200' }, { id: 'projects', title: 'PROYECTOS', img: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1200' }, { id: 'team', title: 'TALENTO', img: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200' }].map(card => (
                     <div key={card.id} onClick={() => setActiveTab(card.id)} className="relative flex-1 group cursor-pointer overflow-hidden border-r border-white/5 last:border-r-0">
-                        <div className="absolute inset-0 bg-black"><img src={card.img} className="w-full h-full object-cover grayscale brightness-50 group-hover:grayscale-0 group-hover:scale-110 transition-all duration-1000" alt=""/></div>
+                        <div className="absolute inset-0 bg-black"><img src={card.img} className="w-full h-full object-cover grayscale brightness-50 group-hover:grayscale-0 transition-all duration-1000" alt=""/></div>
                         <div className="relative z-10 h-full flex flex-col justify-end p-16 pb-32 text-left">
-                            <div className="mb-8 text-[#7D68F6]">{card.icon}</div>
                             <h2 className="text-5xl font-black uppercase tracking-tighter leading-none">{card.title}</h2>
                         </div>
                     </div>
@@ -205,8 +215,8 @@ function MainContent() {
                                     {msg.results && (
                                         <div className="mt-8 pt-8 border-t border-white/10 flex gap-4 overflow-x-auto hide-scrollbar">
                                             {msg.results.map((p, idx) => (
-                                                <div key={idx} onClick={() => setSelectedProject(p)} className="min-w-[280px] bg-black/40 border border-white/5 rounded-[2rem] overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all">
-                                                    <img src={p.images[0]} className="h-32 w-full object-cover grayscale group-hover:grayscale-0 transition-all" alt=""/>
+                                                <div key={idx} onClick={() => setSelectedProject(p)} className="min-w-[280px] bg-black/40 border border-white/5 rounded-[2rem] overflow-hidden cursor-pointer hover:border-[#7D68F6] transition-all">
+                                                    <img src={p.images[0]} className="h-32 w-full object-cover grayscale hover:grayscale-0" alt=""/>
                                                     <div className="p-5 text-left"><h4 className="text-sm font-black uppercase mb-1">{p.Title}</h4><p className="text-[9px] text-[#7D68F6] font-bold uppercase tracking-widest">VER DETALLES</p></div>
                                                 </div>
                                             ))}
@@ -219,7 +229,7 @@ function MainContent() {
                     </div>
                 </div>
                 <div className="flex gap-4">
-                    <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describe tu necesidad..." className="flex-1 bg-white/5 border border-white/20 rounded-[2.5rem] py-5 px-8 outline-none focus:border-[#7D68F6] transition-all text-[15px] min-h-[64px] backdrop-blur-md resize-none" />
+                    <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describe una necesidad de staffing..." className="flex-1 bg-white/5 border border-white/20 rounded-[2.5rem] py-5 px-8 outline-none focus:border-[#7D68F6] transition-all text-[15px] min-h-[64px] backdrop-blur-md resize-none" />
                     <button onClick={handleSend} className="bg-[#7D68F6] w-[64px] h-[64px] rounded-full flex items-center justify-center transition-all hover:scale-105"><Send size={22}/></button>
                 </div>
             </motion.section>
@@ -230,7 +240,7 @@ function MainContent() {
                 {flatProjects.map((p, i) => (
                     <div key={i} onClick={() => setSelectedProject(p)} className="bg-zinc-900/40 border border-white/5 rounded-[2.5rem] overflow-hidden group cursor-pointer hover:border-[#7D68F6] text-left transition-all">
                         <div className="h-64 bg-black overflow-hidden relative"><img src={p.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt=""/></div>
-                        <div className="p-8"><h4 className="text-xl font-black uppercase text-white mb-2">{p.Title}</h4><p className="text-[10px] text-[#7D68F6] font-bold uppercase tracking-widest">VER DETALLES <ChevronRight size={10} className="inline ml-1"/></p></div>
+                        <div className="p-8"><h4 className="text-xl font-black uppercase text-white mb-2">{p.Title}</h4><p className="text-[10px] text-[#7D68F6] font-bold uppercase">VER DETALLES <ChevronRight size={10} className="inline ml-1"/></p></div>
                     </div>
                 ))}
             </motion.section>
@@ -240,7 +250,7 @@ function MainContent() {
             <motion.section key="team" className="flex gap-16 pt-48 px-12 max-w-7xl mx-auto pb-40 text-left">
                 <aside className="w-64 sticky top-48 flex flex-col gap-2">
                     <h3 className="text-[#7D68F6] text-[10px] font-black uppercase mb-8 tracking-[0.4em]">FILTRAR ROL</h3>
-                    {uniqueRoles.map(role => (<button key={role} onClick={() => setFilterRole(role)} className={`text-left px-5 py-2.5 rounded-full text-[11px] font-black uppercase transition-all ${filterRole === role ? 'bg-[#7D68F6] text-white shadow-md' : 'text-white/30 hover:text-white hover:bg-white/5'}`}>{role}</button>))}
+                    {uniqueRoles.map(role => (<button key={role} onClick={() => setFilterRole(role)} className={`text-left px-5 py-2.5 rounded-full text-[11px] font-black uppercase transition-all ${filterRole === role ? 'bg-[#7D68F6] text-white shadow-md' : 'text-white/30 hover:text-white'}`}>{role}</button>))}
                 </aside>
                 <div className="flex-1">
                     <h2 className="text-7xl font-black uppercase tracking-tighter leading-none mb-12">EQUIPO BOGOTÁ</h2>
@@ -260,10 +270,11 @@ function MainContent() {
         </AnimatePresence>
       </main>
 
+      {/* --- DETALLE PROYECTO 70/30 --- */}
       <AnimatePresence>
         {selectedProject && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-start justify-center p-6 backdrop-blur-2xl bg-black/80 overflow-y-auto">
-            <button onClick={() => setSelectedProject(null)} className="fixed top-6 right-6 z-[250] p-4 bg-black/50 backdrop-blur-md rounded-full hover:bg-white text-white hover:text-black transition-all border border-white/10"><X size={24}/></button>
+            <button onClick={() => setSelectedProject(null)} className="fixed top-6 right-6 z-[250] p-4 bg-black/50 rounded-full hover:bg-white text-white hover:text-black transition-all border border-white/10"><X size={24}/></button>
             <div className="w-full max-w-[1600px] mx-auto my-12 flex flex-col lg:flex-row gap-8 pb-20 text-left relative">
               
               <div className="w-full lg:w-[70%] bg-[#0f0f0f] border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl h-fit">
@@ -297,7 +308,7 @@ function MainContent() {
                   {activeTeamTalent.length === 0 ? <p className="text-white/30 text-xs normal-case italic">No se encontró talento asociado. Verifica 'TeamsIDs' en tu CSV.</p> : activeTeamTalent.map(member => (
                     <div key={member.ID} className="flex items-center justify-between bg-black/40 p-5 rounded-3xl border border-white/5 transition-all">
                       <div className="flex items-center gap-4"><img src={member.ImageURL} className="w-12 h-12 rounded-full object-cover border border-white/10" alt=""/><p className="font-black text-[13px] uppercase text-white truncate max-w-[100px]">{member.Name}</p></div>
-                      <button onClick={() => toggleSquad(member)} className={`p-3 rounded-full border transition-all ${squad.some(s => s.ID === member.ID) ? 'text-red-400 border-red-500/30 bg-red-500/10' : 'text-white/30 border-white/10 hover:text-[#7D68F6] hover:border-[#7D68F6]'}`}>{squad.some(s => s.ID === member.ID) ? <UserMinus size={16}/> : <UserPlus size={16}/>}</button>
+                      <button onClick={() => toggleSquad(member)} className={`p-3 rounded-full border transition-all ${squad.some(s => s.ID === member.ID) ? 'text-red-400 border-red-500/30 bg-red-500/10' : 'text-white/30 border-white/10 hover:text-[#7D68F6]'}`}>{squad.some(s => s.ID === member.ID) ? <UserMinus size={16}/> : <UserPlus size={16}/>}</button>
                     </div>
                   ))}
                 </div>
