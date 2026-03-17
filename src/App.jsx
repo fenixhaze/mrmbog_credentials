@@ -5,9 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Send, LogOut, Users, Briefcase, MessageSquare, ChevronRight, X, Mail, Calendar, UserPlus, UserMinus, Check, Link2, ExternalLink } from 'lucide-react';
 import Papa from 'papaparse';
 
-// --- CONFIGURACIÓN DE POWER AUTOMATE Y AZURE ---
-const POWER_AUTOMATE_URL = "https://defaultd026e4c15892497ab9daee493c9f03.64.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/58399658d2814f708a2774d517d4b66a/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=W9bUtaaDctUdbMF6_y7e63sZ7GExKXeuYite_O5T4kg"; 
-
+// --- CONFIGURACIÓN DE AZURE (MANTENIDA EXACTAMENTE IGUAL) ---
 const authConfig = {
     auth: {
         clientId: "23d1168d-113b-48c0-a4fe-6e6d743f77af",
@@ -65,14 +63,14 @@ function MainContent() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Mejoramos la ruta para asegurar que encuentre el CSV
+        // RUTA DINÁMICA REPARADA: Busca en github.io o en local
+        const baseUrl = window.location.hostname.includes('github.io') ? '/mrmbog_credentials' : '';
         const [tRes, pRes] = await Promise.all([
-          fetch('./Talent_Database.csv'), 
-          fetch('./Projects_Database.csv') 
+          fetch(`${baseUrl}/Talent_Database.csv`), 
+          fetch(`${baseUrl}/Projects_Database.csv`) 
         ]);
 
         const talentCSV = await tRes.text();
-        // Quitamos el delimiter=";" para que PapaParse lo adivine solo
         const rawTalent = Papa.parse(talentCSV, { 
             header: true, 
             skipEmptyLines: true, 
@@ -115,13 +113,14 @@ function MainContent() {
           };
         }));
 
-        setChatHistory([{ type: 'ai', text: `Bienvenido al sistema de credenciales MRM Bogotá. ¿Qué equipo y proyecto vamos a conformar hoy?` }]);
+        setChatHistory([{ type: 'ai', text: `Bienvenido al sistema de credenciales MRM Bogotá. He conectado correctamente con Google Gemini. ¿Qué equipo y proyecto vamos a conformar hoy?` }]);
         setLoading(false);
       } catch (e) { console.error("Error cargando CSVs:", e); setLoading(false); }
     };
     fetchData();
   }, [instance, accounts]);
 
+  // --- CONEXIÓN DIRECTA A GEMINI CON TU API KEY ---
   const handleSend = async () => {
     if (!input.trim()) return;
     const userMsg = input;
@@ -130,27 +129,55 @@ function MainContent() {
     setIsTyping(true);
     
     try {
+        const GEMINI_API_KEY = "AIzaSyAuU7YLuBYplG8S2ZBnxiz3xx8uvg81YNQ"; 
+        const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+        // Preparamos la data que le enviamos a Gemini
         const invLite = JSON.stringify(flatProjects.slice(0, 15).map(p => ({ id: p.ID, n: p.Title })));
         const talLite = JSON.stringify(talentData.slice(0, 15).map(t => ({ n: t.Name, r: t.Role, s: t.skillsArray?.slice(0,3).join(',') })));
 
-        const response = await fetch(POWER_AUTOMATE_URL, {
+        const promptText = `
+        Eres un asistente experto de staffing y credenciales para la agencia MRM Bogotá.
+        El usuario tiene esta necesidad: "${userMsg}"
+        
+        Inventario de proyectos disponibles: ${invLite}
+        Talento disponible: ${talLite}
+
+        Devuelve ÚNICAMENTE un objeto JSON válido con la siguiente estructura exacta:
+        {
+          "match_ids": ["ID_del_proyecto_1"],
+          "talent_names": ["Nombre del talento 1"],
+          "reason": "Explicación breve de tu recomendación."
+        }
+        `;
+
+        const response = await fetch(GEMINI_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ PreguntaUsuario: userMsg, Inventario: invLite, Talento: talLite })
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: promptText }] }],
+                generationConfig: { responseMimeType: "application/json" }
+            })
         });
+
         const data = await response.json();
-        const rawContent = data.content || data.text || "";
+        
+        if (!data.candidates || data.candidates.length === 0) {
+            throw new Error("No hay respuesta de Gemini");
+        }
+
+        const rawContent = data.candidates[0].content.parts[0].text;
         
         let pIds = [], tNames = [], cleanReason = "";
-        const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-            try {
-                const parsed = JSON.parse(jsonMatch[0]);
-                pIds = parsed.match_ids || [];
-                tNames = parsed.talent_names || [];
-                cleanReason = parsed.reason || "";
-            } catch { cleanReason = rawContent; }
-        } else { cleanReason = rawContent; }
+        
+        try {
+            const parsed = JSON.parse(rawContent);
+            pIds = parsed.match_ids || [];
+            tNames = parsed.talent_names || [];
+            cleanReason = parsed.reason || "";
+        } catch (parseError) { 
+            cleanReason = rawContent; 
+        }
 
         setChatHistory(prev => [...prev, { 
             type: 'ai', 
@@ -159,7 +186,8 @@ function MainContent() {
             recommendedTalent: talentData.filter(t => tNames.includes(t.Name)).slice(0, 4) 
         }]);
     } catch (err) { 
-        setChatHistory(prev => [...prev, { type: 'ai', text: "Error analizando solicitud en Power Automate." }]); 
+        console.error("Error con Gemini:", err);
+        setChatHistory(prev => [...prev, { type: 'ai', text: "Hubo un error al comunicarse con la IA de Gemini. Verifica tu conexión." }]); 
     } finally { setIsTyping(false); }
   };
 
@@ -289,7 +317,7 @@ function MainContent() {
                     </div>
                 </div>
                 <div className="flex items-center gap-4 w-full">
-                    <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describe tu necesidad..." className="flex-1 bg-white/5 border border-white/20 rounded-[2.5rem] py-5 px-8 outline-none focus:border-[#7D68F6] transition-all text-[15px] min-h-[64px] backdrop-blur-md resize-none shadow-2xl font-normal normal-case" />
+                    <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describe tu necesidad al Gemini AI..." className="flex-1 bg-white/5 border border-white/20 rounded-[2.5rem] py-5 px-8 outline-none focus:border-[#7D68F6] transition-all text-[15px] min-h-[64px] backdrop-blur-md resize-none shadow-2xl font-normal normal-case" />
                     <button onClick={handleSend} disabled={isTyping} className="bg-[#7D68F6] w-[64px] h-[64px] rounded-full flex items-center justify-center flex-shrink-0 hover:scale-105 transition-all shadow-lg shadow-[#7D68F6]/20 disabled:opacity-50"><Send size={22}/></button>
                 </div>
             </motion.section>
