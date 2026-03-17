@@ -45,7 +45,7 @@ function MainContent() {
     }
   }, [chatHistory, isTyping]);
 
-  // --- CARGA DE DATOS Y LÓGICA DE IDs (P vs T) ---
+  // --- CARGA DE DATOS ---
   useEffect(() => {
     if (dataFetchedRef.current) return;
     dataFetchedRef.current = true;
@@ -62,7 +62,7 @@ function MainContent() {
         const rawTalent = Papa.parse(talentCSV, { header: true, skipEmptyLines: true, delimiter: ";" }).data;
         const processedTalent = rawTalent.map(t => ({
             ...t,
-            ID: String(t.ID || "").trim(), // IDs que inician con T
+            ID: String(t.ID || "").trim(), 
             Name: t.Name || "Staff MRM",
             Role: t.Role || "Creativo",
             ImageURL: t.ImageURL || `https://ui-avatars.com/api/?name=${t.Name}&background=7D68F6&color=fff`,
@@ -74,19 +74,16 @@ function MainContent() {
         const rawProjects = Papa.parse(projectsCSV, { header: true, skipEmptyLines: true, delimiter: ";" }).data;
         setFlatProjects(rawProjects.map(p => ({
             ...p,
-            ID: String(p.ID || "").trim(), // IDs que inician con P
-            Title: p.Title || "Proyecto",
-            // Galería:
+            ID: String(p.ID || "").trim(), // IDs de Proyectos (ej. P001)
+            Title: p.Title || "Proyecto MRM",
             images: p.ImageURLs ? String(p.ImageURLs).split(',').map(i => i.trim()).filter(Boolean) : ["https://picsum.photos/1200/800"],
-            // Skills/Tags del proyecto:
-            tagsArray: String(p.tags || p.Tags || "").split(',').map(t => t.trim()).filter(Boolean),
-            // EXTRACCIÓN DE TALENTO (IDs que inician con T):
-            teamArray: String(p.TeamIDs || "").split(/[;,]+/).map(id => id.trim()).filter(id => id.startsWith('T')),
-            Description: p.Description || "Información detallada no disponible en el CSV.",
+            tagsArray: String(p.tags || p.Tags || "").split(',').map(t => t.trim()).filter(Boolean), // TAGS EXTRAÍDOS
+            teamArray: String(p.TeamIDs || "").split(/[;,]+/).map(id => id.trim()).filter(id => id.startsWith('T')), // T-IDs
+            Description: p.Description || "Información no disponible.",
             LoPedido: p.LoPedido || "N/A", LoHecho: p.LoHecho || "N/A", LoLogrado: p.LoLogrado || "N/A"
         })));
 
-        setChatHistory([{ type: 'ai', text: `Sistema MRM Bogotá Sincronizado. Diferenciación de IDs (P-Projects / T-Talent) activa.` }]);
+        setChatHistory([{ type: 'ai', text: `Sistema MRM Bogotá activo. Datacenter sincronizado.` }]);
         setLoading(false);
       } catch (e) { console.error(e); setLoading(false); }
     };
@@ -106,9 +103,23 @@ function MainContent() {
         const MODEL = "gemini-2.5-flash"; 
         const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${KEY}`;
 
-        const prompt = `MRM Bogotá Staffing. Proyectos(P-IDs) y Talento(T-IDs) disponibles. 
-        Analiza la necesidad y responde SOLO JSON: {"match_ids":["ID_QUE_INICIA_CON_P"], "talent_names":["NOMBRE_TALENTO"], "reason":""}
-        Máximo 4 personas. Usuario: "${userMsg}"`;
+        const pBrief = flatProjects.slice(0, 15).map(p => `ID_PROYECTO: ${p.ID} | Título: ${p.Title} | Tags: ${p.tagsArray.join(', ')}`).join("\n");
+        const tBrief = talentData.slice(0, 15).map(t => `Nombre: ${t.Name} | Rol: ${t.Role} | Skills: ${t.skillsArray.join(', ')}`).join("\n");
+
+        // PROMPT ESTRICTO PARA GARANTIZAR RESPUESTA DE PROYECTOS
+        const prompt = `Staffing MRM Bogotá.
+        [PROYECTOS DISPONIBLES]
+        ${pBrief}
+        
+        [TALENTO DISPONIBLE]
+        ${tBrief}
+        
+        REGLAS ESTRICTAS:
+        1. Devuelve MÁXIMO 4 talent_names.
+        2. En "match_ids", debes devolver SOLO los códigos exactos de ID_PROYECTO (ej. "P001", "P002").
+        3. Responde SOLO en este formato JSON exacto: {"match_ids":["ID_PROYECTO"], "talent_names":["NOMBRE"], "reason":"explicación"}
+        
+        USUARIO: "${userMsg}"`;
 
         const response = await fetch(API_URL, {
             method: "POST",
@@ -123,16 +134,16 @@ function MainContent() {
         setChatHistory(prev => [...prev, { 
             type: 'ai', 
             text: parsed.reason, 
-            results: flatProjects.filter(p => parsed.match_ids?.includes(p.ID)), 
+            results: flatProjects.filter(p => parsed.match_ids?.includes(p.ID)), // TARJETAS DE PROYECTOS RECUPERADAS
             recommendedTalent: talentData.filter(t => parsed.talent_names?.includes(t.Name)).slice(0, 4) 
         }]);
-    } catch (err) { setChatHistory(prev => [...prev, { type: 'ai', text: `⚠️ Error en el motor de IA.` }]); } 
+
+    } catch (err) { setChatHistory(prev => [...prev, { type: 'ai', text: `⚠️ Error de análisis en Gemini 2.5.` }]); } 
     finally { setIsTyping(false); }
   };
 
   const toggleSquad = (p) => setSquad(prev => prev.some(x => x.ID === p.ID) ? prev.filter(x => x.ID !== p.ID) : [...prev, p]);
   
-  // Matching dinámico para el modal 30% basado en T-IDs
   const activeTeamTalent = useMemo(() => {
     if (!selectedProject) return [];
     return talentData.filter(t => selectedProject.teamArray.includes(t.ID));
@@ -141,7 +152,7 @@ function MainContent() {
   const filteredTalent = useMemo(() => talentData.filter(p => (filterRole === 'All' || p.Role === filterRole)), [talentData, filterRole]);
   const uniqueRoles = useMemo(() => ['All', ...new Set(talentData.map(t => t.Role))], [talentData]);
 
-  if (loading) return <div className="h-screen bg-[#0A0A0A] flex items-center justify-center text-[#7D68F6] font-black uppercase animate-pulse">Staffing Engine MRM...</div>;
+  if (loading) return <div className="h-screen bg-[#0A0A0A] flex items-center justify-center text-[#7D68F6] font-black uppercase animate-pulse">Staffing Engine...</div>;
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white font-sans overflow-x-hidden selection:bg-[#7D68F6]/30">
@@ -159,7 +170,7 @@ function MainContent() {
             {activeTab !== 'landing' && (
                 <nav className="flex gap-2 p-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-full shadow-2xl mr-4">
                     {[{id: 'chat', label: 'IA', icon: <MessageSquare size={14}/>}, {id: 'projects', label: 'PROYECTOS', icon: <Briefcase size={14}/>}, {id: 'team', label: 'TALENTO', icon: <Users size={14}/>}].map(tab => (
-                        <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[#7D68F6] text-white shadow-lg shadow-[#7D68F6]/40' : 'text-white/40 hover:text-white'}`}> {tab.icon} {tab.label} </button>
+                        <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[#7D68F6] text-white shadow-lg' : 'text-white/40 hover:text-white'}`}> {tab.icon} {tab.label} </button>
                     ))}
                 </nav>
             )}
@@ -182,27 +193,39 @@ function MainContent() {
 
           {activeTab === 'chat' && (
             <section className="max-w-4xl mx-auto pt-24 w-full px-6 flex flex-col h-[calc(100vh-100px)] text-left">
-                <div ref={chatContainerRef} className="flex-1 overflow-y-auto flex flex-col gap-8 hide-scrollbar pb-8">
+                <div ref={chatContainerRef} className="flex-1 overflow-y-auto flex flex-col gap-8 hide-scrollbar pb-8 px-2 -mx-2">
                     {chatHistory.map((msg, i) => (
                         <div key={i} className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
                             <div className={`max-w-[95%] p-6 px-8 rounded-[2rem] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6]' : 'bg-white/5 border-white/10 backdrop-blur-xl'}`}>
                                 <p className="whitespace-pre-wrap leading-relaxed opacity-90 normal-case mb-6">{msg.text}</p>
+                                
+                                {/* PROYECTOS RECOMENDADOS EN CHAT (CON TAGS) */}
                                 {msg.results && msg.results.length > 0 && (
-                                    <div className="mb-6 flex gap-4 overflow-x-auto hide-scrollbar pb-2">
+                                    <div className="mb-6 flex gap-4 overflow-x-auto hide-scrollbar pb-4 pt-2 px-2 -mx-2">
                                         {msg.results.map((p, idx) => (
-                                            <div key={idx} onClick={() => setSelectedProject(p)} className="min-w-[240px] bg-black/40 border border-white/10 rounded-3xl overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all">
+                                            <div key={idx} onClick={() => setSelectedProject(p)} className="min-w-[280px] bg-black/40 border border-white/10 rounded-3xl overflow-hidden group cursor-pointer hover:ring-2 hover:ring-[#7D68F6] transition-all">
                                                 <img src={p.images[0]} className="h-28 w-full object-cover grayscale group-hover:grayscale-0 transition-all" alt=""/>
-                                                <div className="p-4 text-left"><h4 className="text-[11px] font-black uppercase mb-1 truncate text-white">{p.Title}</h4><p className="text-[9px] text-[#7D68F6] font-bold uppercase tracking-widest">VER CREDENCIAL</p></div>
+                                                <div className="p-5 text-left">
+                                                    <h4 className="text-[12px] font-black uppercase mb-2 truncate text-white">{p.Title}</h4>
+                                                    <div className="flex flex-wrap gap-1.5 mb-3">
+                                                        {p.tagsArray.slice(0,2).map((tag, tIdx) => (
+                                                            <span key={tIdx} className="px-2 py-1 bg-white/10 rounded text-[8px] font-black uppercase tracking-widest text-zinc-300">{tag}</span>
+                                                        ))}
+                                                    </div>
+                                                    <p className="text-[9px] text-[#7D68F6] font-bold uppercase tracking-widest">VER CREDENCIAL</p>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
                                 )}
+
+                                {/* PERSONAS RECOMENDADAS */}
                                 {msg.recommendedTalent && msg.recommendedTalent.length > 0 && (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2 pt-5 border-t border-white/10">
                                         {msg.recommendedTalent.map((t, idx) => (
                                             <div key={idx} onClick={() => setSelectedTalent(t)} className="bg-black/40 p-3 pr-5 rounded-full border border-white/5 flex items-center justify-between group cursor-pointer transition-all hover:ring-2 hover:ring-[#7D68F6]">
                                                 <div className="flex items-center gap-4 text-left">
-                                                    <img src={t.ImageURL} className="w-10 h-10 rounded-full object-cover grayscale transition-all" alt=""/>
+                                                    <img src={t.ImageURL} className="w-10 h-10 rounded-full object-cover grayscale group-hover:grayscale-0 transition-all" alt=""/>
                                                     <div><p className="text-[10px] font-black uppercase text-white leading-none mb-1">{t.Name}</p><p className="text-[8px] text-[#7D68F6] font-bold uppercase">{t.Role}</p></div>
                                                 </div>
                                                 <button onClick={(e) => { e.stopPropagation(); toggleSquad(t); }} className={`p-2 rounded-full border transition-all ${squad.some(s => s.ID === t.ID) ? 'bg-[#7D68F6] border-[#7D68F6] text-white shadow-lg' : 'border-white/10 text-white/40 hover:text-white'}`}>
@@ -217,7 +240,7 @@ function MainContent() {
                     ))}
                 </div>
                 <div className="flex gap-4">
-                    <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="¿Qué squad necesitas armar?" className="flex-1 bg-white/5 border border-white/20 rounded-[2.5rem] py-5 px-8 outline-none focus:border-[#7D68F6] text-[15px] min-h-[64px] backdrop-blur-md resize-none" />
+                    <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describe la necesidad..." className="flex-1 bg-white/5 border border-white/20 rounded-[2.5rem] py-5 px-8 outline-none focus:border-[#7D68F6] text-[15px] min-h-[64px] backdrop-blur-md resize-none" />
                     <button onClick={handleSend} disabled={isTyping} className="bg-[#7D68F6] w-[64px] h-[64px] rounded-full flex items-center justify-center shadow-lg hover:scale-105 disabled:opacity-50 transition-all"><Send size={22}/></button>
                 </div>
             </section>
@@ -226,9 +249,18 @@ function MainContent() {
           {activeTab === 'projects' && (
             <section className="pt-48 px-12 max-w-7xl mx-auto pb-40 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                 {flatProjects.map((p, i) => (
-                    <div key={i} onClick={() => setSelectedProject(p)} className="bg-zinc-900/40 border border-white/5 rounded-[2.5rem] overflow-hidden group cursor-pointer hover:border-[#7D68F6] text-left transition-all shadow-xl">
+                    <div key={i} onClick={() => setSelectedProject(p)} className="bg-zinc-900/40 border border-white/5 rounded-[2.5rem] overflow-hidden group cursor-pointer hover:ring-2 hover:ring-[#7D68F6] text-left transition-all shadow-xl flex flex-col">
                         <div className="h-64 bg-black overflow-hidden relative"><img src={p.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt=""/></div>
-                        <div className="p-8"><h4 className="text-xl font-black uppercase text-white mb-2">{p.Title}</h4><p className="text-[10px] text-[#7D68F6] font-bold uppercase tracking-widest tracking-widest">VER CREDENCIAL <ChevronRight size={10} className="inline ml-1"/></p></div>
+                        <div className="p-8 flex-1 flex flex-col">
+                            <h4 className="text-xl font-black uppercase text-white mb-4">{p.Title}</h4>
+                            {/* TAGS EN GRID DE PROYECTOS */}
+                            <div className="flex flex-wrap gap-2 mb-6">
+                                {p.tagsArray.slice(0, 3).map((tag, tIdx) => (
+                                    <span key={tIdx} className="px-3 py-1.5 bg-white/5 rounded-md text-[9px] font-black uppercase tracking-widest text-zinc-400">{tag}</span>
+                                ))}
+                            </div>
+                            <p className="text-[10px] text-[#7D68F6] font-bold uppercase tracking-widest mt-auto">VER CREDENCIAL <ChevronRight size={10} className="inline ml-1"/></p>
+                        </div>
                     </div>
                 ))}
             </section>
@@ -248,6 +280,14 @@ function MainContent() {
                                 <img src={person.ImageURL} className="w-24 h-24 rounded-full mx-auto mb-6 object-cover grayscale transition-all border-4 border-transparent group-hover:border-[#7D68F6] bg-black shadow-lg" alt=""/>
                                 <h4 className="text-[18px] font-black uppercase truncate w-full text-white">{person.Name}</h4>
                                 <p className="text-[10px] text-[#7D68F6] font-black uppercase mb-4 tracking-widest">{person.Role}</p>
+                                
+                                {/* SKILLS EN GRID DE TALENTO */}
+                                <div className="flex flex-wrap justify-center gap-1.5 mb-6">
+                                    {person.skillsArray.slice(0, 2).map((skill, sIdx) => (
+                                        <span key={sIdx} className="px-2 py-1 bg-white/5 rounded text-[8px] font-black uppercase tracking-widest text-zinc-400">{skill}</span>
+                                    ))}
+                                </div>
+
                                 <button onClick={(e) => { e.stopPropagation(); toggleSquad(person); }} className={`w-full py-3 rounded-full text-[10px] font-black uppercase border border-[#7D68F6] mt-auto transition-all ${squad.some(p => p.ID === person.ID) ? 'bg-[#7D68F6] text-white shadow-lg' : 'text-[#7D68F6] hover:bg-[#7D68F6]/10'}`}>{squad.some(p => p.ID === person.ID) ? 'EN SQUAD' : 'ADD TO SQUAD'}</button>
                             </div>
                         ))}
@@ -258,14 +298,13 @@ function MainContent() {
         </AnimatePresence>
       </main>
 
-      {/* MODAL PROYECTO 70/30 (CON DESCRIPCIÓN Y EQUIPO T-IDs) */}
+      {/* MODAL PROYECTO 70/30 */}
       <AnimatePresence>
         {selectedProject && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-start justify-center p-6 backdrop-blur-2xl bg-black/95 overflow-y-auto">
             <button onClick={() => setSelectedProject(null)} className="fixed top-6 right-6 z-[250] p-4 bg-black/50 rounded-full hover:bg-white text-white hover:text-black transition-all border border-white/10 shadow-2xl"><X size={24}/></button>
             <div className="w-full max-w-[1600px] mx-auto my-12 flex flex-col lg:flex-row gap-8 pb-20 text-left relative">
               
-              {/* 70%: CREDENCIAL */}
               <div className="w-full lg:w-[70%] bg-[#0f0f0f] border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl h-fit">
                 <div className="relative h-[450px] w-full bg-zinc-950 flex overflow-x-auto snap-x hide-scrollbar">
                   {selectedProject.images.map((img, i) => (<img key={i} src={img} className="w-full h-full object-cover flex-shrink-0 snap-start opacity-70" alt="Slide" />))}
@@ -276,7 +315,7 @@ function MainContent() {
                     <h2 className="text-7xl font-black uppercase tracking-tighter text-white leading-none">{selectedProject.Title}</h2>
                     <p className="text-xl text-white/60 normal-case leading-relaxed font-normal">{selectedProject.Description}</p>
                     
-                    {/* SKILLS CHIPS EN PROYECTO */}
+                    {/* CHIPS SKILLS EN PROYECTO */}
                     <div className="flex flex-wrap gap-2 pt-4">
                         {selectedProject.tagsArray.map((tag, idx) => (
                             <span key={idx} className="px-5 py-2.5 bg-zinc-900 border border-white/5 rounded-full text-[10px] font-black uppercase text-zinc-400 tracking-widest">{tag}</span>
@@ -294,17 +333,18 @@ function MainContent() {
                 </div>
               </div>
 
-              {/* 30%: TALENTO INCLUIDO (HOVER STROKE) */}
+              {/* BARRA LATERAL TALENTO CON HOVER CORREGIDO */}
               <div className="w-full lg:w-[30%] bg-[#0f0f0f] border border-white/10 rounded-[3rem] p-10 shadow-2xl h-fit lg:sticky top-12 flex flex-col">
-                <h4 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mb-8">EQUIPO DEL PROYECTO</h4>
-                <div className="flex flex-col gap-4 max-h-[50vh] overflow-y-auto hide-scrollbar">
-                  {activeTeamTalent.length === 0 ? <p className="text-white/20 text-xs italic">IDs de talento no vinculados en este proyecto.</p> : activeTeamTalent.map(member => (
-                    <div key={member.ID} onClick={() => setSelectedTalent(member)} className="flex items-center justify-between bg-black/40 p-5 rounded-3xl border border-white/5 group transition-all hover:ring-2 hover:ring-[#7D68F6] cursor-pointer">
+                <h4 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mb-8">TALENTO INVOLUCRADO</h4>
+                {/* Solución Clipping Hover: p-2 -mx-2 */}
+                <div className="flex flex-col gap-4 max-h-[50vh] overflow-y-auto hide-scrollbar px-2 -mx-2 py-2">
+                  {activeTeamTalent.length === 0 ? <p className="text-white/20 text-xs italic">IDs de talento no vinculados.</p> : activeTeamTalent.map(member => (
+                    <div key={member.ID} onClick={() => setSelectedTalent(member)} className="flex items-center justify-between bg-black/40 p-5 rounded-3xl border border-white/5 group cursor-pointer transition-all hover:ring-2 hover:ring-[#7D68F6]">
                       <div className="flex items-center gap-4 text-left">
                         <img src={member.ImageURL} className="w-12 h-12 rounded-full object-cover border border-white/10 grayscale group-hover:grayscale-0 transition-all" alt=""/>
                         <div><p className="font-black text-[13px] uppercase text-white truncate max-w-[120px]">{member.Name}</p><p className="text-[9px] text-[#7D68F6] font-black uppercase">{member.Role}</p></div>
                       </div>
-                      <button onClick={(e) => { e.stopPropagation(); toggleSquad(member); }} className={`p-3 rounded-full border transition-all ${squad.some(s => s.ID === member.ID) ? 'bg-[#7D68F6] text-white shadow-lg' : 'text-white/30 border-white/10 hover:text-white'}`}>
+                      <button onClick={(e) => { e.stopPropagation(); toggleSquad(member); }} className={`p-3 rounded-full border transition-all ${squad.some(s => s.ID === member.ID) ? 'bg-[#7D68F6] text-white shadow-lg' : 'text-white/30 border-white/10 hover:text-white hover:border-[#7D68F6]'}`}>
                         {squad.some(s => s.ID === member.ID) ? <UserMinus size={16}/> : <UserPlus size={16}/>}
                       </button>
                     </div>
@@ -316,7 +356,7 @@ function MainContent() {
         )}
       </AnimatePresence>
 
-      {/* MODAL TALENTO (CON SKILLS CHIPS) */}
+      {/* MODAL TALENTO DEDICADO */}
       <AnimatePresence>
         {selectedTalent && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[300] flex items-center justify-center p-6 backdrop-blur-2xl bg-black/95">
