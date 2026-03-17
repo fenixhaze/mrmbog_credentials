@@ -121,7 +121,7 @@ function MainContent() {
     
     try {
         // Leemos la llave desde el archivo .env
-        const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY; 
+        const GEMINI_API_KEY = "AIzaSyAa2osLkIVn9d9sBth-h6KUIn71jP5zVxU"; 
         
         if (!GEMINI_API_KEY) {
             throw new Error("La API Key no está configurada en las variables de entorno.");
