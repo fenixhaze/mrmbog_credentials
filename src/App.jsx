@@ -111,7 +111,7 @@ function MainContent() {
     fetchData();
   }, []);
 
-  // --- FUNCIÓN DE GEMINI USANDO VARIABLES DE ENTORNO ---
+ // --- FUNCIÓN DE GEMINI CON EL MODELO 2.5 FLASH ---
   const handleSend = async () => {
     if (!input.trim()) return;
     const userMsg = input;
@@ -120,14 +120,16 @@ function MainContent() {
     setIsTyping(true);
     
     try {
-        // Leemos la llave desde el archivo .env o los Secrets de GitHub
+        // Leemos la llave desde el archivo .env
         const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY; 
         
         if (!GEMINI_API_KEY) {
-            throw new Error("La API Key no está configurada. Revisa tus variables de entorno.");
+            throw new Error("La API Key no está configurada en las variables de entorno.");
         }
 
-        const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+        // AHORA SÍ: Usamos exactamente el modelo que vimos en tu terminal
+        const MODEL_NAME = "gemini-2.5-flash"; 
+        const GEMINI_URL = `https://generativelanguage.googleapis.com/v1/models/${MODEL_NAME}:generateContent?key=${GEMINI_API_KEY}`;
 
         // Resumen ligero de datos para la IA
         const invLite = JSON.stringify(flatProjects.slice(0, 45).map(p => ({ id: p.ID, t: p.Title, c: p.tagsArray.join(',') })));
@@ -135,33 +137,43 @@ function MainContent() {
 
         const promptText = `Eres un experto en staffing para la agencia MRM Bogotá. Necesidad del usuario: "${userMsg}". 
         Analiza estos datos de la agencia: Proyectos=${invLite}, Talento=${talLite}. 
-        Responde exclusivamente en formato JSON (sin markdown): {"match_ids":["ID1"], "talent_names":["Nombre1"], "reason":"Porque..."}`;
+        Responde exclusivamente en formato JSON (sin bloques de código \`\`\`json): 
+        {"match_ids":["ID1"], "talent_names":["Nombre1"], "reason":"Porque..."}`;
 
         const response = await fetch(GEMINI_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: promptText }] }] })
+            body: JSON.stringify({ 
+                contents: [{ role: "user", parts: [{ text: promptText }] }],
+                // Opcional: Para forzar el JSON en los modelos 2.0+
+                generationConfig: { responseMimeType: "application/json" }
+            })
         });
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.error?.message || `Error ${response.status}`);
+            throw new Error(errorData.error?.message || `Error HTTP: ${response.status}`);
         }
 
         const data = await response.json();
-        let rawContent = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
+        
+        // Limpiamos la respuesta en caso de que envíe markdown
+        let rawContent = data.candidates[0].content.parts[0].text;
+        rawContent = rawContent.replace(/```json/g, '').replace(/```/g, '').trim();
+        
         const parsed = JSON.parse(rawContent);
 
         setChatHistory(prev => [...prev, { 
             type: 'ai', 
-            text: parsed.reason, 
-            results: flatProjects.filter(p => parsed.match_ids.includes(p.ID)), 
-            recommendedTalent: talentData.filter(t => parsed.talent_names.includes(t.Name)) 
+            text: parsed.reason || "Aquí tienes algunas recomendaciones de mi análisis.", 
+            results: flatProjects.filter(p => parsed.match_ids?.includes(p.ID)), 
+            recommendedTalent: talentData.filter(t => parsed.talent_names?.includes(t.Name)) 
         }]);
     } catch (err) { 
+        console.error("Error completo en handleSend:", err);
         setChatHistory(prev => [...prev, { 
             type: 'ai', 
-            text: `⚠️ Error de sistema: ${err.message}. Verifica la configuración de la API Key.` 
+            text: `⚠️ Error de sistema: ${err.message}` 
         }]); 
     } finally { setIsTyping(false); }
   };
