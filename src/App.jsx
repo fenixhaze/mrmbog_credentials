@@ -120,7 +120,7 @@ function MainContent() {
     fetchData();
   }, [instance, accounts]);
 
-  // --- CONEXIÓN DIRECTA Y ROBUSTA A GEMINI LEYENDO TODO EL CSV ---
+// --- CONEXIÓN DIRECTA Y ROBUSTA A GEMINI LEYENDO TODO EL CSV ---
   const handleSend = async () => {
     if (!input.trim()) return;
     const userMsg = input;
@@ -132,65 +132,54 @@ function MainContent() {
         const GEMINI_API_KEY = "AIzaSyAuU7YLuBYplG8S2ZBnxiz3xx8uvg81YNQ"; 
         const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
-        // Convertimos TODA tu base de datos a texto estructurado para que la IA la analice
-        const invLite = JSON.stringify(flatProjects.map(p => ({ 
+        // OPTIMIZACIÓN EXTREMA: Comprimimos la info al máximo quitando textos largos (como descripciones completas)
+        // Solo le enviamos IDs, Títulos y Categorías/Tags. Así nunca pesará demasiado.
+        // Además, lo limitamos a los 50 más recientes para evitar bloqueos de red.
+        const invLite = JSON.stringify(flatProjects.slice(0, 50).map(p => ({ 
             id: p.ID, 
-            titulo: p.Title, 
-            descripcion: p.Description, 
-            categorias: p.tagsArray 
+            t: p.Title, 
+            c: p.tagsArray.join(',') 
         })));
         
-        const talLite = JSON.stringify(talentData.map(t => ({ 
-            nombre: t.Name, 
-            rol: t.Role, 
-            habilidades: t.skillsArray 
+        const talLite = JSON.stringify(talentData.slice(0, 50).map(t => ({ 
+            n: t.Name, 
+            r: t.Role, 
+            h: t.skillsArray.join(',') 
         })));
 
         const promptText = `
-        Eres un director de staffing y credenciales experto en la agencia MRM Bogotá.
-        El usuario tiene la siguiente necesidad: "${userMsg}"
+        Eres un experto en staffing para MRM Bogotá.
+        Necesidad: "${userMsg}"
         
-        Aquí tienes la base de datos completa de PROYECTOS de la agencia:
-        ${invLite}
-        
-        Aquí tienes la base de datos completa de TALENTO de la agencia:
-        ${talLite}
+        Proyectos disponibles: ${invLite}
+        Talento disponible: ${talLite}
 
-        Analiza la necesidad, busca en la base de datos de proyectos cuáles son los más relevantes y busca en la base de datos de talento a las personas con las habilidades perfectas.
-
-        Devuelve ÚNICAMENTE un objeto JSON válido con esta estructura exacta (sin markdown, sin \`\`\`json, solo el objeto puro):
-        {
-          "match_ids": ["ID_del_proyecto_1", "ID_del_proyecto_2"],
-          "talent_names": ["Nombre del talento 1", "Nombre del talento 2"],
-          "reason": "Explicación de máximo 3 líneas de por qué recomendaste esto."
-        }
+        Devuelve SOLO un JSON válido (sin formato markdown) con esta estructura exacta:
+        {"match_ids": ["ID1", "ID2"], "talent_names": ["Nombre1"], "reason": "Breve explicación."}
         `;
 
         const response = await fetch(GEMINI_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                contents: [{ role: "user", parts: [{ text: promptText }] }],
-                generationConfig: { 
-                    temperature: 0.2, 
-                    responseMimeType: "application/json" 
-                }
+                contents: [{ role: "user", parts: [{ text: promptText }] }]
+                // Quité el parámetro estricto de JSON de Google porque a veces causa error 400 si el CSV tiene caracteres raros.
             })
         });
 
+        // SI GOOGLE RECHAZA LA PETICIÓN, ESTO NOS DIRÁ EXACTAMENTE POR QUÉ
         if (!response.ok) {
-            const errorDetails = await response.json();
-            console.error("Detalles del error de la API de Google:", errorDetails);
-            throw new Error(`Error de Google API: ${response.status}`);
+            const errorText = await response.text(); // Capturamos el error crudo
+            console.error("Error de Google:", errorText);
+            throw new Error(`Google rechazó la conexión (Error ${response.status}). Detalles: ${errorText.substring(0, 150)}...`);
         }
 
         const data = await response.json();
         
         if (!data.candidates || data.candidates.length === 0) {
-            throw new Error("Gemini no devolvió ninguna respuesta válida.");
+            throw new Error("Gemini respondió, pero el mensaje venía vacío.");
         }
 
-        // Limpiamos la respuesta por si Gemini manda formato Markdown por error
         let rawContent = data.candidates[0].content.parts[0].text;
         rawContent = rawContent.replace(/```json/g, '').replace(/```/g, '').trim();
         
@@ -202,8 +191,8 @@ function MainContent() {
             tNames = parsed.talent_names || [];
             cleanReason = parsed.reason || "";
         } catch (parseError) { 
-            console.error("Error decodificando el JSON de Gemini:", rawContent);
-            cleanReason = "Encontré opciones, pero hubo un error de formato al procesar la recomendación."; 
+            console.error("Error decodificando el JSON:", rawContent);
+            cleanReason = "Encontré recomendaciones, pero la IA devolvió un formato incorrecto."; 
         }
 
         setChatHistory(prev => [...prev, { 
@@ -214,7 +203,11 @@ function MainContent() {
         }]);
     } catch (err) { 
         console.error("Fallo general en handleSend:", err);
-        setChatHistory(prev => [...prev, { type: 'ai', text: "Hubo un problema de conexión con Gemini. Abre la consola (F12) para ver más detalles." }]); 
+        // AHORA EL CHAT MOSTRARÁ EL ERROR REAL PARA PODER ARREGLARLO
+        setChatHistory(prev => [...prev, { 
+            type: 'ai', 
+            text: `⚠️ Error del sistema: ${err.message}` 
+        }]); 
     } finally { setIsTyping(false); }
   };
 
