@@ -2,10 +2,10 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { PublicClientApplication } from "@azure/msal-browser";
 import { MsalProvider, AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from "@azure/msal-react";
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, LogOut, Users, Briefcase, MessageSquare, ChevronRight, X, Mail, Calendar, UserPlus, UserMinus, Link2, ExternalLink } from 'lucide-react';
+import { Send, LogOut, Users, Briefcase, MessageSquare, ChevronRight, X, Calendar, UserPlus, UserMinus } from 'lucide-react';
 import Papa from 'papaparse';
 
-// --- CONFIGURACIÓN DE AZURE (SISTEMA DE CREDENCIALES) ---
+// --- CONFIGURACIÓN DE AZURE ---
 const authConfig = {
     auth: {
         clientId: "23d1168d-113b-48c0-a4fe-6e6d743f77af",
@@ -33,15 +33,14 @@ function MainContent() {
   const [filterRole, setFilterRole] = useState('All');
 
   const chatContainerRef = useRef(null);
+  const dataFetchedRef = useRef(false); // CANDADO 1: Evita que los CSV se carguen dos veces en React Strict Mode
 
-  // Auto-scroll del chat
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTo({ top: chatContainerRef.current.scrollHeight, behavior: 'smooth' });
     }
   }, [chatHistory, isTyping]);
 
-  // Lógica de Squad
   const toggleSquad = (person) => {
       if (!person) return;
       setSquad(prev => prev.some(p => p.ID === person.ID) ? prev.filter(p => p.ID !== person.ID) : [...prev, person]);
@@ -64,6 +63,10 @@ function MainContent() {
 
   // --- CARGA DE DATOS DESDE /datacenter/ ---
   useEffect(() => {
+    // Si la data ya se empezó a pedir, cancelamos la segunda vuelta
+    if (dataFetchedRef.current) return;
+    dataFetchedRef.current = true;
+
     const fetchData = async () => {
       try {
         const baseUrl = window.location.hostname.includes('github.io') ? '/mrmbog_credentials' : '';
@@ -95,7 +98,7 @@ function MainContent() {
             ID: String(p.ID || "").trim(),
             Title: p.Title || "PROYECTO SIN TÍTULO",
             images: p.ImageURLs ? String(p.ImageURLs).split(',').map(i => i.trim()) : ["https://picsum.photos/1200/800"],
-            tagsArray: String(p.tags || "").split(',').map(t => t.trim()).filter(Boolean),
+            tagsArray: String(p.tags || p.Tags || "").split(',').map(t => t.trim()).filter(Boolean),
             teamArray: String(p.TeamsIDs || "").replace(/;/g, ',').split(',').map(t => t.trim()).filter(Boolean),
             Category: p.Category || "Proyecto Especial",
             Description: p.Description || "Sin descripción disponible.",
@@ -104,76 +107,68 @@ function MainContent() {
             LoLogrado: p.LoLogrado || "Plataforma desplegada con éxito."
         })));
 
-        setChatHistory([{ type: 'ai', text: `Sistema MRM Bogotá activo. Consultoría IA lista para Staffing. ¿En qué puedo ayudarte?` }]);
+        setChatHistory([{ type: 'ai', text: `Sistema MRM Bogotá activo. Consultoría IA lista con modelo Gemini 2.5 Flash.` }]);
         setLoading(false);
       } catch (e) { console.error("Error carga CSV:", e); setLoading(false); }
     };
     fetchData();
   }, []);
 
- // --- FUNCIÓN DE GEMINI CON EL MODELO 2.5 FLASH ---
+  // --- FUNCIÓN DE GEMINI ---
   const handleSend = async () => {
-    if (!input.trim()) return;
+    // CANDADO 2: Si está vacío o ya estamos procesando un mensaje, bloquea el doble clic o doble enter
+    if (!input.trim() || isTyping) return; 
+    
     const userMsg = input;
     setChatHistory(prev => [...prev, { type: 'user', text: userMsg }]);
     setInput('');
     setIsTyping(true);
     
     try {
-        // Leemos la llave desde el archivo .env
-        const GEMINI_API_KEY = "AIzaSyAa2osLkIVn9d9sBth-h6KUIn71jP5zVxU"; 
+        const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY; 
         
         if (!GEMINI_API_KEY) {
-            throw new Error("La API Key no está configurada en las variables de entorno.");
+            throw new Error("No se encontró la API Key en el archivo .env o en los Secrets de GitHub.");
         }
 
-        // AHORA SÍ: Usamos exactamente el modelo que vimos en tu terminal
         const MODEL_NAME = "gemini-2.5-flash"; 
         const GEMINI_URL = `https://generativelanguage.googleapis.com/v1/models/${MODEL_NAME}:generateContent?key=${GEMINI_API_KEY}`;
 
-        // Resumen ligero de datos para la IA
         const invLite = JSON.stringify(flatProjects.slice(0, 45).map(p => ({ id: p.ID, t: p.Title, c: p.tagsArray.join(',') })));
         const talLite = JSON.stringify(talentData.slice(0, 45).map(t => ({ n: t.Name, r: t.Role, h: t.skillsArray.join(',') })));
 
-        const promptText = `Eres un experto en staffing para la agencia MRM Bogotá. Necesidad del usuario: "${userMsg}". 
-        Analiza estos datos de la agencia: Proyectos=${invLite}, Talento=${talLite}. 
-        Responde exclusivamente en formato JSON (sin bloques de código \`\`\`json): 
-        {"match_ids":["ID1"], "talent_names":["Nombre1"], "reason":"Porque..."}`;
+        const promptText = `Eres experto en staffing para MRM Bogotá. Necesidad: "${userMsg}". Datos: Proyectos=${invLite}, Talento=${talLite}. Responde SOLO en formato JSON estructurado: {"match_ids":["ID1"], "talent_names":["Nombre1"], "reason":"Porque..."}`;
 
         const response = await fetch(GEMINI_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ 
                 contents: [{ role: "user", parts: [{ text: promptText }] }],
-                // Opcional: Para forzar el JSON en los modelos 2.0+
                 generationConfig: { responseMimeType: "application/json" }
             })
         });
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.error?.message || `Error HTTP: ${response.status}`);
+            throw new Error(`Error API: ${errorData.error?.message || response.status}`);
         }
 
         const data = await response.json();
-        
-        // Limpiamos la respuesta en caso de que envíe markdown
         let rawContent = data.candidates[0].content.parts[0].text;
-        rawContent = rawContent.replace(/```json/g, '').replace(/```/g, '').trim();
-        
+        rawContent = rawContent.replace(/```json/gi, '').replace(/```/g, '').trim();
         const parsed = JSON.parse(rawContent);
 
         setChatHistory(prev => [...prev, { 
             type: 'ai', 
-            text: parsed.reason || "Aquí tienes algunas recomendaciones de mi análisis.", 
+            text: parsed.reason || "Aquí tienes las credenciales recomendadas.", 
             results: flatProjects.filter(p => parsed.match_ids?.includes(p.ID)), 
             recommendedTalent: talentData.filter(t => parsed.talent_names?.includes(t.Name)) 
         }]);
     } catch (err) { 
-        console.error("Error completo en handleSend:", err);
+        console.error("Fallo IA:", err);
         setChatHistory(prev => [...prev, { 
             type: 'ai', 
-            text: `⚠️ Error de sistema: ${err.message}` 
+            text: `⚠️ Error del sistema: ${err.message}` 
         }]); 
     } finally { setIsTyping(false); }
   };
@@ -204,7 +199,7 @@ function MainContent() {
                     ))}
                 </nav>
             )}
-            <div onClick={() => setShowSquadModal(true)} className="bg-[#7D68F6] px-6 py-4 rounded-full flex items-center gap-4 cursor-pointer shadow-lg uppercase text-[10px] font-black hover:scale-105 transition-all">SQUAD ({squad.length})</div>
+            <div onClick={() => setShowSquadModal(true)} className="bg-[#7D68F6] px-6 py-4 rounded-full flex items-center gap-4 cursor-pointer shadow-lg shadow-[#7D68F6]/20 uppercase text-[10px] font-black hover:scale-105 transition-all">SQUAD ({squad.length})</div>
         </div>
       </header>
 
@@ -236,7 +231,7 @@ function MainContent() {
                                             {msg.results.map((p, idx) => (
                                                 <div key={idx} onClick={() => setSelectedProject(p)} className="min-w-[280px] bg-black/40 border border-white/5 rounded-[2rem] overflow-hidden group cursor-pointer hover:border-[#7D68F6] transition-all">
                                                     <img src={p.images[0]} className="h-32 w-full object-cover grayscale group-hover:grayscale-0 transition-all" alt=""/>
-                                                    <div className="p-5 text-left"><h4 className="text-sm font-black uppercase mb-1">{p.Title}</h4><p className="text-[9px] text-[#7D68F6] font-bold uppercase">VER DETALLES</p></div>
+                                                    <div className="p-5 text-left"><h4 className="text-sm font-black uppercase mb-1">{p.Title}</h4><p className="text-[9px] text-[#7D68F6] font-bold uppercase tracking-widest">VER DETALLES</p></div>
                                                 </div>
                                             ))}
                                         </div>
@@ -248,8 +243,8 @@ function MainContent() {
                     </div>
                 </div>
                 <div className="flex gap-4">
-                    <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describe una necesidad de staffing..." className="flex-1 bg-white/5 border border-white/20 rounded-[2.5rem] py-5 px-8 outline-none focus:border-[#7D68F6] transition-all text-[15px] min-h-[64px] backdrop-blur-md resize-none" />
-                    <button onClick={handleSend} className="bg-[#7D68F6] w-[64px] h-[64px] rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg shadow-[#7D68F6]/20"><Send size={22}/></button>
+                    <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describe tu necesidad de staffing..." className="flex-1 bg-white/5 border border-white/20 rounded-[2.5rem] py-5 px-8 outline-none focus:border-[#7D68F6] transition-all text-[15px] min-h-[64px] backdrop-blur-md resize-none" />
+                    <button onClick={handleSend} disabled={isTyping} className={`bg-[#7D68F6] w-[64px] h-[64px] rounded-full flex items-center justify-center transition-all shadow-lg shadow-[#7D68F6]/20 ${isTyping ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'}`}><Send size={22}/></button>
                 </div>
             </motion.section>
           )}
@@ -327,7 +322,7 @@ function MainContent() {
                   {activeTeamTalent.length === 0 ? <p className="text-white/30 text-xs normal-case italic">No se encontró talento asociado.</p> : activeTeamTalent.map(member => (
                     <div key={member.ID} className="flex items-center justify-between bg-black/40 p-5 rounded-3xl border border-white/5 transition-all">
                       <div className="flex items-center gap-4"><img src={member.ImageURL} className="w-12 h-12 rounded-full object-cover border border-white/10" alt=""/><p className="font-black text-[13px] uppercase text-white truncate max-w-[100px]">{member.Name}</p></div>
-                      <button onClick={() => toggleSquad(member)} className={`p-3 rounded-full border transition-all ${squad.some(s => s.ID === member.ID) ? 'text-red-400 border-red-500/30 bg-red-500/10' : 'text-white/30 border-white/10 hover:text-[#7D68F6] hover:border-[#7D68F6]'}`}>{squad.some(s => s.ID === member.ID) ? <UserMinus size={16}/> : <UserPlus size={16}/>}</button>
+                      <button onClick={() => toggleSquad(member)} className={`p-3 rounded-full border transition-all ${squad.some(s => s.ID === member.ID) ? 'text-red-400 border-red-500/30 bg-red-500/10' : 'text-white/30 border-white/10 hover:text-[#7D68F6]'}`}>{squad.some(s => s.ID === member.ID) ? <UserMinus size={16}/> : <UserPlus size={16}/>}</button>
                     </div>
                   ))}
                 </div>
