@@ -48,54 +48,37 @@ function MainContent() {
 
     const fetchData = async () => {
       try {
-        // Usamos rutas relativas para evitar el 404 en Azure
         const [tRes, pRes] = await Promise.all([
-          fetch('./datacenter/Talent_Database.csv'), 
-          fetch('./datacenter/Projects_Database.csv') 
+          fetch('/datacenter/Talent_Database.csv'), 
+          fetch('/datacenter/Projects_Database.csv') 
         ]);
-
-        if (!tRes.ok || !pRes.ok) throw new Error("CSV no encontrados");
-
+        if (!tRes.ok || !pRes.ok) throw new Error("CSV no encontrados en /public/datacenter");
         const talentCSV = await tRes.text();
-        const rawTalent = Papa.parse(talentCSV, { 
-            header: true, skipEmptyLines: true, delimiter: ";",
-            transformHeader: h => h.trim().replace(/^[\u200B\uFEFF]/, '') 
-        }).data;
-
+        const rawTalent = Papa.parse(talentCSV, { header: true, skipEmptyLines: true, delimiter: ";" }).data;
         setTalentData(rawTalent.map(p => ({
             ...p,
             ID: String(p.ID || p.Name || "").trim(), 
             skillsArray: String(p.Tags || p.Skills || "").split(',').map(s => s.trim()).filter(Boolean)
         })));
-
         const projectsCSV = await pRes.text();
-        const rawProjects = Papa.parse(projectsCSV, { 
-            header: true, skipEmptyLines: true, delimiter: ";",
-            transformHeader: h => h.trim().replace(/^[\u200B\uFEFF]/, '') 
-        }).data;
-        
+        const rawProjects = Papa.parse(projectsCSV, { header: true, skipEmptyLines: true, delimiter: ";" }).data;
         setFlatProjects(rawProjects.map(p => ({
             ...p,
             ID: String(p.ID || "").trim(),
-            Title: p.Title || "PROYECTO",
+            Title: p.Title || "Proyecto",
             images: p.ImageURLs ? String(p.ImageURLs).split(',').map(i => i.trim()) : ["https://picsum.photos/1200/800"],
             tagsArray: String(p.tags || p.Tags || "").split(',').map(t => t.trim()).filter(Boolean),
             teamArray: String(p.TeamsIDs || "").replace(/;/g, ',').split(',').map(t => t.trim()).filter(Boolean),
-            Category: p.Category || "General",
-            Description: p.Description || "", LoPedido: p.LoPedido || "", LoHecho: p.LoHecho || "", LoLogrado: p.LoLogrado || ""
+            Category: p.Category || "General", Description: p.Description || "", LoPedido: p.LoPedido || "", LoHecho: p.LoHecho || "", LoLogrado: p.LoLogrado || ""
         })));
-
-        setChatHistory([{ type: 'ai', text: `Sistema MRM Bogotá activo. ¿En qué puedo ayudarte hoy?` }]);
+        setChatHistory([{ type: 'ai', text: `Sistema MRM Bogotá activo. ¿A quién buscamos hoy?` }]);
         setLoading(false);
-      } catch (e) { 
-        console.error("Error CSV:", e);
-        setLoading(false); 
-      }
+      } catch (e) { console.error(e); setLoading(false); }
     };
     fetchData();
   }, []);
 
-  // --- CHATBOT CORREGIDO (GEMINI 2.0 FLASH) ---
+  // --- CHATBOT ---
   const handleSend = async () => {
     if (!input.trim() || isTyping) return;
     const userMsg = input;
@@ -105,88 +88,54 @@ function MainContent() {
     
     try {
         const KEY = import.meta.env.VITE_GEMINI_API_KEY;
-        if (!KEY) throw new Error("API Key no detectada.");
+        if (!KEY) throw new Error("API Key no detectada en el entorno.");
 
-        // Usamos Gemini 2.0 Flash (Más compatible y estable)
         const MODEL = "gemini-2.0-flash"; 
         const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${KEY}`;
 
-        // Simplificamos la data para que el prompt sea texto puro (evita el error 400)
-        const projectList = flatProjects.slice(0, 25).map(p => `- ${p.Title} (ID: ${p.ID}, Tags: ${p.tagsArray.join(', ')})`).join('\n');
-        const talentList = talentData.slice(0, 25).map(t => `- ${t.Name} (Rol: ${t.Role}, Skills: ${t.skillsArray.join(', ')})`).join('\n');
+        const pList = flatProjects.slice(0, 20).map(p => `${p.Title} (ID:${p.ID})`).join(", ");
+        const tList = talentData.slice(0, 20).map(t => `${t.Name} (${t.Role})`).join(", ");
 
-        const systemPrompt = `Eres experto en Staffing para MRM Bogotá.
-        LISTA DE PROYECTOS:\n${projectList}
-        \nLISTA DE TALENTO:\n${talentList}
-        \nREGLA: Responde SIEMPRE en este formato JSON exacto:
-        {"match_ids": ["ID_DEL_PROYECTO"], "talent_names": ["NOMBRE_DEL_TALENTO"], "reason": "Tu explicación aquí"}
-        \nPregunta: ${userMsg}`;
+        const prompt = `Agencia MRM. Proyectos: ${pList}. Talento: ${tList}. 
+        Usuario: "${userMsg}". Responde SOLO JSON: {"match_ids":[], "talent_names":[], "reason":""}`;
 
         const response = await fetch(API_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: systemPrompt }] }]
-            })
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
         });
 
-        if (!response.ok) {
-            const errorBody = await response.json();
-            throw new Error(errorBody.error?.message || `Error ${response.status}`);
-        }
-
         const data = await response.json();
-        const textResponse = data.candidates[0].content.parts[0].text;
-        
-        // Limpiamos la respuesta para extraer el JSON
-        const jsonOnly = textResponse.replace(/```json/gi, '').replace(/```/g, '').trim();
-        const parsed = JSON.parse(jsonOnly);
+        const textRes = data.candidates[0].content.parts[0].text.replace(/```json/gi, '').replace(/```/g, '').trim();
+        const parsed = JSON.parse(textRes);
 
         setChatHistory(prev => [...prev, { 
-            type: 'ai', 
-            text: parsed.reason, 
+            type: 'ai', text: parsed.reason, 
             results: flatProjects.filter(p => parsed.match_ids?.includes(p.ID)), 
             recommendedTalent: talentData.filter(t => parsed.talent_names?.includes(t.Name)) 
         }]);
-
     } catch (err) { 
-        console.error("Detalle del error:", err);
         setChatHistory(prev => [...prev, { type: 'ai', text: `⚠️ Error: ${err.message}` }]); 
     } finally { setIsTyping(false); }
   };
 
-  // --- RESTO DE LÓGICA (SQUAD, RENDER, ETC) ---
-  const toggleSquad = (person) => {
-    setSquad(prev => prev.some(p => p.ID === person.ID) ? prev.filter(p => p.ID !== person.ID) : [...prev, person]);
-  };
-
-  const activeProjectTeamIds = selectedProject?.teamArray || [];
-  const activeTeamTalent = talentData.filter(t => activeProjectTeamIds.includes(t.ID));
-  const isEntireTeamInSquad = activeProjectTeamIds.length > 0 && activeTeamTalent.every(member => squad.some(s => s.ID === member.ID));
-
-  const toggleEntireTeam = () => {
-    if (isEntireTeamInSquad) {
-      setSquad(prev => prev.filter(p => !activeProjectTeamIds.includes(p.ID)));
-    } else {
-      setSquad(prev => [...prev, ...activeTeamTalent.filter(p => !prev.some(s => s.ID === p.ID))]);
-    }
-  };
-
+  // --- LÓGICA DE INTERFAZ (IGUAL A LA ANTERIOR) ---
+  const toggleSquad = (p) => setSquad(prev => prev.some(x => x.ID === p.ID) ? prev.filter(x => x.ID !== p.ID) : [...prev, p]);
+  const activeTeamTalent = talentData.filter(t => (selectedProject?.teamArray || []).includes(t.ID));
+  const isEntireTeamInSquad = activeTeamTalent.length > 0 && activeTeamTalent.every(m => squad.some(s => s.ID === m.ID));
+  const toggleEntireTeam = () => isEntireTeamInSquad ? setSquad(prev => prev.filter(p => !(selectedProject?.teamArray || []).includes(p.ID))) : setSquad(prev => [...prev, ...activeTeamTalent.filter(p => !prev.some(s => s.ID === p.ID))]);
   const filteredTalent = useMemo(() => talentData.filter(p => (filterRole === 'All' || p.Role === filterRole)), [talentData, filterRole]);
   const uniqueRoles = useMemo(() => ['All', ...new Set(talentData.map(t => t.Role))], [talentData]);
 
-  if (loading) return <div className="h-screen bg-[#0A0A0A] flex items-center justify-center text-[#7D68F6] font-black uppercase tracking-widest animate-pulse">Iniciando Credenciales MRM...</div>;
+  if (loading) return <div className="h-screen bg-[#0A0A0A] flex items-center justify-center text-[#7D68F6] font-black uppercase animate-pulse">Cargando Datacenter...</div>;
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white font-sans selection:bg-[#7D68F6]/30 overflow-x-hidden">
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_20%_20%,#1a0b3d_0%,transparent_50%)] z-0 pointer-events-none" />
-      
       <header className="fixed top-0 left-0 w-full p-10 px-12 z-[100] flex justify-between items-start pointer-events-none">
         <div className="flex flex-col items-start cursor-pointer pointer-events-auto" onClick={() => setActiveTab('landing')}>
             <h1 className="text-6xl font-black uppercase tracking-tighter leading-none m-0">MRM</h1>
-            <div className="text-[10px] text-[#7D68F6] mt-1 ml-1 border-l-2 border-[#7D68F6] pl-3 flex flex-col uppercase">
-                <span>BOGOTÁ</span><span>CREATIVE</span><span>CREDENTIALS</span>
-            </div>
+            <div className="text-[10px] text-[#7D68F6] mt-1 ml-1 border-l-2 border-[#7D68F6] pl-3 flex flex-col uppercase"><span>BOGOTÁ</span><span>CREATIVE</span><span>CREDENTIALS</span></div>
         </div>
         <div className="flex gap-4 items-center pointer-events-auto">
             {activeTab !== 'landing' && (
@@ -207,14 +156,11 @@ function MainContent() {
                 {[{ id: 'chat', title: 'CONSULTORÍA IA', img: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200' }, { id: 'projects', title: 'PROYECTOS', img: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1200' }, { id: 'team', title: 'TALENTO', img: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200' }].map(card => (
                     <div key={card.id} onClick={() => setActiveTab(card.id)} className="relative flex-1 group cursor-pointer overflow-hidden border-r border-white/5 last:border-r-0">
                         <div className="absolute inset-0 bg-black"><img src={card.img} className="w-full h-full object-cover grayscale brightness-50 group-hover:grayscale-0 transition-all duration-1000" alt=""/></div>
-                        <div className="relative z-10 h-full flex flex-col justify-end p-16 pb-32 text-left">
-                            <h2 className="text-5xl font-black uppercase tracking-tighter leading-none">{card.title}</h2>
-                        </div>
+                        <div className="relative z-10 h-full flex flex-col justify-end p-16 pb-32 text-left"><h2 className="text-5xl font-black uppercase tracking-tighter leading-none">{card.title}</h2></div>
                     </div>
                 ))}
             </motion.section>
           )}
-
           {activeTab === 'chat' && (
             <motion.section key="chat" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto pt-24 w-full px-6 flex flex-col h-[calc(100vh-100px)] pb-12 text-left">
                 <div className="relative flex-1 mb-8 overflow-hidden">
@@ -245,7 +191,6 @@ function MainContent() {
                 </div>
             </motion.section>
           )}
-
           {activeTab === 'projects' && (
             <motion.section key="projects" className="pt-48 px-12 max-w-7xl mx-auto pb-40 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                 {flatProjects.map((p, i) => (
@@ -256,7 +201,6 @@ function MainContent() {
                 ))}
             </motion.section>
           )}
-
           {activeTab === 'team' && (
             <motion.section key="team" className="flex gap-16 pt-48 px-12 max-w-7xl mx-auto pb-40 text-left">
                 <aside className="w-64 sticky top-48 flex flex-col gap-2">
