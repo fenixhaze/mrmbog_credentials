@@ -5,12 +5,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Send, LogOut, Users, Briefcase, MessageSquare, ChevronRight, X, Mail, Calendar, UserPlus, UserMinus, Check, Link2, ExternalLink } from 'lucide-react';
 import Papa from 'papaparse';
 
-// --- CONFIGURACIÓN DE AZURE (MANTENIDA EXACTAMENTE IGUAL) ---
+// --- CONFIGURACIÓN DE AZURE ---
 const authConfig = {
     auth: {
         clientId: "23d1168d-113b-48c0-a4fe-6e6d743f77af",
-        authority: "https://login.microsoftonline.com/d026e4c1-5892-497a-b9da-ee493c9f0364",
-        redirectUri: "https://fenixhaze.github.io/mrmbog_credentials/", 
+        authority: "[https://login.microsoftonline.com/d026e4c1-5892-497a-b9da-ee493c9f0364](https://login.microsoftonline.com/d026e4c1-5892-497a-b9da-ee493c9f0364)",
+        redirectUri: "[https://fenixhaze.github.io/mrmbog_credentials/](https://fenixhaze.github.io/mrmbog_credentials/)", 
     },
     cache: { cacheLocation: "sessionStorage", storeAuthStateInCookie: false }
 };
@@ -63,11 +63,11 @@ function MainContent() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // RUTA DINÁMICA REPARADA: Busca en github.io o en local
+        // RUTA DINÁMICA APUNTANDO A LA CARPETA 'datacenter'
         const baseUrl = window.location.hostname.includes('github.io') ? '/mrmbog_credentials' : '';
         const [tRes, pRes] = await Promise.all([
-          fetch(`${baseUrl}/Talent_Database.csv`), 
-          fetch(`${baseUrl}/Projects_Database.csv`) 
+          fetch(`${baseUrl}/datacenter/Talent_Database.csv`), 
+          fetch(`${baseUrl}/datacenter/Projects_Database.csv`) 
         ]);
 
         const talentCSV = await tRes.text();
@@ -102,7 +102,7 @@ function MainContent() {
             ID: String(p.ID || p.id || "").trim(),
             Title: p.Title || p.title || "PROYECTO SIN TÍTULO",
             Description: p.Description || p.description || "Sin descripción disponible.",
-            images: p.ImageURLs ? String(p.ImageURLs).split(',').map(i => i.trim()) : ["https://picsum.photos/1200/800"],
+            images: p.ImageURLs ? String(p.ImageURLs).split(',').map(i => i.trim()) : ["[https://picsum.photos/1200/800](https://picsum.photos/1200/800)"],
             tagsArray: rawTags.split(',').map(t => t.trim()).filter(Boolean),
             teamArray: rawTeam.split(',').map(t => t.trim()).filter(Boolean),
             Category: p.Category || p.category || "Proyecto Especial",
@@ -120,7 +120,7 @@ function MainContent() {
     fetchData();
   }, [instance, accounts]);
 
-  // --- CONEXIÓN DIRECTA A GEMINI CON TU API KEY ---
+  // --- CONEXIÓN DIRECTA Y ROBUSTA A GEMINI LEYENDO TODO EL CSV ---
   const handleSend = async () => {
     if (!input.trim()) return;
     const userMsg = input;
@@ -132,22 +132,37 @@ function MainContent() {
         const GEMINI_API_KEY = "AIzaSyAuU7YLuBYplG8S2ZBnxiz3xx8uvg81YNQ"; 
         const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
-        // Preparamos la data que le enviamos a Gemini
-        const invLite = JSON.stringify(flatProjects.slice(0, 15).map(p => ({ id: p.ID, n: p.Title })));
-        const talLite = JSON.stringify(talentData.slice(0, 15).map(t => ({ n: t.Name, r: t.Role, s: t.skillsArray?.slice(0,3).join(',') })));
+        // Convertimos TODA tu base de datos a texto estructurado para que la IA la analice
+        const invLite = JSON.stringify(flatProjects.map(p => ({ 
+            id: p.ID, 
+            titulo: p.Title, 
+            descripcion: p.Description, 
+            categorias: p.tagsArray 
+        })));
+        
+        const talLite = JSON.stringify(talentData.map(t => ({ 
+            nombre: t.Name, 
+            rol: t.Role, 
+            habilidades: t.skillsArray 
+        })));
 
         const promptText = `
-        Eres un asistente experto de staffing y credenciales para la agencia MRM Bogotá.
-        El usuario tiene esta necesidad: "${userMsg}"
+        Eres un director de staffing y credenciales experto en la agencia MRM Bogotá.
+        El usuario tiene la siguiente necesidad: "${userMsg}"
         
-        Inventario de proyectos disponibles: ${invLite}
-        Talento disponible: ${talLite}
+        Aquí tienes la base de datos completa de PROYECTOS de la agencia:
+        ${invLite}
+        
+        Aquí tienes la base de datos completa de TALENTO de la agencia:
+        ${talLite}
 
-        Devuelve ÚNICAMENTE un objeto JSON válido con la siguiente estructura exacta:
+        Analiza la necesidad, busca en la base de datos de proyectos cuáles son los más relevantes y busca en la base de datos de talento a las personas con las habilidades perfectas.
+
+        Devuelve ÚNICAMENTE un objeto JSON válido con esta estructura exacta (sin markdown, sin \`\`\`json, solo el objeto puro):
         {
-          "match_ids": ["ID_del_proyecto_1"],
-          "talent_names": ["Nombre del talento 1"],
-          "reason": "Explicación breve de tu recomendación."
+          "match_ids": ["ID_del_proyecto_1", "ID_del_proyecto_2"],
+          "talent_names": ["Nombre del talento 1", "Nombre del talento 2"],
+          "reason": "Explicación de máximo 3 líneas de por qué recomendaste esto."
         }
         `;
 
@@ -155,18 +170,29 @@ function MainContent() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                contents: [{ parts: [{ text: promptText }] }],
-                generationConfig: { responseMimeType: "application/json" }
+                contents: [{ role: "user", parts: [{ text: promptText }] }],
+                generationConfig: { 
+                    temperature: 0.2, 
+                    responseMimeType: "application/json" 
+                }
             })
         });
+
+        if (!response.ok) {
+            const errorDetails = await response.json();
+            console.error("Detalles del error de la API de Google:", errorDetails);
+            throw new Error(`Error de Google API: ${response.status}`);
+        }
 
         const data = await response.json();
         
         if (!data.candidates || data.candidates.length === 0) {
-            throw new Error("No hay respuesta de Gemini");
+            throw new Error("Gemini no devolvió ninguna respuesta válida.");
         }
 
-        const rawContent = data.candidates[0].content.parts[0].text;
+        // Limpiamos la respuesta por si Gemini manda formato Markdown por error
+        let rawContent = data.candidates[0].content.parts[0].text;
+        rawContent = rawContent.replace(/```json/g, '').replace(/```/g, '').trim();
         
         let pIds = [], tNames = [], cleanReason = "";
         
@@ -176,18 +202,19 @@ function MainContent() {
             tNames = parsed.talent_names || [];
             cleanReason = parsed.reason || "";
         } catch (parseError) { 
-            cleanReason = rawContent; 
+            console.error("Error decodificando el JSON de Gemini:", rawContent);
+            cleanReason = "Encontré opciones, pero hubo un error de formato al procesar la recomendación."; 
         }
 
         setChatHistory(prev => [...prev, { 
             type: 'ai', 
             text: cleanReason, 
             results: flatProjects.filter(p => pIds.includes(p.ID)), 
-            recommendedTalent: talentData.filter(t => tNames.includes(t.Name)).slice(0, 4) 
+            recommendedTalent: talentData.filter(t => tNames.includes(t.Name)) 
         }]);
     } catch (err) { 
-        console.error("Error con Gemini:", err);
-        setChatHistory(prev => [...prev, { type: 'ai', text: "Hubo un error al comunicarse con la IA de Gemini. Verifica tu conexión." }]); 
+        console.error("Fallo general en handleSend:", err);
+        setChatHistory(prev => [...prev, { type: 'ai', text: "Hubo un problema de conexión con Gemini. Abre la consola (F12) para ver más detalles." }]); 
     } finally { setIsTyping(false); }
   };
 
@@ -236,9 +263,9 @@ function MainContent() {
           {activeTab === 'landing' && (
             <motion.section key="landing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex h-screen items-stretch overflow-hidden -mt-24">
                 {[
-                    { id: 'chat', title: 'CONSULTORÍA IA', img: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200', icon: <MessageSquare size={48}/> },
-                    { id: 'projects', title: 'PROYECTOS', img: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1200', icon: <Briefcase size={48}/> },
-                    { id: 'team', title: 'TALENTO', img: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200', icon: <Users size={48}/> }
+                    { id: 'chat', title: 'CONSULTORÍA IA', img: '[https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200](https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200)', icon: <MessageSquare size={48}/> },
+                    { id: 'projects', title: 'PROYECTOS', img: '[https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1200](https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1200)', icon: <Briefcase size={48}/> },
+                    { id: 'team', title: 'TALENTO', img: '[https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200](https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200)', icon: <Users size={48}/> }
                 ].map(card => (
                     <div key={card.id} onClick={() => setActiveTab(card.id)} className="relative flex-1 group cursor-pointer overflow-hidden border-r border-white/5 last:border-r-0">
                         <div className="absolute inset-0 z-0 bg-black"><img src={card.img} className="w-full h-full object-cover grayscale brightness-50 group-hover:grayscale-0 group-hover:brightness-75 group-hover:scale-110 transition-all duration-1000" alt=""/></div>
@@ -438,7 +465,7 @@ function MainContent() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       {[0, 1, 2, 3].map(i => (
                           <div key={i} className="aspect-square rounded-2xl overflow-hidden border border-white/5 bg-black/40">
-                              <img src={selectedProject.images[i] || selectedProject.images[0] || "https://picsum.photos/600"} className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-500 hover:scale-110" alt="Mosaico"/>
+                              <img src={selectedProject.images[i] || selectedProject.images[0] || "[https://picsum.photos/600](https://picsum.photos/600)"} className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-500 hover:scale-110" alt="Mosaico"/>
                           </div>
                       ))}
                     </div>
