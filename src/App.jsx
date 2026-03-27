@@ -8,7 +8,7 @@ import Papa from 'papaparse';
 // --- CONFIGURACIÓN AZURE MSAL ---
 const authConfig = {
   auth: {
-    clientId: "23d1168d-113b-48c0-a4fe-6e6d743f77af", 
+    clientId: "23d1168d-113b-48c0-a4fe-6e6d743f77af",
     authority: "https://login.microsoftonline.com/d026e4c1-5892-497a-b9da-ee493c9f0364",
     redirectUri: "https://zealous-sky-0305e650f.2.azurestaticapps.net",
   },
@@ -16,12 +16,11 @@ const authConfig = {
 };
 
 const msalInstance = new PublicClientApplication(authConfig);
- 
-// --- TRADUCCIONES ---
+
 const translations = {
   es: {
     loading: "Cargando Staffing Engine...",
-    subtitle: "CREDENCIALES CREATIVAS BOGOTÁ", // This is for the login screen
+    subtitle: "CREDENCIALES CREATIVAS BOGOTÁ",
     loginBtn: "INICIAR SESIÓN CON MICROSOFT",
     nav: { chat: "BÚSQUEDA IA", projects: "PROYECTOS", team: "TALENTO" },
     squad: "SQUAD",
@@ -57,8 +56,8 @@ const translations = {
       add: "AÑADIR AL SQUAD"
     },
     squadModal: {
-      defaultTitle: "NUEVO PROYECTO MRM", // Default title for squad modal
-      titlePlaceholder: "NOMBRE DEL PROYECTO...", // Placeholder for squad modal
+      defaultTitle: "NUEVO PROYECTO MRM",
+      titlePlaceholder: "NOMBRE DEL PROYECTO...",
       analysis: "ANÁLISIS DE SISTEMA",
       analysisQuote: '"Squad optimizado para ejecución estratégica en MRM Bogotá."',
       selected: "PARTICIPANTES SELECCIONADOS",
@@ -82,34 +81,27 @@ const translations = {
     team: { filter: "FILTER ROLE", title: "BOGOTÁ TEAM", inSquad: "IN SQUAD", addSquad: "ADD TO SQUAD", all: "All" },
     projectModal: { category: "Category", loPedido: "THE ASK", loHecho: "THE WORK", loLogrado: "THE RESULT", talentInvolved: "INVOLVED TALENT", noTalent: "No associated talent found.", removeSquad: "REMOVE FULL SQUAD", addSquad: "ADD FULL SQUAD", viewCredential: "VIEW CREDENTIAL" },
     talentModal: { skills: "SKILLS AND EXPERIENCE", remove: "REMOVE FROM SQUAD", add: "ADD TO SQUAD" },
-    squadModal: { defaultTitle: "NEW MRM PROJECT", titlePlaceholder: "PROJECT NAME...", analysis: "SYSTEM ANALYSIS", analysisQuote: '"Squad optimized for strategic execution at MRM Bogotá."', selected: "SELECTED PARTICIPANTS", teamsBtn: "COORDINATE TEAMS MEETING" } // Default title for squad modal
+    squadModal: { defaultTitle: "NEW MRM PROJECT", titlePlaceholder: "PROJECT NAME...", analysis: "SYSTEM ANALYSIS", analysisQuote: '"Squad optimized for strategic execution at MRM Bogotá."', selected: "SELECTED PARTICIPANTS", teamsBtn: "COORDINATE TEAMS MEETING" }
   }
 };
 
-function MainContent({ language, setLanguage, t, translations }) {
+function MainContent({ language, setLanguage, t }) {
   const { instance } = useMsal();
   const [activeTab, setActiveTab] = useState('landing');
   const [rawTalentData, setRawTalentData] = useState([]);
-  const [talentData, setTalentData] = useState([]);
   const [rawFlatProjects, setRawFlatProjects] = useState([]);
-  const [flatProjects, setFlatProjects] = useState([]); // Processed projects for current language
+  const [talentData, setTalentData] = useState([]);
+  const [flatProjects, setFlatProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [chatHistory, setChatHistory] = useState([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-
-  // Modales
   const [selectedProject, setSelectedProject] = useState(null);
   const [selectedTalent, setSelectedTalent] = useState(null);
   const [squad, setSquad] = useState([]);
-  const [showSquadModal, setShowSquadModal] = useState(false);
-  const [customProjectTitle, setCustomProjectTitle] = useState(t.squadModal.defaultTitle);
-  const [isTranslating, setIsTranslating] = useState(false); // New state for translation loading
   const [filterRole, setFilterRole] = useState('All');
 
   const chatContainerRef = useRef(null);
-  const dataFetchedRef = useRef(false);
-  const prevLanguageRef = useRef(language);
 
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -117,95 +109,6 @@ function MainContent({ language, setLanguage, t, translations }) {
     }
   }, [chatHistory, isTyping]);
 
-  // --- DYNAMIC DATA TRANSLATION ENGINE ---
-  const [translatedDataCache, setTranslatedDataCache] = useState({}); // Cache for translated data
-
-  const translateDynamicData = async (targetLang) => {
-    setIsTranslating(true);
-    try {
-      const KEY = import.meta.env.VITE_GEMINI_API_KEY;
-      const MODEL = "gemini-2.5-flash";
-      const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${KEY}`;
-
-      const dataToTranslate = {
-        projects: rawFlatProjects.map(p => ({
-          id: p.ID,
-          title: p.Title,
-          category: p.Category,
-          description: p.Description,
-          loPedido: p.LoPedido,
-          loHecho: p.LoHecho,
-          loLogrado: p.LoLogrado,
-          tags: p.rawTags // Send as single string for translation
-        })),
-        talent: rawTalentData.map(tItem => ({
-          id: tItem.ID,
-          role: tItem.Role,
-          skills: tItem.rawSkills // Send as single string for translation
-        }))
-      };
-
-      const prompt = `Translate this Creative Agency data to ${targetLang === 'en' ? 'English' : 'Spanish'}. Maintain a professional, high-end tone. Do NOT change any IDs (P### or T###). Return the translated data in the same JSON structure.
-      
-      Data: ${JSON.stringify(dataToTranslate)}`;
-
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Gemini API error: ${errorData.error?.message || response.statusText}`);
-      }
-
-      const geminiResponse = await response.json();
-      const rawTranslatedText = geminiResponse.candidates[0].content.parts[0].text.replace(/```json/gi, '').replace(/```/g, '').trim();
-      const translatedContent = JSON.parse(rawTranslatedText);
-
-      const newFlatProjects = rawFlatProjects.map(p => {
-        const translatedP = translatedContent.projects.find(tp => tp.id === p.ID);
-        if (!translatedP) return p; // Fallback to original if translation fails for an item
-        return {
-          ...p,
-          Title: translatedP.title,
-          Category: translatedP.category,
-          Description: translatedP.description,
-          LoPedido: translatedP.loPedido,
-          LoHecho: translatedP.loHecho,
-          LoLogrado: translatedP.loLogrado,
-          tagsArray: translatedP.tags.split(',').map(s => s.trim()).filter(Boolean)
-        };
-      });
-
-      const newTalentData = rawTalentData.map(tItem => {
-        const translatedT = translatedContent.talent.find(tt => tt.id === tItem.ID);
-        if (!translatedT) return tItem; // Fallback to original if translation fails for an item
-        return {
-          ...tItem,
-          Role: translatedT.role,
-          skillsArray: translatedT.skills.split(',').map(s => s.trim()).filter(Boolean)
-        };
-      });
-
-      setTranslatedDataCache(prev => ({
-        ...prev,
-        [targetLang]: { projects: newFlatProjects, talent: newTalentData }
-      }));
-
-      setFlatProjects(newFlatProjects);
-      setTalentData(newTalentData);
-
-    } catch (error) {
-      console.error("Translation error:", error);
-      // Optionally show an error message to the user
-    } finally {
-      setIsTranslating(false);
-    }
-  };
-
-  // --- 1. Load Raw Data (runs once) ---
   useEffect(() => {
     const loadRawData = async () => {
       try {
@@ -213,46 +116,56 @@ function MainContent({ language, setLanguage, t, translations }) {
           fetch('/datacenter/Talent_Database.csv'),
           fetch('/datacenter/Projects_Database.csv')
         ]);
-        if (!tRes.ok || !pRes.ok) throw new Error("Archivos CSV no encontrados");
+
+        if (!tRes.ok || !pRes.ok) throw new Error('Archivos CSV no encontrados');
 
         const talentCSV = await tRes.text();
-        const parsedTalent = Papa.parse(talentCSV, { header: true, skipEmptyLines: true, delimiter: ";", transformHeader: (h) => h.trim().replace(/^[\u200B\uFEFF]/, "") }).data;
+        const parsedTalent = Papa.parse(talentCSV, {
+          header: true,
+          skipEmptyLines: true,
+          delimiter: ';',
+          transformHeader: (h) => h.trim().replace(/^[\u200B\uFEFF]/, '')
+        }).data;
         setRawTalentData(parsedTalent);
 
         const projectsCSV = await pRes.text();
-        const parsedProjects = Papa.parse(projectsCSV, { header: true, skipEmptyLines: true, delimiter: ";", transformHeader: (h) => h.trim().replace(/^[\u200B\uFEFF]/, "") }).data;
+        const parsedProjects = Papa.parse(projectsCSV, {
+          header: true,
+          skipEmptyLines: true,
+          delimiter: ';',
+          transformHeader: (h) => h.trim().replace(/^[\u200B\uFEFF]/, '')
+        }).data;
         setRawFlatProjects(parsedProjects);
       } catch (e) {
-        console.error("Error loading raw CSV data:", e);
-        setLoading(false); // Stop loading if raw data fails
+        console.error('Error loading raw CSV data:', e);
+        setLoading(false);
       }
     };
+
     loadRawData();
-  }, []); // Empty dependency array: runs only once on mount
+  }, []);
 
-  // --- 2. Process/Translate Data for Current Language (runs on raw data load or language change) ---
   useEffect(() => {
-    if (rawTalentData.length === 0 || rawFlatProjects.length === 0) return; // Wait for raw data
+    if (rawTalentData.length === 0 || rawFlatProjects.length === 0) return;
 
-    const processAndSetLanguageData = async () => {
-      if (translatedDataCache[language]) {
-        // Use cached data
-        setFlatProjects(translatedDataCache[language].projects);
-        setTalentData(translatedDataCache[language].talent);
-      } else {
-        // Translate if not cached
-        await translateDynamicData(language); // This function updates flatProjects, talentData, and translatedDataCache
-      }
-      // Update UI elements dependent on 't' (current language translations)
-      setChatHistory([{ type: 'ai', text: t.chat.welcome }]);
-      setCustomProjectTitle(t.squadModal.defaultTitle);
-      setLoading(false); // Initial load is complete once data for the first language is ready
-    };
+    const normalizedTalent = rawTalentData.map(item => ({
+      ...item,
+      skillsArray: item.Tags ? item.Tags.split(/[;,]+/).map(skill => skill.trim()).filter(Boolean) : []
+    }));
 
-    processAndSetLanguageData();
-  }, [language, rawTalentData, rawFlatProjects, t, translatedDataCache]); // Dependencies
+    const normalizedProjects = rawFlatProjects.map(item => ({
+      ...item,
+      images: item.ImageURLs ? item.ImageURLs.split(',').map(src => src.trim()).filter(Boolean) : [],
+      tagsArray: item.Tags ? item.Tags.split(/[;,]+/).map(tag => tag.trim()).filter(Boolean) : [],
+      teamArray: item.TeamIDs ? item.TeamIDs.split(/[;,]+/).map(id => id.trim()).filter(Boolean) : [] // Correct TeamIDs bridge
+    }));
 
-  // --- LÓGICA IA ---
+    setTalentData(normalizedTalent);
+    setFlatProjects(normalizedProjects);
+    setLoading(false);
+    setChatHistory([{ type: 'ai', text: t.chat.welcome }]);
+  }, [rawTalentData, rawFlatProjects, t]);
+
   const handleSend = async () => {
     if (!input.trim() || isTyping) return;
     const userMsg = input;
@@ -262,39 +175,21 @@ function MainContent({ language, setLanguage, t, translations }) {
 
     try {
       const KEY = import.meta.env.VITE_GEMINI_API_KEY;
-      const MODEL = "gemini-2.5-flash";
+      const MODEL = 'gemini-2.5-flash';
       const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${KEY}`;
 
-      const pBrief = flatProjects.slice(0, 15).map(p => `ID_PROYECTO: ${p.ID} | Título: ${p.Title} | Tags: ${p.tagsArray.join(', ')}`).join("\n"); // Use current language projects
-      const tBrief = talentData.slice(0, 15).map(t => `Nombre: ${t.Name} | Rol: ${t.Role} | Skills: ${t.skillsArray.join(', ')}`).join("\n"); // Use current language talent
+      const pBrief = flatProjects.slice(0, 15).map(p => `ID_PROYECTO: ${p.ID} | Título: ${p.Title} | Tags: ${p.tagsArray.join(', ')}`).join('\n');
+      const tBrief = talentData.slice(0, 15).map(tItem => `Nombre: ${tItem.Name} | Rol: ${tItem.Role} | Skills: ${tItem.skillsArray.join(', ')}`).join('\n');
 
-      const systemPrompt = language === 'es' 
-        ? `Eres el Asistente de Staffing de MRM Bogotá.
-           Distingue estrictamente entre P-IDs (Proyectos) y T-IDs (Talento).
-           REGLAS ESTRICTAS:
-           1. Devuelve MÁXIMO 4 talent_names en un grid de 2 columnas.
-           2. En "match_ids", debes devolver SOLO los códigos exactos de ID_PROYECTO (ej. "P001").
-           3. Responde SOLO en este formato JSON: {"match_ids":["P###"], "talent_names":["NOMBRE"], "reason":"explicación en ESPAÑOL"}`
-        : `You are the Staffing Assistant for MRM Bogotá.
-           Strictly distinguish between P-IDs (Projects) and T-IDs (Talent).
-           STRICT RULES:
-           1. Return MAXIMUM 4 talent_names in a 2-column grid.
-           2. In "match_ids", you must return ONLY the exact PROJECT_IDs (e.g., "P001").
-           3. Respond ONLY in this JSON format: {"match_ids":["P###"], "talent_names":["NAME"], "reason":"explanation in ENGLISH"}`;
+      const systemPrompt = language === 'es'
+        ? `Eres el Asistente de Staffing de MRM Bogotá.\nDistingue estrictamente entre P-IDs (Proyectos) y T-IDs (Talento).\nREGLAS ESTRICTAS:\n1. Devuelve MÁXIMO 4 talent_names en un grid de 2 columnas.\n2. En "match_ids", debes devolver SOLO los códigos exactos de ID_PROYECTO (ej. "P001").\n3. Responde SOLO en este formato JSON: {"match_ids":["P###"], "talent_names":["NOMBRE"], "reason":"explicación en ESPAÑOL"}`
+        : `You are the Staffing Assistant for MRM Bogotá.\nStrictly distinguish between P-IDs (Projects) and T-IDs (Talent).\nSTRICT RULES:\n1. Return MAXIMUM 4 talent_names in a 2-column grid.\n2. In "match_ids", you must return ONLY the exact PROJECT_IDs (e.g., "P001").\n3. Respond ONLY in this JSON format: {"match_ids":["P###"], "talent_names":["NAME"], "reason":"explanation in ENGLISH"}`;
 
-      const prompt = `${systemPrompt}
-        
-        [PROYECTOS DISPONIBLES]
-        ${pBrief}
-        
-        [TALENTO DISPONIBLE]
-        ${tBrief}
-        
-        USUARIO: "${userMsg}"`;
+      const prompt = `${systemPrompt}\n\n[PROYECTOS DISPONIBLES]\n${pBrief}\n\n[TALENTO DISPONIBLE]\n${tBrief}\n\nUSUARIO: "${userMsg}"`;
 
       const response = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
       });
 
@@ -305,23 +200,25 @@ function MainContent({ language, setLanguage, t, translations }) {
       setChatHistory(prev => [...prev, {
         type: 'ai',
         text: parsed.reason,
-        results: flatProjects.filter(p => parsed.match_ids?.includes(p.ID)), // TARJETAS DE PROYECTOS RECUPERADAS
-        recommendedTalent: talentData.filter(t => parsed.talent_names?.includes(t.Name)).slice(0, 4)
+        results: flatProjects.filter(p => parsed.match_ids?.includes(p.ID)),
+        recommendedTalent: talentData.filter(tItem => parsed.talent_names?.includes(tItem.Name)).slice(0, 4)
       }]);
-
-    } catch (err) { setChatHistory(prev => [...prev, { type: 'ai', text: t.chat.error + (err.message || "") }]); }
-    finally { setIsTyping(false); }
+    } catch (err) {
+      setChatHistory(prev => [...prev, { type: 'ai', text: t.chat.error + (err.message || '') }]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
-  const toggleSquad = (p) => setSquad(prev => prev.some(x => x.ID === p.ID) ? prev.filter(x => x.ID !== p.ID) : [...prev, p]);
+  const toggleSquad = (item) => setSquad(prev => prev.some(x => x.ID === item.ID) ? prev.filter(x => x.ID !== item.ID) : [...prev, item]);
 
   const activeTeamTalent = useMemo(() => {
     if (!selectedProject) return [];
-    return talentData.filter(t => selectedProject.teamArray.includes(t.ID));
+    return talentData.filter(member => selectedProject.teamArray.includes(member.ID));
   }, [selectedProject, talentData]);
 
-  const filteredTalent = useMemo(() => talentData.filter(p => (filterRole === 'All' || p.Role === filterRole)), [talentData, filterRole]);
-  const uniqueRoles = useMemo(() => ['All', ...new Set(talentData.map(t => t.Role))], [talentData]);
+  const filteredTalent = useMemo(() => talentData.filter(person => filterRole === 'All' || person.Role === filterRole), [talentData, filterRole]);
+  const uniqueRoles = useMemo(() => ['All', ...new Set(talentData.map(person => person.Role))], [talentData]);
 
   if (loading) return <div className="h-screen bg-[#0A0A0A] flex items-center justify-center text-[#7D68F6] font-black uppercase animate-pulse">{t.loading}</div>;
 
@@ -329,7 +226,6 @@ function MainContent({ language, setLanguage, t, translations }) {
     <div className="min-h-screen bg-[#0A0A0A] text-white font-sans overflow-x-hidden selection:bg-[#7D68F6]/30">
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_20%_20%,#1a0b3d_0%,transparent_50%)] z-0 pointer-events-none" />
 
-      {/* HEADER + BANNER NAVEGACIÓN */}
       <header className="fixed top-0 left-0 w-full p-10 px-12 z-[100] flex justify-between items-start pointer-events-none">
         <div className="flex flex-col items-start cursor-pointer pointer-events-auto" onClick={() => setActiveTab('landing')}>
           <h1 className="text-6xl font-black uppercase tracking-tighter leading-none m-0">MRM</h1>
@@ -338,7 +234,6 @@ function MainContent({ language, setLanguage, t, translations }) {
           </div>
         </div>
         <div className="flex gap-4 items-center pointer-events-auto">
-          {/* Language Selector */}
           <div className="flex bg-white/5 backdrop-blur-3xl border border-white/10 rounded-full p-1">
             {['es', 'en'].map((lang) => (
               <button
@@ -349,16 +244,24 @@ function MainContent({ language, setLanguage, t, translations }) {
                 {lang}
               </button>
             ))}
-            {isTranslating && <span className="ml-2 text-white/60 animate-pulse">({t.chat.analyzing})</span>}
           </div>
           {activeTab !== 'landing' && (
             <nav className="flex gap-2 p-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-full shadow-2xl mr-4">
               {[{ id: 'chat', label: t.nav.chat, icon: <MessageSquare size={14} /> }, { id: 'projects', label: t.nav.projects, icon: <Briefcase size={14} /> }, { id: 'team', label: t.nav.team, icon: <Users size={14} /> }].map(tab => (
-                <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[#7D68F6] text-white shadow-lg' : 'text-white/40 hover:text-white'}`}> {tab.icon} {tab.label} </button>
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[#7D68F6] text-white shadow-lg' : 'text-white/40 hover:text-white'}`}
+                >
+                  {tab.icon}
+                  {tab.label}
+                </button>
               ))}
             </nav>
           )}
-          <div onClick={() => setShowSquadModal(true)} className="bg-[#7D68F6] px-6 py-4 rounded-full flex items-center gap-4 cursor-pointer shadow-lg uppercase text-[10px] font-black hover:scale-105 transition-all">{t.squad} ({squad.length})</div>
+          <div className="bg-[#7D68F6] px-6 py-4 rounded-full flex items-center gap-4 cursor-pointer shadow-lg uppercase text-[10px] font-black hover:scale-105 transition-all" onClick={() => setSelectedProject(null)}>
+            {t.squad} ({squad.length})
+          </div>
         </div>
       </header>
 
@@ -368,8 +271,10 @@ function MainContent({ language, setLanguage, t, translations }) {
             <motion.section key="landing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex h-screen items-stretch -mt-24">
               {[{ id: 'chat', title: t.landing.chat, img: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200' }, { id: 'projects', title: t.landing.projects, img: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1200' }, { id: 'team', title: t.landing.team, img: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200' }].map(card => (
                 <div key={card.id} onClick={() => setActiveTab(card.id)} className="relative flex-1 group cursor-pointer overflow-hidden border-r border-white/5 last:border-r-0">
-                  <div className="absolute inset-0 bg-black"><img src={card.img} className="w-full h-full object-cover grayscale brightness-50 group-hover:grayscale-0 transition-all duration-1000" alt="" /></div>
-                  <div className="relative z-10 h-full flex flex-col justify-end p-16 pb-32 text-left"><h2 className="text-5xl font-black uppercase tracking-tighter leading-none group-hover:text-[#7D68F6] transition-colors">{card.title}</h2></div>
+                  <div className="absolute inset-0 bg-black"><img src={card.img} className="w-full h-full object-cover grayscale brightness-50 group-hover:grayscale-0 transition-all" alt="" /></div>
+                  <div className="relative z-10 h-full flex flex-col justify-end p-16 pb-32 text-left">
+                    <h2 className="text-5xl font-black uppercase tracking-tighter leading-none group-hover:text-[#7D68F6] transition-colors">{card.title}</h2>
+                  </div>
                 </div>
               ))}
             </motion.section>
@@ -383,7 +288,6 @@ function MainContent({ language, setLanguage, t, translations }) {
                     <div className={`max-w-[95%] pt-6 pb-3 px-8 rounded-[2rem] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6]' : 'bg-white/5 border-white/10 backdrop-blur-xl'}`}>
                       <p className="whitespace-pre-wrap leading-relaxed opacity-90 normal-case mb-6">{msg.text}</p>
 
-                      {/* PROYECTOS RECOMENDADOS EN CHAT (CON TAGS) */}
                       {msg.results && msg.results.length > 0 && (
                         <div className="mb-6 flex gap-4 overflow-x-auto hide-scrollbar pb-4 pt-2 px-4 -mx-4">
                           {msg.results.map((p, idx) => (
@@ -404,21 +308,23 @@ function MainContent({ language, setLanguage, t, translations }) {
                         </div>
                       )}
 
-                      {/* PERSONAS RECOMENDADAS */}
                       {msg.recommendedTalent && msg.recommendedTalent.length > 0 && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2 pt-5 border-t border-white/10 p-2 -mx-2">
-                          {msg.recommendedTalent.map((t, idx) => (
-                            <div key={idx} onClick={() => setSelectedTalent(t)} className="bg-black/40 p-3 pr-5 rounded-full border border-white/5 flex items-center justify-between group cursor-pointer transition-all hover:ring-2 hover:ring-[#7D68F6]">
+                          {msg.recommendedTalent.map((talent, idx) => (
+                            <div key={idx} onClick={() => setSelectedTalent(talent)} className="bg-black/40 p-3 pr-5 rounded-full border border-white/5 flex items-center justify-between group cursor-pointer transition-all hover:ring-2 hover:ring-[#7D68F6]">
                               <div className="flex items-center gap-4 text-left">
-                                <img src={t.ImageURL} className="w-10 h-10 rounded-full object-cover grayscale group-hover:grayscale-0 transition-all" alt="" />
-                                <div><p className="text-[10px] font-black uppercase text-white leading-none mb-1">{t.Name}</p><p className="text-[8px] text-[#7D68F6] font-bold uppercase">{t.Role}</p></div>
+                                <img src={talent.ImageURL} className="w-10 h-10 rounded-full object-cover grayscale group-hover:grayscale-0 transition-all" alt="" />
+                                <div>
+                                  <p className="text-[10px] font-black uppercase text-white leading-none mb-1">{talent.Name}</p>
+                                  <p className="text-[8px] text-[#7D68F6] font-bold uppercase">{talent.Role}</p>
+                                </div>
                               </div>
                               <button
-                                onClick={(e) => { e.stopPropagation(); toggleSquad(t); }}
-                                title={squad.some(s => s.ID === t.ID) ? t.talentModal.remove : t.talentModal.add}
-                                className={`p-2 rounded-full border transition-all ${squad.some(s => s.ID === t.ID) ? 'bg-[#7D68F6] border-[#7D68F6] text-white shadow-lg' : 'border-white/10 text-white/40 hover:text-white'}`}
+                                onClick={(e) => { e.stopPropagation(); toggleSquad(talent); }}
+                                title={squad.some(s => s.ID === talent.ID) ? t.talentModal.remove : t.talentModal.add}
+                                className={`p-2 rounded-full border transition-all ${squad.some(s => s.ID === talent.ID) ? 'bg-[#7D68F6] border-[#7D68F6] text-white shadow-lg' : 'border-white/10 text-white/40 hover:text-white'}`}
                               >
-                                {squad.some(s => s.ID === t.ID) ? <UserMinus size={12} /> : <UserPlus size={12} />}
+                                {squad.some(s => s.ID === talent.ID) ? <UserMinus size={12} /> : <UserPlus size={12} />}
                               </button>
                             </div>
                           ))}
@@ -429,26 +335,37 @@ function MainContent({ language, setLanguage, t, translations }) {
                 ))}
               </div>
               <div className="flex gap-4 items-center">
-                <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describe la necesidad..." className="flex-1 bg-white/5 border border-white/20 rounded-[2.5rem] py-5 px-8 outline-none focus:border-[#7D68F6] text-[15px] min-h-[64px] backdrop-blur-md resize-none" />
-                <button onClick={handleSend} disabled={isTyping} className="bg-[#7D68F6] w-[64px] h-[64px] rounded-full flex items-center justify-center shadow-lg hover:scale-105 disabled:opacity-50 transition-all"><Send size={22} /></button>
+                <textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                  placeholder={t.chat.placeholder}
+                  className="flex-1 bg-white/5 border border-white/20 rounded-[2.5rem] py-5 px-8 outline-none focus:border-[#7D68F6] text-[15px] min-h-[64px] backdrop-blur-md resize-none"
+                />
+                <button
+                  onClick={handleSend}
+                  disabled={isTyping}
+                  className="bg-[#7D68F6] w-[64px] h-[64px] rounded-full flex items-center justify-center shadow-lg hover:scale-105 disabled:opacity-50 transition-all"
+                >
+                  <Send size={22} />
+                </button>
               </div>
             </section>
           )}
 
           {activeTab === 'projects' && (
             <section className="pt-48 px-12 max-w-7xl mx-auto pb-40 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 p-2 -mx-2">
-              {flatProjects.map((p, i) => (
-                <div key={i} onClick={() => setSelectedProject(p)} className="bg-zinc-900/40 border border-white/10 rounded-[2.5rem] overflow-hidden group cursor-pointer hover:ring-2 hover:ring-[#7D68F6] text-left transition-all shadow-xl flex flex-col">
-                  <div className="h-64 bg-black overflow-hidden relative"><img src={p.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt="" /></div>
+              {flatProjects.map((project, i) => (
+                <div key={i} onClick={() => setSelectedProject(project)} className="bg-zinc-900/40 border border-white/10 rounded-[2.5rem] overflow-hidden group cursor-pointer hover:ring-2 hover:ring-[#7D68F6] text-left transition-all shadow-xl flex flex-col">
+                  <div className="h-64 bg-black overflow-hidden relative"><img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt="" /></div>
                   <div className="p-8 flex-1 flex flex-col">
-                    <h4 className="text-xl font-black uppercase text-white mb-4">{p.Title}</h4>
-                    {/* TAGS EN GRID DE PROYECTOS */}
+                    <h4 className="text-xl font-black uppercase text-white mb-4">{project.Title}</h4>
                     <div className="flex flex-wrap gap-2 mb-6">
-                      {p.tagsArray.slice(0, 3).map((tag, tIdx) => (
+                      {project.tagsArray.slice(0, 3).map((tag, tIdx) => (
                         <span key={tIdx} className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-md text-[10px] font-black uppercase tracking-widest text-zinc-400">{tag}</span>
                       ))}
                     </div>
-                    <p className="text-[11px] text-white/50 line-clamp-2 mb-8 normal-case font-normal leading-relaxed">{p.Description}</p>
+                    <p className="text-[11px] text-white/50 line-clamp-2 mb-8 normal-case font-normal leading-relaxed">{project.Description}</p>
                     <p className="text-[10px] text-[#7D68F6] font-bold uppercase tracking-widest mt-auto">{t.projectModal.viewCredential} <ChevronRight size={10} className="inline ml-1" /></p>
                   </div>
                 </div>
@@ -459,8 +376,16 @@ function MainContent({ language, setLanguage, t, translations }) {
           {activeTab === 'team' && (
             <section className="flex gap-16 pt-48 px-12 max-w-7xl mx-auto pb-40 text-left">
               <aside className="w-64 sticky top-48 flex flex-col gap-2">
-                <h3 className="text-[#7D68F6] text-[10px] font-black uppercase mb-8 tracking-widest font-black">{t.team.filter}</h3>
-                {uniqueRoles.map(role => (<button key={role} onClick={() => setFilterRole(role)} className={`text-left px-5 py-2.5 rounded-full text-[11px] font-black uppercase transition-all ${filterRole === role ? 'bg-[#7D68F6] text-white shadow-lg' : 'text-white/30 hover:text-white hover:bg-white/5'}`}>{role === 'All' ? t.team.all : role}</button>))}
+                <h3 className="text-[#7D68F6] text-[10px] font-black uppercase mb-8 tracking-widest">{t.team.filter}</h3>
+                {uniqueRoles.map(role => (
+                  <button
+                    key={role}
+                    onClick={() => setFilterRole(role)}
+                    className={`text-left px-5 py-2.5 rounded-full text-[11px] font-black uppercase transition-all ${filterRole === role ? 'bg-[#7D68F6] text-white shadow-lg' : 'text-white/30 hover:text-white hover:bg-white/5'}`}
+                  >
+                    {role === 'All' ? t.team.all : role}
+                  </button>
+                ))}
               </aside>
               <div className="flex-1">
                 <h2 className="text-7xl font-black uppercase tracking-tighter mb-12 text-white leading-none">{t.team.title}</h2>
@@ -470,15 +395,17 @@ function MainContent({ language, setLanguage, t, translations }) {
                       <img src={person.ImageURL} className="w-24 h-24 rounded-full mx-auto mb-6 object-cover grayscale transition-all border-4 border-transparent group-hover:border-[#7D68F6] bg-black shadow-lg" alt="" />
                       <h4 className="text-[18px] font-black uppercase truncate w-full text-white">{person.Name}</h4>
                       <p className="text-[10px] text-[#7D68F6] font-black uppercase mb-4 tracking-widest">{person.Role}</p>
-
-                      {/* SKILLS EN GRID DE TALENTO */}
                       <div className="flex flex-wrap justify-center gap-1.5 mb-6">
                         {person.skillsArray.slice(0, 2).map((skill, sIdx) => (
                           <span key={sIdx} className="px-2 py-1 bg-white/5 border border-white/10 rounded text-[10px] font-black uppercase tracking-widest text-zinc-400">{skill}</span>
                         ))}
                       </div>
-
-                      <button onClick={(e) => { e.stopPropagation(); toggleSquad(person); }} className={`w-full py-3 rounded-full text-[10px] font-black uppercase border border-[#7D68F6] mt-auto transition-all ${squad.some(p => p.ID === person.ID) ? 'bg-[#7D68F6] text-white shadow-lg' : 'text-[#7D68F6] hover:bg-[#7D68F6]/10'}`}>{squad.some(p => p.ID === person.ID) ? t.team.inSquad : t.team.addSquad}</button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleSquad(person); }}
+                        className={`w-full py-3 rounded-full text-[10px] font-black uppercase border border-[#7D68F6] mt-auto transition-all ${squad.some(p => p.ID === person.ID) ? 'bg-[#7D68F6] text-white shadow-lg' : 'text-[#7D68F6] hover:bg-[#7D68F6]/10'}`}
+                      >
+                        {squad.some(p => p.ID === person.ID) ? t.team.inSquad : t.team.addSquad}
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -488,7 +415,6 @@ function MainContent({ language, setLanguage, t, translations }) {
         </AnimatePresence>
       </main>
 
-      {/* MODAL PROYECTO 70/30 */}
       <AnimatePresence>
         {selectedProject && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-start justify-center p-6 backdrop-blur-2xl bg-black/95 overflow-y-auto">
@@ -504,26 +430,22 @@ function MainContent({ language, setLanguage, t, translations }) {
                     <span className="text-[10px] font-black uppercase px-4 py-1.5 bg-[#7D68F6]/20 text-[#7D68F6] border border-[#7D68F6]/30 rounded-full tracking-widest">{selectedProject.Category}</span>
                     <h2 className="text-7xl font-black uppercase tracking-tighter text-white leading-none">{selectedProject.Title}</h2>
                     <p className="text-xl text-white/60 normal-case leading-relaxed font-normal">{selectedProject.Description}</p>
-
-                    {/* CHIPS SKILLS EN PROYECTO */}
                     <div className="flex flex-wrap gap-2 pt-4">
                       {selectedProject.tagsArray.map((tag, idx) => (
                         <span key={idx} className="px-5 py-2.5 bg-zinc-900 border border-white/10 rounded-full text-[10px] font-black uppercase text-zinc-400 tracking-widest">{tag}</span>
                       ))}
                     </div>
-
-                    {/* CAROUSEL DE IMÁGENES (MOVIES DESDE LAS CARDS) */}
                     {selectedProject.images.length > 1 && (
                       <div className="flex gap-4 overflow-x-auto hide-scrollbar pt-6 pb-2 -mx-2 px-2">
-                        {selectedProject.images.slice(1).map((img, i) => (
-                          <img key={i} src={img} className="h-40 w-64 object-cover rounded-2xl flex-shrink-0 border border-white/10 hover:border-[#7D68F6] transition-all" alt="Gallery image" />
+                        {selectedProject.images.slice(1).map((img, idx) => (
+                          <img key={idx} src={img} className="h-40 w-64 object-cover rounded-2xl flex-shrink-0 border border-white/10 hover:border-[#7D68F6] transition-all" alt="Gallery image" />
                         ))}
                       </div>
                     )}
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-12 pt-12 border-t border-white/5">
-                    {[{ label: t.projectModal.loPedido, d: selectedProject.LoPedido }, { label: t.projectModal.loHecho, d: selectedProject.LoHecho }, { label: t.projectModal.loLogrado, d: selectedProject.LoLogrado }].map((col, i) => ( // Use t.projectModal for labels
-                      <div key={i} className="space-y-4">
+                    {[{ label: t.projectModal.loPedido, d: selectedProject.LoPedido }, { label: t.projectModal.loHecho, d: selectedProject.LoHecho }, { label: t.projectModal.loLogrado, d: selectedProject.LoLogrado }].map((col, index) => (
+                      <div key={index} className="space-y-4">
                         <h4 className="text-[12px] font-black tracking-[0.4em] text-[#7D68F6] uppercase">{col.label}</h4>
                         <p className="text-sm text-white/50 leading-relaxed font-normal">{col.d}</p>
                       </div>
@@ -532,26 +454,31 @@ function MainContent({ language, setLanguage, t, translations }) {
                 </div>
               </div>
 
-              {/* BARRA LATERAL TALENTO CON HOVER CORREGIDO */}
               <div className="w-full lg:w-[30%] bg-[#0f0f0f] border border-white/10 rounded-[3rem] p-10 shadow-2xl h-fit lg:sticky top-12 flex flex-col">
                 <h4 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mb-8">{t.projectModal.talentInvolved}</h4>
-                {/* Solución Clipping Hover: p-2 -mx-2 */}
-                <div className="flex flex-col gap-4 max-h-[50vh] overflow-y-auto hide-scrollbar px-2 -mx-2 py-2">
-                  {activeTeamTalent.length === 0 ? <p className="text-white/20 text-xs italic">{t.projectModal.noTalent}</p> : activeTeamTalent.map(member => (
-                    <div key={member.ID} onClick={() => setSelectedTalent(member)} className="flex items-center justify-between bg-black/40 p-5 rounded-3xl border border-white/5 group cursor-pointer transition-all hover:ring-2 hover:ring-[#7D68F6]">
-                      <div className="flex items-center gap-4 text-left">
-                        <img src={member.ImageURL} className="w-12 h-12 rounded-full object-cover border border-white/10 grayscale group-hover:grayscale-0 transition-all" alt="" />
-                        <div><p className="font-black text-[13px] uppercase text-white truncate max-w-[120px]">{member.Name}</p><p className="text-[9px] text-[#7D68F6] font-black uppercase">{member.Role}</p></div>
+                <div className="flex flex-col gap-4 max-h-[50vh] overflow-y-auto hide-scrollbar p-2 -mx-2">
+                  {activeTeamTalent.length === 0 ? (
+                    <p className="text-white/20 text-xs italic">{t.projectModal.noTalent}</p>
+                  ) : (
+                    activeTeamTalent.map(member => (
+                      <div key={member.ID} onClick={() => setSelectedTalent(member)} className="flex items-center justify-between bg-black/40 p-5 rounded-3xl border border-white/5 group cursor-pointer transition-all hover:ring-2 hover:ring-[#7D68F6]">
+                        <div className="flex items-center gap-4 text-left">
+                          <img src={member.ImageURL} className="w-12 h-12 rounded-full object-cover border border-white/10 grayscale group-hover:grayscale-0 transition-all" alt="" />
+                          <div>
+                            <p className="font-black text-[13px] uppercase text-white truncate max-w-[120px]">{member.Name}</p>
+                            <p className="text-[9px] text-[#7D68F6] font-black uppercase">{member.Role}</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); toggleSquad(member); }}
+                          title={squad.some(s => s.ID === member.ID) ? t.talentModal.remove : t.talentModal.add}
+                          className={`p-3 rounded-full border transition-all ${squad.some(s => s.ID === member.ID) ? 'text-red-400 border-red-500/30 bg-red-500/10' : 'text-white/30 border-white/10 hover:text-white hover:border-[#7D68F6]'}`}
+                        >
+                          {squad.some(s => s.ID === member.ID) ? <UserMinus size={16} /> : <UserPlus size={16} />}
+                        </button>
                       </div>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); toggleSquad(member); }}
-                        title={squad.some(s => s.ID === member.ID) ? t.talentModal.remove : t.talentModal.add}
-                        className={`p-3 rounded-full border transition-all ${squad.some(s => s.ID === member.ID) ? 'text-red-400 border-red-500/30 bg-red-500/10' : 'text-white/30 border-white/10 hover:text-white hover:border-[#7D68F6]'}`}
-                      >
-                        {squad.some(s => s.ID === member.ID) ? <UserMinus size={16} /> : <UserPlus size={16} />}
-                      </button>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </div>
             </div>
@@ -559,7 +486,6 @@ function MainContent({ language, setLanguage, t, translations }) {
         )}
       </AnimatePresence>
 
-      {/* MODAL TALENTO DEDICADO */}
       <AnimatePresence>
         {selectedTalent && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[300] flex items-center justify-center p-6 backdrop-blur-2xl bg-black/95">
@@ -568,15 +494,16 @@ function MainContent({ language, setLanguage, t, translations }) {
               <img src={selectedTalent.ImageURL} className="w-48 h-48 rounded-full mx-auto mb-10 object-cover border-4 border-[#7D68F6] shadow-[0_0_40px_rgba(125,104,246,0.3)]" alt="" />
               <h2 className="text-6xl font-black uppercase tracking-tighter text-white mb-4 leading-none">{selectedTalent.Name}</h2>
               <p className="text-[#7D68F6] font-black uppercase tracking-[0.4em] text-xs mb-16">{selectedTalent.Role}</p>
-
               <h4 className="text-[10px] font-black uppercase text-white/40 mb-6 tracking-widest">{t.talentModal.skills}</h4>
               <div className="flex flex-wrap justify-center gap-3 mb-16">
                 {selectedTalent.skillsArray.map((skill, idx) => (
                   <span key={idx} className="px-6 py-3 bg-white/5 border border-white/10 rounded-full text-[10px] font-black uppercase text-white tracking-widest">{skill}</span>
                 ))}
               </div>
-
-              <button onClick={() => { toggleSquad(selectedTalent); setSelectedTalent(null); }} className={`w-full py-7 rounded-full font-black uppercase tracking-[0.3em] text-[12px] transition-all shadow-xl ${squad.some(s => s.ID === selectedTalent.ID) ? 'bg-red-500/10 text-red-400 border border-red-500/30' : 'bg-[#7D68F6] text-white hover:scale-105 shadow-[#7D68F6]/20'}`}>
+              <button
+                onClick={() => { toggleSquad(selectedTalent); setSelectedTalent(null); }}
+                className={`w-full py-7 rounded-full font-black uppercase tracking-[0.3em] text-[12px] transition-all shadow-xl ${squad.some(s => s.ID === selectedTalent.ID) ? 'bg-red-500/10 text-red-400 border border-red-500/30' : 'bg-[#7D68F6] text-white hover:scale-105 shadow-[#7D68F6]/20'}`}
+              >
                 {squad.some(s => s.ID === selectedTalent.ID) ? t.talentModal.remove : t.talentModal.add}
               </button>
             </div>
@@ -603,18 +530,26 @@ export default function App() {
   return (
     <MsalProvider instance={msalInstance}>
       <AuthenticatedTemplate>
-        <MainContent language={language} setLanguage={handleSetLanguage} t={t} translations={translations} />
+        <MainContent language={language} setLanguage={handleSetLanguage} t={t} />
       </AuthenticatedTemplate>
       <UnauthenticatedTemplate>
         <div className="h-screen bg-[#0A0A0A] flex flex-col items-center justify-center text-white relative">
           <div className="absolute top-10 right-12 flex bg-white/5 backdrop-blur-3xl border border-white/10 rounded-full p-1 z-[110]">
             {['es', 'en'].map((lang) => (
-              <button key={lang} onClick={() => setLanguage(lang)} className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${language === lang ? 'bg-[#7D68F6] text-white shadow-lg' : 'text-white/40 hover:text-white'}`}> {lang} </button>
+              <button
+                key={lang}
+                onClick={() => setLanguage(lang)}
+                className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${language === lang ? 'bg-[#7D68F6] text-white shadow-lg' : 'text-white/40 hover:text-white'}`}
+              >
+                {lang}
+              </button>
             ))}
           </div>
           <h1 className="text-[120px] font-black uppercase tracking-tighter leading-none mb-4">MRM</h1>
           <p className="text-[14px] text-[#7D68F6] font-black uppercase tracking-[0.5em] mb-12">{t.subtitle}</p>
-          <button onClick={() => msalInstance.loginRedirect()} className="bg-[#7D68F6] px-14 py-6 rounded-full text-[12px] font-black uppercase tracking-widest shadow-[0_0_60px_rgba(125,104,246,0.3)]"> {t.loginBtn} </button>
+          <button onClick={() => msalInstance.loginRedirect()} className="bg-[#7D68F6] px-14 py-6 rounded-full text-[12px] font-black uppercase tracking-widest shadow-[0_0_60px_rgba(125,104,246,0.3)]">
+            {t.loginBtn}
+          </button>
         </div>
       </UnauthenticatedTemplate>
     </MsalProvider>
