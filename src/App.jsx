@@ -59,14 +59,14 @@ function MainContent() {
         if (!tRes.ok || !pRes.ok) throw new Error("Archivos CSV no encontrados");
 
         const talentCSV = await tRes.text();
-        const rawTalent = Papa.parse(talentCSV, { header: true, skipEmptyLines: true, delimiter: ";" }).data;
+        const rawTalent = Papa.parse(talentCSV, { header: true, skipEmptyLines: true, delimiter: ";", transformHeader: (h) => h.trim().replace(/^[\u200B\uFEFF]/, "") }).data;
         const processedTalent = rawTalent.map(t => ({
             ...t,
             ID: String(t.ID || "").trim(), 
             Name: t.Name || "Staff MRM",
             Role: t.Role || "Creativo",
             ImageURL: t.ImageURL || `https://ui-avatars.com/api/?name=${t.Name}&background=7D68F6&color=fff`,
-            skillsArray: String(t.Tags || t.Skills || "").split(',').map(s => s.trim()).filter(Boolean)
+            skillsArray: String(t.Tags || t.Skills || t.skills || "").split(',').map(s => s.trim()).filter(Boolean)
         }));
         setTalentData(processedTalent);
 
@@ -74,11 +74,11 @@ function MainContent() {
         const rawProjects = Papa.parse(projectsCSV, { header: true, skipEmptyLines: true, delimiter: ";" }).data;
         setFlatProjects(rawProjects.map(p => ({
             ...p,
-            ID: String(p.ID || "").trim(), // IDs de Proyectos (ej. P001)
+            ID: String(p.ID || "").trim(), // P-IDs
             Title: p.Title || "Proyecto MRM",
             images: p.ImageURLs ? String(p.ImageURLs).split(',').map(i => i.trim()).filter(Boolean) : ["https://picsum.photos/1200/800"],
             tagsArray: String(p.tags || p.Tags || "").split(',').map(t => t.trim()).filter(Boolean), // TAGS EXTRAÍDOS
-            teamArray: String(p.TeamIDs || "").split(/[;,]+/).map(id => id.trim()).filter(id => id.startsWith('T')), // T-IDs
+            teamArray: String(p.TeamIDs || "").split(/[;,]+/).map(id => id.trim()).filter(id => id.startsWith('T')), // Relational Bridge using T-IDs
             Description: p.Description || "Información no disponible.",
             LoPedido: p.LoPedido || "N/A", LoHecho: p.LoHecho || "N/A", LoLogrado: p.LoLogrado || "N/A"
         })));
@@ -106,8 +106,9 @@ function MainContent() {
         const pBrief = flatProjects.slice(0, 15).map(p => `ID_PROYECTO: ${p.ID} | Título: ${p.Title} | Tags: ${p.tagsArray.join(', ')}`).join("\n");
         const tBrief = talentData.slice(0, 15).map(t => `Nombre: ${t.Name} | Rol: ${t.Role} | Skills: ${t.skillsArray.join(', ')}`).join("\n");
 
-        // PROMPT ESTRICTO PARA GARANTIZAR RESPUESTA DE PROYECTOS
-        const prompt = `Staffing MRM Bogotá.
+        const prompt = `Eres el Asistente de Staffing de MRM Bogotá.
+        Distigue estrictamente entre P-IDs (Proyectos) y T-IDs (Talento).
+        
         [PROYECTOS DISPONIBLES]
         ${pBrief}
         
@@ -115,9 +116,9 @@ function MainContent() {
         ${tBrief}
         
         REGLAS ESTRICTAS:
-        1. Devuelve MÁXIMO 4 talent_names.
+        1. Devuelve MÁXIMO 4 talent_names en un grid de 2 columnas.
         2. En "match_ids", debes devolver SOLO los códigos exactos de ID_PROYECTO (ej. "P001", "P002").
-        3. Responde SOLO en este formato JSON exacto: {"match_ids":["ID_PROYECTO"], "talent_names":["NOMBRE"], "reason":"explicación"}
+        3. Responde SOLO en este formato JSON: {"match_ids":["P###"], "talent_names":["NOMBRE"], "reason":"explicación"}
         
         USUARIO: "${userMsg}"`;
 
@@ -221,7 +222,7 @@ function MainContent() {
 
                                 {/* PERSONAS RECOMENDADAS */}
                                 {msg.recommendedTalent && msg.recommendedTalent.length > 0 && (
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2 pt-5 border-t border-white/10">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2 pt-5 border-t border-white/10 p-2 -mx-2">
                                         {msg.recommendedTalent.map((t, idx) => (
                                             <div key={idx} onClick={() => setSelectedTalent(t)} className="bg-black/40 p-3 pr-5 rounded-full border border-white/5 flex items-center justify-between group cursor-pointer transition-all hover:ring-2 hover:ring-[#7D68F6]">
                                                 <div className="flex items-center gap-4 text-left">
@@ -247,7 +248,7 @@ function MainContent() {
           )}
 
           {activeTab === 'projects' && (
-            <section className="pt-48 px-12 max-w-7xl mx-auto pb-40 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+            <section className="pt-48 px-12 max-w-7xl mx-auto pb-40 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 p-2 -mx-2">
                 {flatProjects.map((p, i) => (
                     <div key={i} onClick={() => setSelectedProject(p)} className="bg-zinc-900/40 border border-white/5 rounded-[2.5rem] overflow-hidden group cursor-pointer hover:ring-2 hover:ring-[#7D68F6] text-left transition-all shadow-xl flex flex-col">
                         <div className="h-64 bg-black overflow-hidden relative"><img src={p.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt=""/></div>
@@ -256,7 +257,7 @@ function MainContent() {
                             {/* TAGS EN GRID DE PROYECTOS */}
                             <div className="flex flex-wrap gap-2 mb-6">
                                 {p.tagsArray.slice(0, 3).map((tag, tIdx) => (
-                                    <span key={tIdx} className="px-3 py-1.5 bg-white/5 rounded-md text-[9px] font-black uppercase tracking-widest text-zinc-400">{tag}</span>
+                                    <span key={tIdx} className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-md text-[10px] font-black uppercase tracking-widest text-zinc-400">{tag}</span>
                                 ))}
                             </div>
                             <p className="text-[10px] text-[#7D68F6] font-bold uppercase tracking-widest mt-auto">VER CREDENCIAL <ChevronRight size={10} className="inline ml-1"/></p>
@@ -274,7 +275,7 @@ function MainContent() {
                 </aside>
                 <div className="flex-1">
                     <h2 className="text-7xl font-black uppercase tracking-tighter mb-12 text-white leading-none">EQUIPO BOGOTÁ</h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-2 -mx-2">
                         {filteredTalent.map((person, i) => (
                             <div key={i} onClick={() => setSelectedTalent(person)} className="bg-zinc-900/40 border border-white/5 p-8 rounded-[3.5rem] text-center flex flex-col group cursor-pointer transition-all hover:ring-2 hover:ring-[#7D68F6]">
                                 <img src={person.ImageURL} className="w-24 h-24 rounded-full mx-auto mb-6 object-cover grayscale transition-all border-4 border-transparent group-hover:border-[#7D68F6] bg-black shadow-lg" alt=""/>
@@ -284,7 +285,7 @@ function MainContent() {
                                 {/* SKILLS EN GRID DE TALENTO */}
                                 <div className="flex flex-wrap justify-center gap-1.5 mb-6">
                                     {person.skillsArray.slice(0, 2).map((skill, sIdx) => (
-                                        <span key={sIdx} className="px-2 py-1 bg-white/5 rounded text-[8px] font-black uppercase tracking-widest text-zinc-400">{skill}</span>
+                                        <span key={sIdx} className="px-2 py-1 bg-white/5 border border-white/10 rounded text-[10px] font-black uppercase tracking-widest text-zinc-400">{skill}</span>
                                     ))}
                                 </div>
 
@@ -318,7 +319,7 @@ function MainContent() {
                     {/* CHIPS SKILLS EN PROYECTO */}
                     <div className="flex flex-wrap gap-2 pt-4">
                         {selectedProject.tagsArray.map((tag, idx) => (
-                            <span key={idx} className="px-5 py-2.5 bg-zinc-900 border border-white/5 rounded-full text-[10px] font-black uppercase text-zinc-400 tracking-widest">{tag}</span>
+                            <span key={idx} className="px-5 py-2.5 bg-zinc-900 border border-white/10 rounded-full text-[10px] font-black uppercase text-zinc-400 tracking-widest">{tag}</span>
                         ))}
                     </div>
                   </div>
@@ -369,7 +370,7 @@ function MainContent() {
                 <h4 className="text-[10px] font-black uppercase text-white/40 mb-6 tracking-widest">HABILIDADES Y EXPERIENCIA</h4>
                 <div className="flex flex-wrap justify-center gap-3 mb-16">
                     {selectedTalent.skillsArray.map((skill, idx) => (
-                        <span key={idx} className="px-6 py-3 bg-white/5 border border-white/10 rounded-full text-[11px] font-black uppercase text-white tracking-widest">{skill}</span>
+                        <span key={idx} className="px-6 py-3 bg-white/5 border border-white/10 rounded-full text-[10px] font-black uppercase text-white tracking-widest">{skill}</span>
                     ))}
                 </div>
 
