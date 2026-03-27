@@ -213,12 +213,7 @@ function MainContent() {
                                                             <span key={tIdx} className="px-2 py-1 bg-white/10 rounded text-[8px] font-black uppercase tracking-widest text-zinc-300">{tag}</span>
                                                         ))}
                                                     </div>
-                                                    <p className="text-[10px] text-white/50 line-clamp-2 mb-4 normal-case font-normal leading-relaxed">{p.Description}</p>
-                                                    <div className="flex gap-2 overflow-x-auto hide-scrollbar mb-4 p-1 -mx-1">
-                                                        {p.images.slice(1).map((img, imgIdx) => (
-                                                            <img key={imgIdx} src={img} className="h-10 w-16 object-cover rounded-lg flex-shrink-0 border border-white/10 grayscale group-hover:grayscale-0 transition-all duration-500" alt=""/>
-                                                        ))}
-                                                    </div>
+                                                    <p className="text-[10px] text-white/50 line-clamp-2 mb-6 normal-case font-normal leading-relaxed">{p.Description}</p>
                                                     <p className="text-[9px] text-[#7D68F6] font-bold uppercase tracking-widest">VER CREDENCIAL</p>
                                                 </div>
                                             </div>
@@ -270,12 +265,7 @@ function MainContent() {
                                     <span key={tIdx} className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-md text-[10px] font-black uppercase tracking-widest text-zinc-400">{tag}</span>
                                 ))}
                             </div>
-                            <p className="text-[11px] text-white/50 line-clamp-2 mb-6 normal-case font-normal leading-relaxed">{p.Description}</p>
-                            <div className="flex gap-3 overflow-x-auto hide-scrollbar mb-8 p-2 -mx-2">
-                                {p.images.slice(1).map((img, imgIdx) => (
-                                    <img key={imgIdx} src={img} className="h-16 w-24 object-cover rounded-xl flex-shrink-0 border border-white/10 grayscale group-hover:grayscale-0 transition-all duration-500" alt=""/>
-                                ))}
-                            </div>
+                            <p className="text-[11px] text-white/50 line-clamp-2 mb-8 normal-case font-normal leading-relaxed">{p.Description}</p>
                             <p className="text-[10px] text-[#7D68F6] font-bold uppercase tracking-widest mt-auto">VER CREDENCIAL <ChevronRight size={10} className="inline ml-1"/></p>
                         </div>
                     </div>
@@ -323,8 +313,8 @@ function MainContent() {
             <div className="w-full max-w-[1600px] mx-auto my-12 flex flex-col lg:flex-row gap-8 pb-20 text-left relative">
               
               <div className="w-full lg:w-[70%] bg-[#0f0f0f] border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl h-fit">
-                <div className="relative h-[450px] w-full bg-zinc-950 flex overflow-x-auto snap-x hide-scrollbar">
-                  {selectedProject.images.map((img, i) => (<img key={i} src={img} className="w-full h-full object-cover flex-shrink-0 snap-start opacity-70" alt="Slide" />))}
+                <div className="relative h-[450px] w-full bg-zinc-950 overflow-hidden">
+                  <img src={selectedProject.images[0]} className="w-full h-full object-cover opacity-70" alt="Project cover" />
                 </div>
                 <div className="p-16 space-y-12">
                   <div className="space-y-6">
@@ -338,6 +328,15 @@ function MainContent() {
                             <span key={idx} className="px-5 py-2.5 bg-zinc-900 border border-white/10 rounded-full text-[10px] font-black uppercase text-zinc-400 tracking-widest">{tag}</span>
                         ))}
                     </div>
+
+                    {/* CAROUSEL DE IMÁGENES (MOVIES DESDE LAS CARDS) */}
+                    {selectedProject.images.length > 1 && (
+                      <div className="flex gap-4 overflow-x-auto hide-scrollbar pt-6 pb-2 -mx-2 px-2">
+                        {selectedProject.images.slice(1).map((img, i) => (
+                          <img key={i} src={img} className="h-40 w-64 object-cover rounded-2xl flex-shrink-0 border border-white/10 hover:border-[#7D68F6] transition-all" alt="Gallery image" />
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-12 pt-12 border-t border-white/5">
                     {[{t: "LO PEDIDO", d: selectedProject.LoPedido}, {t: "LO HECHO", d: selectedProject.LoHecho}, {t: "LO LOGRADO", d: selectedProject.LoLogrado}].map((col, i) => (
