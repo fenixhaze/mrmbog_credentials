@@ -20,14 +20,14 @@ const msalInstance = new PublicClientApplication(authConfig);
 // --- TRADUCCIONES ---
 const translations = {
   es: {
-    loading: "Iniciando Staffing Engine...",
-    subtitle: "CREDENCIALES CREATIVAS BOGOTÁ",
+    loading: "Cargando Staffing Engine...",
+    subtitle: "CREDENCIALES CREATIVAS BOGOTÁ", // This is for the login screen
     loginBtn: "INICIAR SESIÓN CON MICROSOFT",
-    nav: { chat: "BUSQUEDA AVANZADA", projects: "PROYECTOS", team: "TALENTO" },
+    nav: { chat: "BÚSQUEDA IA", projects: "PROYECTOS", team: "TALENTO" },
     squad: "SQUAD",
-    landing: { chat: "BÚSQUEDA AVANZADA", projects: "PROYECTOS", team: "TALENTO" },
+    landing: { chat: "CONSULTORÍA IA", projects: "PROYECTOS", team: "TALENTO" },
     chat: {
-      welcome: "Bienvenido al sistema de staffing de MRM Bogotá. Escribe el brief de tu necesidad y te recomendaremos proyectos y talento.",
+      welcome: "Sistema MRM Bogotá activo. Consultoría IA lista con modelo Gemini 2.5 Flash.",
       placeholder: "Describe tu necesidad de staffing...",
       analyzing: "analizando datacenter...",
       viewCredential: "VER CREDENCIAL",
@@ -52,13 +52,13 @@ const translations = {
       viewCredential: "VER CREDENCIAL"
     },
     talentModal: {
-      skills: "COMPETENCIAS Y EXPERIENCIA",
+      skills: "HABILIDADES Y EXPERIENCIA",
       remove: "RETIRAR DEL SQUAD",
       add: "AÑADIR AL SQUAD"
     },
     squadModal: {
-      defaultTitle: "NUEVO PROYECTO MRM",
-      titlePlaceholder: "NOMBRE DEL PROYECTO...",
+      defaultTitle: "NUEVO PROYECTO MRM", // Default title for squad modal
+      titlePlaceholder: "NOMBRE DEL PROYECTO...", // Placeholder for squad modal
       analysis: "ANÁLISIS DE SISTEMA",
       analysisQuote: '"Squad optimizado para ejecución estratégica en MRM Bogotá."',
       selected: "PARTICIPANTES SELECCIONADOS",
@@ -66,14 +66,14 @@ const translations = {
     }
   },
   en: {
-    loading: "Starting Staffing Engine...",
+    loading: "Loading Staffing Engine...",
     subtitle: "BOGOTÁ CREATIVE CREDENTIALS",
     loginBtn: "SIGN IN WITH MICROSOFT",
-    nav: { chat: "ADVANCE SEARCH", projects: "PROJECTS", team: "TALENT" },
+    nav: { chat: "AI SEARCH", projects: "PROJECTS", team: "TALENT" },
     squad: "SQUAD",
-    landing: { chat: "ADVANCE SEARCH", projects: "PROJECTS", team: "TALENT" },
+    landing: { chat: "AI CONSULTANCY", projects: "PROJECTS", team: "TALENT" },
     chat: {
-      welcome: "Welcome to MRM Bogotá's staffing system. Tell us what you're looking for, and we'll recommend projects and talent.",
+      welcome: "MRM Bogotá system active. AI consultancy ready with Gemini 2.5 Flash model.",
       placeholder: "Describe your staffing need...",
       analyzing: "analyzing datacenter...",
       viewCredential: "VIEW CREDENTIAL",
@@ -82,15 +82,17 @@ const translations = {
     team: { filter: "FILTER ROLE", title: "BOGOTÁ TEAM", inSquad: "IN SQUAD", addSquad: "ADD TO SQUAD", all: "All" },
     projectModal: { category: "Category", loPedido: "THE ASK", loHecho: "THE WORK", loLogrado: "THE RESULT", talentInvolved: "INVOLVED TALENT", noTalent: "No associated talent found.", removeSquad: "REMOVE FULL SQUAD", addSquad: "ADD FULL SQUAD", viewCredential: "VIEW CREDENTIAL" },
     talentModal: { skills: "SKILLS AND EXPERIENCE", remove: "REMOVE FROM SQUAD", add: "ADD TO SQUAD" },
-    squadModal: { defaultTitle: "NEW MRM PROJECT", titlePlaceholder: "PROJECT NAME...", analysis: "SYSTEM ANALYSIS", analysisQuote: '"Squad optimized for strategic execution at MRM Bogotá."', selected: "SELECTED PARTICIPANTS", teamsBtn: "COORDINATE TEAMS MEETING" }
+    squadModal: { defaultTitle: "NEW MRM PROJECT", titlePlaceholder: "PROJECT NAME...", analysis: "SYSTEM ANALYSIS", analysisQuote: '"Squad optimized for strategic execution at MRM Bogotá."', selected: "SELECTED PARTICIPANTS", teamsBtn: "COORDINATE TEAMS MEETING" } // Default title for squad modal
   }
 };
 
 function MainContent({ language, setLanguage, t, translations }) {
   const { instance } = useMsal();
   const [activeTab, setActiveTab] = useState('landing');
+  const [rawTalentData, setRawTalentData] = useState([]);
   const [talentData, setTalentData] = useState([]);
-  const [flatProjects, setFlatProjects] = useState([]);
+  const [rawFlatProjects, setRawFlatProjects] = useState([]);
+  const [flatProjects, setFlatProjects] = useState([]); // Processed projects for current language
   const [loading, setLoading] = useState(true);
   const [chatHistory, setChatHistory] = useState([]);
   const [input, setInput] = useState('');
@@ -99,10 +101,10 @@ function MainContent({ language, setLanguage, t, translations }) {
   // Modales
   const [selectedProject, setSelectedProject] = useState(null);
   const [selectedTalent, setSelectedTalent] = useState(null);
-
   const [squad, setSquad] = useState([]);
   const [showSquadModal, setShowSquadModal] = useState(false);
   const [customProjectTitle, setCustomProjectTitle] = useState(t.squadModal.defaultTitle);
+  const [isTranslating, setIsTranslating] = useState(false); // New state for translation loading
   const [filterRole, setFilterRole] = useState('All');
 
   const chatContainerRef = useRef(null);
@@ -115,21 +117,97 @@ function MainContent({ language, setLanguage, t, translations }) {
     }
   }, [chatHistory, isTyping]);
 
-  // Detect language changes to reset dynamic strings and initial messages
-  useEffect(() => {
-    if (prevLanguageRef.current !== language) {
-      if (chatHistory.length <= 1) setChatHistory([{ type: 'ai', text: t.chat.welcome }]);
-      setCustomProjectTitle(t.squadModal.defaultTitle);
-      prevLanguageRef.current = language;
+  // --- DYNAMIC DATA TRANSLATION ENGINE ---
+  const [translatedDataCache, setTranslatedDataCache] = useState({}); // Cache for translated data
+
+  const translateDynamicData = async (targetLang) => {
+    setIsTranslating(true);
+    try {
+      const KEY = import.meta.env.VITE_GEMINI_API_KEY;
+      const MODEL = "gemini-2.5-flash";
+      const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${KEY}`;
+
+      const dataToTranslate = {
+        projects: rawFlatProjects.map(p => ({
+          id: p.ID,
+          title: p.Title,
+          category: p.Category,
+          description: p.Description,
+          loPedido: p.LoPedido,
+          loHecho: p.LoHecho,
+          loLogrado: p.LoLogrado,
+          tags: p.rawTags // Send as single string for translation
+        })),
+        talent: rawTalentData.map(tItem => ({
+          id: tItem.ID,
+          role: tItem.Role,
+          skills: tItem.rawSkills // Send as single string for translation
+        }))
+      };
+
+      const prompt = `Translate this Creative Agency data to ${targetLang === 'en' ? 'English' : 'Spanish'}. Maintain a professional, high-end tone. Do NOT change any IDs (P### or T###). Return the translated data in the same JSON structure.
+      
+      Data: ${JSON.stringify(dataToTranslate)}`;
+
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Gemini API error: ${errorData.error?.message || response.statusText}`);
+      }
+
+      const geminiResponse = await response.json();
+      const rawTranslatedText = geminiResponse.candidates[0].content.parts[0].text.replace(/```json/gi, '').replace(/```/g, '').trim();
+      const translatedContent = JSON.parse(rawTranslatedText);
+
+      const newFlatProjects = rawFlatProjects.map(p => {
+        const translatedP = translatedContent.projects.find(tp => tp.id === p.ID);
+        if (!translatedP) return p; // Fallback to original if translation fails for an item
+        return {
+          ...p,
+          Title: translatedP.title,
+          Category: translatedP.category,
+          Description: translatedP.description,
+          LoPedido: translatedP.loPedido,
+          LoHecho: translatedP.loHecho,
+          LoLogrado: translatedP.loLogrado,
+          tagsArray: translatedP.tags.split(',').map(s => s.trim()).filter(Boolean)
+        };
+      });
+
+      const newTalentData = rawTalentData.map(tItem => {
+        const translatedT = translatedContent.talent.find(tt => tt.id === tItem.ID);
+        if (!translatedT) return tItem; // Fallback to original if translation fails for an item
+        return {
+          ...tItem,
+          Role: translatedT.role,
+          skillsArray: translatedT.skills.split(',').map(s => s.trim()).filter(Boolean)
+        };
+      });
+
+      setTranslatedDataCache(prev => ({
+        ...prev,
+        [targetLang]: { projects: newFlatProjects, talent: newTalentData }
+      }));
+
+      setFlatProjects(newFlatProjects);
+      setTalentData(newTalentData);
+
+    } catch (error) {
+      console.error("Translation error:", error);
+      // Optionally show an error message to the user
+    } finally {
+      setIsTranslating(false);
     }
-  }, [language, t]);
+  };
 
-  // --- CARGA DE DATOS ---
+  // --- 1. Load Raw Data (runs once) ---
   useEffect(() => {
-    if (dataFetchedRef.current) return;
-    dataFetchedRef.current = true;
-
-    const fetchData = async () => {
+    const loadRawData = async () => {
       try {
         const [tRes, pRes] = await Promise.all([
           fetch('/datacenter/Talent_Database.csv'),
@@ -138,36 +216,41 @@ function MainContent({ language, setLanguage, t, translations }) {
         if (!tRes.ok || !pRes.ok) throw new Error("Archivos CSV no encontrados");
 
         const talentCSV = await tRes.text();
-        const rawTalent = Papa.parse(talentCSV, { header: true, skipEmptyLines: true, delimiter: ";", transformHeader: (h) => h.trim().replace(/^[\u200B\uFEFF]/, "") }).data;
-        const processedTalent = rawTalent.map(t => ({
-          ...t,
-          ID: String(t.ID || "").trim(),
-          Name: t.Name || "Staff MRM",
-          Role: t.Role || (language === 'es' ? "Creativo" : "Creative"),
-          ImageURL: t.ImageURL || `https://ui-avatars.com/api/?name=${t.Name}&background=7D68F6&color=fff`,
-          skillsArray: String(t.Tags || t.Skills || t.skills || "").split(',').map(s => s.trim()).filter(Boolean)
-        }));
-        setTalentData(processedTalent);
+        const parsedTalent = Papa.parse(talentCSV, { header: true, skipEmptyLines: true, delimiter: ";", transformHeader: (h) => h.trim().replace(/^[\u200B\uFEFF]/, "") }).data;
+        setRawTalentData(parsedTalent);
 
         const projectsCSV = await pRes.text();
-        const rawProjects = Papa.parse(projectsCSV, { header: true, skipEmptyLines: true, delimiter: ";", transformHeader: (h) => h.trim().replace(/^[\u200B\uFEFF]/, "") }).data;
-        setFlatProjects(rawProjects.map(p => ({
-          ...p,
-          ID: String(p.ID || "").trim(), // P-IDs
-          Title: p.Title || "Proyecto MRM",
-          images: p.ImageURLs ? String(p.ImageURLs).split(',').map(i => i.trim()).filter(Boolean) : ["https://picsum.photos/1200/800"],
-          tagsArray: String(p.tags || p.Tags || "").split(',').map(t => t.trim()).filter(Boolean), // TAGS EXTRAÍDOS
-          teamArray: String(p.TeamIDs || "").split(/[;,]+/).map(id => id.trim()).filter(id => id.startsWith('T')), // Relational Bridge using T-IDs
-          Description: p.Description || (language === 'es' ? "Información no disponible." : "Information not available."),
-          LoPedido: p.LoPedido || "N/A", LoHecho: p.LoHecho || "N/A", LoLogrado: p.LoLogrado || "N/A"
-        })));
-
-        setChatHistory([{ type: 'ai', text: t.chat.welcome }]);
-        setLoading(false);
-      } catch (e) { console.error(e); setLoading(false); }
+        const parsedProjects = Papa.parse(projectsCSV, { header: true, skipEmptyLines: true, delimiter: ";", transformHeader: (h) => h.trim().replace(/^[\u200B\uFEFF]/, "") }).data;
+        setRawFlatProjects(parsedProjects);
+      } catch (e) {
+        console.error("Error loading raw CSV data:", e);
+        setLoading(false); // Stop loading if raw data fails
+      }
     };
-    fetchData();
-  }, []);
+    loadRawData();
+  }, []); // Empty dependency array: runs only once on mount
+
+  // --- 2. Process/Translate Data for Current Language (runs on raw data load or language change) ---
+  useEffect(() => {
+    if (rawTalentData.length === 0 || rawFlatProjects.length === 0) return; // Wait for raw data
+
+    const processAndSetLanguageData = async () => {
+      if (translatedDataCache[language]) {
+        // Use cached data
+        setFlatProjects(translatedDataCache[language].projects);
+        setTalentData(translatedDataCache[language].talent);
+      } else {
+        // Translate if not cached
+        await translateDynamicData(language); // This function updates flatProjects, talentData, and translatedDataCache
+      }
+      // Update UI elements dependent on 't' (current language translations)
+      setChatHistory([{ type: 'ai', text: t.chat.welcome }]);
+      setCustomProjectTitle(t.squadModal.defaultTitle);
+      setLoading(false); // Initial load is complete once data for the first language is ready
+    };
+
+    processAndSetLanguageData();
+  }, [language, rawTalentData, rawFlatProjects, t, translatedDataCache]); // Dependencies
 
   // --- LÓGICA IA ---
   const handleSend = async () => {
@@ -182,8 +265,8 @@ function MainContent({ language, setLanguage, t, translations }) {
       const MODEL = "gemini-2.5-flash";
       const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${KEY}`;
 
-      const pBrief = flatProjects.slice(0, 15).map(p => `ID_PROYECTO: ${p.ID} | Título: ${p.Title} | Tags: ${p.tagsArray.join(', ')}`).join("\n");
-      const tBrief = talentData.slice(0, 15).map(t => `Nombre: ${t.Name} | Rol: ${t.Role} | Skills: ${t.skillsArray.join(', ')}`).join("\n");
+      const pBrief = flatProjects.slice(0, 15).map(p => `ID_PROYECTO: ${p.ID} | Título: ${p.Title} | Tags: ${p.tagsArray.join(', ')}`).join("\n"); // Use current language projects
+      const tBrief = talentData.slice(0, 15).map(t => `Nombre: ${t.Name} | Rol: ${t.Role} | Skills: ${t.skillsArray.join(', ')}`).join("\n"); // Use current language talent
 
       const systemPrompt = language === 'es' 
         ? `Eres el Asistente de Staffing de MRM Bogotá.
@@ -266,6 +349,7 @@ function MainContent({ language, setLanguage, t, translations }) {
                 {lang}
               </button>
             ))}
+            {isTranslating && <span className="ml-2 text-white/60 animate-pulse">({t.chat.analyzing})</span>}
           </div>
           {activeTab !== 'landing' && (
             <nav className="flex gap-2 p-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-full shadow-2xl mr-4">
@@ -438,7 +522,7 @@ function MainContent({ language, setLanguage, t, translations }) {
                     )}
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-12 pt-12 border-t border-white/5">
-                    {[{ label: t.projectModal.loPedido, d: selectedProject.LoPedido }, { label: t.projectModal.loHecho, d: selectedProject.LoHecho }, { label: t.projectModal.loLogrado, d: selectedProject.LoLogrado }].map((col, i) => (
+                    {[{ label: t.projectModal.loPedido, d: selectedProject.LoPedido }, { label: t.projectModal.loHecho, d: selectedProject.LoHecho }, { label: t.projectModal.loLogrado, d: selectedProject.LoLogrado }].map((col, i) => ( // Use t.projectModal for labels
                       <div key={i} className="space-y-4">
                         <h4 className="text-[12px] font-black tracking-[0.4em] text-[#7D68F6] uppercase">{col.label}</h4>
                         <p className="text-sm text-white/50 leading-relaxed font-normal">{col.d}</p>
@@ -461,7 +545,7 @@ function MainContent({ language, setLanguage, t, translations }) {
                       </div>
                       <button
                         onClick={(e) => { e.stopPropagation(); toggleSquad(member); }}
-                        title={squad.some(s => s.ID === member.ID) ? "Quitar del Squad" : "Agregar al Squad"}
+                        title={squad.some(s => s.ID === member.ID) ? t.talentModal.remove : t.talentModal.add}
                         className={`p-3 rounded-full border transition-all ${squad.some(s => s.ID === member.ID) ? 'text-red-400 border-red-500/30 bg-red-500/10' : 'text-white/30 border-white/10 hover:text-white hover:border-[#7D68F6]'}`}
                       >
                         {squad.some(s => s.ID === member.ID) ? <UserMinus size={16} /> : <UserPlus size={16} />}
