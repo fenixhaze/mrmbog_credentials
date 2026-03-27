@@ -8,7 +8,7 @@ import Papa from 'papaparse';
 // --- CONFIGURACIÓN AZURE MSAL ---
 const authConfig = {
   auth: {
-    clientId: "23d1168d-113b-48c0-a4fe-6e6d743f77af",
+    clientId: "23d1168d-113b-48c0-a4fe-6e6d743f77af", 
     authority: "https://login.microsoftonline.com/d026e4c1-5892-497a-b9da-ee493c9f0364",
     redirectUri: "https://zealous-sky-0305e650f.2.azurestaticapps.net",
   },
@@ -488,4 +488,27 @@ function MainContent({ language, setLanguage, t }) {
   );
 }
 
-export default function App() { return (<MsalProvider instance={msalInstance}><AuthenticatedTemplate><MainContent /></AuthenticatedTemplate><UnauthenticatedTemplate><div className="h-screen bg-[#0A0A0A] flex flex-col items-center justify-center text-white"><h1 className="text-[120px] font-black uppercase tracking-tighter leading-none mb-12">MRM</h1><button onClick={() => msalInstance.loginRedirect()} className="bg-[#7D68F6] px-14 py-6 rounded-full text-[12px] font-black uppercase tracking-widest shadow-[0_0_60px_rgba(125,104,246,0.3)] tracking-widest">INICIAR SESIÓN CON MICROSOFT</button></div></UnauthenticatedTemplate></MsalProvider>); }
+export default function App() {
+  const [language, setLanguage] = useState('es');
+  const t = translations[language];
+
+  return (
+    <MsalProvider instance={msalInstance}>
+      <AuthenticatedTemplate>
+        <MainContent language={language} setLanguage={setLanguage} t={t} />
+      </AuthenticatedTemplate>
+      <UnauthenticatedTemplate>
+        <div className="h-screen bg-[#0A0A0A] flex flex-col items-center justify-center text-white relative">
+          <div className="absolute top-10 right-12 flex bg-white/5 backdrop-blur-3xl border border-white/10 rounded-full p-1 z-[110]">
+            {['es', 'en'].map((lang) => (
+              <button key={lang} onClick={() => setLanguage(lang)} className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${language === lang ? 'bg-[#7D68F6] text-white shadow-lg' : 'text-white/40 hover:text-white'}`}> {lang} </button>
+            ))}
+          </div>
+          <h1 className="text-[120px] font-black uppercase tracking-tighter leading-none mb-4">MRM</h1>
+          <p className="text-[14px] text-[#7D68F6] font-black uppercase tracking-[0.5em] mb-12">{t.subtitle}</p>
+          <button onClick={() => msalInstance.loginRedirect()} className="bg-[#7D68F6] px-14 py-6 rounded-full text-[12px] font-black uppercase tracking-widest shadow-[0_0_60px_rgba(125,104,246,0.3)]"> {t.loginBtn} </button>
+        </div>
+      </UnauthenticatedTemplate>
+    </MsalProvider>
+  );
+}
