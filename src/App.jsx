@@ -529,7 +529,6 @@ function MainContent({ language, setLanguage, t }) {
                 </div>
                 <div className="p-16 space-y-12">
                   <div className="space-y-6">
-                    <span className="text-[10px] font-black uppercase px-4 py-1.5 bg-[#7D68F6]/20 text-[#7D68F6] border border-[#7D68F6]/30 rounded-full tracking-widest">{selectedProject.Category}</span>
                     <h2 className="text-7xl font-black uppercase tracking-tighter text-white leading-none">{selectedProject.Title}</h2>
                     <p className="text-xl text-white/60 normal-case leading-relaxed font-normal">{selectedProject.Description}</p>
                     <div className="flex flex-wrap gap-2 pt-4">
