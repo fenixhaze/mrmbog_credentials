@@ -511,7 +511,7 @@ function MainContent({ language, setLanguage, t }) {
                     <h2 className="text-7xl font-black uppercase tracking-tighter text-white leading-none">{selectedProject.Title}</h2>
                     <p className="text-xl text-white/60 normal-case leading-relaxed font-normal">{selectedProject.Description}</p>
                     <div className="flex flex-wrap gap-2 pt-4">
-                      {selectedProject.tagsArray.map((tag, idx) => (
+                      {selectedProject.tagsArray.slice(0, 3).map((tag, idx) => (
                         <span key={idx} className="px-5 py-2.5 bg-zinc-900 border border-white/10 rounded-full text-[10px] font-black uppercase text-zinc-400 tracking-widest">{tag}</span>
                       ))}
                     </div>
