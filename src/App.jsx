@@ -71,7 +71,7 @@ function MainContent() {
         setTalentData(processedTalent);
 
         const projectsCSV = await pRes.text();
-        const rawProjects = Papa.parse(projectsCSV, { header: true, skipEmptyLines: true, delimiter: ";" }).data;
+        const rawProjects = Papa.parse(projectsCSV, { header: true, skipEmptyLines: true, delimiter: ";", transformHeader: (h) => h.trim().replace(/^[\u200B\uFEFF]/, "") }).data;
         setFlatProjects(rawProjects.map(p => ({
             ...p,
             ID: String(p.ID || "").trim(), // P-IDs
@@ -197,12 +197,12 @@ function MainContent() {
                 <div ref={chatContainerRef} className="flex-1 overflow-y-auto flex flex-col gap-8 hide-scrollbar pb-8 px-2 -mx-2">
                     {chatHistory.map((msg, i) => (
                         <div key={i} className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
-                            <div className={`max-w-[95%] p-6 px-8 rounded-[2rem] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6]' : 'bg-white/5 border-white/10 backdrop-blur-xl'}`}>
+                            <div className={`max-w-[95%] pt-6 pb-3 px-8 rounded-[2rem] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6]' : 'bg-white/5 border-white/10 backdrop-blur-xl'}`}>
                                 <p className="whitespace-pre-wrap leading-relaxed opacity-90 normal-case mb-6">{msg.text}</p>
                                 
                                 {/* PROYECTOS RECOMENDADOS EN CHAT (CON TAGS) */}
                                 {msg.results && msg.results.length > 0 && (
-                                    <div className="mb-6 flex gap-4 overflow-x-auto hide-scrollbar pb-4 pt-2 px-2 -mx-2">
+                                    <div className="mb-6 flex gap-4 overflow-x-auto hide-scrollbar pb-4 pt-2 px-4 -mx-4">
                                         {msg.results.map((p, idx) => (
                                             <div key={idx} onClick={() => setSelectedProject(p)} className="min-w-[280px] bg-black/40 border border-white/10 rounded-3xl overflow-hidden group cursor-pointer hover:ring-2 hover:ring-[#7D68F6] transition-all">
                                                 <img src={p.images[0]} className="h-28 w-full object-cover grayscale group-hover:grayscale-0 transition-all" alt=""/>
@@ -211,6 +211,12 @@ function MainContent() {
                                                     <div className="flex flex-wrap gap-1.5 mb-3">
                                                         {p.tagsArray.slice(0,2).map((tag, tIdx) => (
                                                             <span key={tIdx} className="px-2 py-1 bg-white/10 rounded text-[8px] font-black uppercase tracking-widest text-zinc-300">{tag}</span>
+                                                        ))}
+                                                    </div>
+                                                    <p className="text-[10px] text-white/50 line-clamp-2 mb-4 normal-case font-normal leading-relaxed">{p.Description}</p>
+                                                    <div className="flex gap-2 overflow-x-auto hide-scrollbar mb-4 p-1 -mx-1">
+                                                        {p.images.slice(1).map((img, imgIdx) => (
+                                                            <img key={imgIdx} src={img} className="h-10 w-16 object-cover rounded-lg flex-shrink-0 border border-white/10 grayscale group-hover:grayscale-0 transition-all duration-500" alt=""/>
                                                         ))}
                                                     </div>
                                                     <p className="text-[9px] text-[#7D68F6] font-bold uppercase tracking-widest">VER CREDENCIAL</p>
@@ -229,7 +235,11 @@ function MainContent() {
                                                     <img src={t.ImageURL} className="w-10 h-10 rounded-full object-cover grayscale group-hover:grayscale-0 transition-all" alt=""/>
                                                     <div><p className="text-[10px] font-black uppercase text-white leading-none mb-1">{t.Name}</p><p className="text-[8px] text-[#7D68F6] font-bold uppercase">{t.Role}</p></div>
                                                 </div>
-                                                <button onClick={(e) => { e.stopPropagation(); toggleSquad(t); }} className={`p-2 rounded-full border transition-all ${squad.some(s => s.ID === t.ID) ? 'bg-[#7D68F6] border-[#7D68F6] text-white shadow-lg' : 'border-white/10 text-white/40 hover:text-white'}`}>
+                                                <button 
+                                                  onClick={(e) => { e.stopPropagation(); toggleSquad(t); }} 
+                                                  title={squad.some(s => s.ID === t.ID) ? "Quitar del Squad" : "Agregar al Squad"}
+                                                  className={`p-2 rounded-full border transition-all ${squad.some(s => s.ID === t.ID) ? 'bg-[#7D68F6] border-[#7D68F6] text-white shadow-lg' : 'border-white/10 text-white/40 hover:text-white'}`}
+                                                >
                                                     {squad.some(s => s.ID === t.ID) ? <UserMinus size={12}/> : <UserPlus size={12}/>}
                                                 </button>
                                             </div>
@@ -240,7 +250,7 @@ function MainContent() {
                         </div>
                     ))}
                 </div>
-                <div className="flex gap-4">
+                <div className="flex gap-4 items-center">
                     <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder="Describe la necesidad..." className="flex-1 bg-white/5 border border-white/20 rounded-[2.5rem] py-5 px-8 outline-none focus:border-[#7D68F6] text-[15px] min-h-[64px] backdrop-blur-md resize-none" />
                     <button onClick={handleSend} disabled={isTyping} className="bg-[#7D68F6] w-[64px] h-[64px] rounded-full flex items-center justify-center shadow-lg hover:scale-105 disabled:opacity-50 transition-all"><Send size={22}/></button>
                 </div>
@@ -250,7 +260,7 @@ function MainContent() {
           {activeTab === 'projects' && (
             <section className="pt-48 px-12 max-w-7xl mx-auto pb-40 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 p-2 -mx-2">
                 {flatProjects.map((p, i) => (
-                    <div key={i} onClick={() => setSelectedProject(p)} className="bg-zinc-900/40 border border-white/5 rounded-[2.5rem] overflow-hidden group cursor-pointer hover:ring-2 hover:ring-[#7D68F6] text-left transition-all shadow-xl flex flex-col">
+                    <div key={i} onClick={() => setSelectedProject(p)} className="bg-zinc-900/40 border border-white/10 rounded-[2.5rem] overflow-hidden group cursor-pointer hover:ring-2 hover:ring-[#7D68F6] text-left transition-all shadow-xl flex flex-col">
                         <div className="h-64 bg-black overflow-hidden relative"><img src={p.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt=""/></div>
                         <div className="p-8 flex-1 flex flex-col">
                             <h4 className="text-xl font-black uppercase text-white mb-4">{p.Title}</h4>
@@ -258,6 +268,12 @@ function MainContent() {
                             <div className="flex flex-wrap gap-2 mb-6">
                                 {p.tagsArray.slice(0, 3).map((tag, tIdx) => (
                                     <span key={tIdx} className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-md text-[10px] font-black uppercase tracking-widest text-zinc-400">{tag}</span>
+                                ))}
+                            </div>
+                            <p className="text-[11px] text-white/50 line-clamp-2 mb-6 normal-case font-normal leading-relaxed">{p.Description}</p>
+                            <div className="flex gap-3 overflow-x-auto hide-scrollbar mb-8 p-2 -mx-2">
+                                {p.images.slice(1).map((img, imgIdx) => (
+                                    <img key={imgIdx} src={img} className="h-16 w-24 object-cover rounded-xl flex-shrink-0 border border-white/10 grayscale group-hover:grayscale-0 transition-all duration-500" alt=""/>
                                 ))}
                             </div>
                             <p className="text-[10px] text-[#7D68F6] font-bold uppercase tracking-widest mt-auto">VER CREDENCIAL <ChevronRight size={10} className="inline ml-1"/></p>
@@ -345,7 +361,11 @@ function MainContent() {
                         <img src={member.ImageURL} className="w-12 h-12 rounded-full object-cover border border-white/10 grayscale group-hover:grayscale-0 transition-all" alt=""/>
                         <div><p className="font-black text-[13px] uppercase text-white truncate max-w-[120px]">{member.Name}</p><p className="text-[9px] text-[#7D68F6] font-black uppercase">{member.Role}</p></div>
                       </div>
-                      <button onClick={(e) => { e.stopPropagation(); toggleSquad(member); }} className={`p-3 rounded-full border transition-all ${squad.some(s => s.ID === member.ID) ? 'bg-[#7D68F6] text-white shadow-lg' : 'text-white/30 border-white/10 hover:text-white hover:border-[#7D68F6]'}`}>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); toggleSquad(member); }} 
+                        title={squad.some(s => s.ID === member.ID) ? "Quitar del Squad" : "Agregar al Squad"}
+                        className={`p-3 rounded-full border transition-all ${squad.some(s => s.ID === member.ID) ? 'text-red-400 border-red-500/30 bg-red-500/10' : 'text-white/30 border-white/10 hover:text-white hover:border-[#7D68F6]'}`}
+                      >
                         {squad.some(s => s.ID === member.ID) ? <UserMinus size={16}/> : <UserPlus size={16}/>}
                       </button>
                     </div>
