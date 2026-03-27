@@ -85,6 +85,65 @@ const translations = {
   }
 };
 
+const contentTranslations = {
+  projects: {
+    P01: {
+      en: {
+        Title: "Nike Refresh 2024",
+        Description: "Complete redesign of the user experience for the e-commerce platform across Latam."
+      }
+    },
+    P02: {
+      en: {
+        Title: "Coca-Cola Summer",
+        Description: "Animated content campaign for giant screens and social media during the summer."
+      }
+    },
+    P03: {
+      en: {
+        Title: "Mastercard Security",
+        Description: "Case study-style video production showcasing new biometric security layers."
+      }
+    },
+    P04: {
+      en: {
+        Title: "Lego Builder Ads",
+        Description: "Interactive rich media banner set for the Technic line launch."
+      }
+    },
+    P05: {
+      en: {
+        Title: "Spotify Wrapped Local",
+        Description: "Adaptation of the Wrapped campaign for digital billboards in Bogotá and Medellín."
+      }
+    },
+    P06: {
+      en: {
+        Title: "Nestlé Smart Data",
+        Description: "Interactive dashboard and consumer data visualization for decision making."
+      }
+    },
+    P07: {
+      en: {
+        Title: "IKEA Welcome Home",
+        Description: "Automated loyalty strategy with dynamic email design."
+      }
+    },
+    P08: {
+      en: {
+        Title: "P&G Global Pitch",
+        Description: "Visual narrative design and decks for the global pitch of personal care accounts."
+      }
+    },
+    P09: {
+      en: {
+        Title: "AI Workflow 1.0",
+        Description: "Implementation of generative AI tools for campaign asset creation."
+      }
+    }
+  }
+};
+
 function MainContent({ language, setLanguage, t }) {
   const { instance } = useMsal();
   const [activeTab, setActiveTab] = useState('landing');
@@ -153,18 +212,39 @@ function MainContent({ language, setLanguage, t }) {
       skillsArray: item.Tags ? item.Tags.split(/[;,]+/).map(skill => skill.trim()).filter(Boolean) : []
     }));
 
-    const normalizedProjects = rawFlatProjects.map(item => ({
-      ...item,
-      images: item.ImageURLs ? item.ImageURLs.split(',').map(src => src.trim()).filter(Boolean) : [],
-      tagsArray: item.Tags ? item.Tags.split(/[;,]+/).map(tag => tag.trim()).filter(Boolean) : [],
-      teamArray: item.TeamIDs ? item.TeamIDs.split(/[;,]+/).map(id => id.trim()).filter(Boolean) : [] // Correct TeamIDs bridge
-    }));
+    const normalizedProjects = rawFlatProjects.map(item => {
+      const projectTranslation = contentTranslations.projects[item.ID]?.[language] || {};
+      return {
+        ...item,
+        Title: language === 'en' ? projectTranslation.Title || item.Title : item.Title,
+        Description: language === 'en' ? projectTranslation.Description || item.Description : item.Description,
+        images: item.ImageURLs ? item.ImageURLs.split(',').map(src => src.trim()).filter(Boolean) : [],
+        tagsArray: item.Tags ? item.Tags.split(/[;,]+/).map(tag => tag.trim()).filter(Boolean) : [],
+        teamArray: item.TeamIDs ? item.TeamIDs.split(/[;,]+/).map(id => id.trim()).filter(Boolean) : [] // Correct TeamIDs bridge
+      };
+    });
 
     setTalentData(normalizedTalent);
     setFlatProjects(normalizedProjects);
     setLoading(false);
     setChatHistory([{ type: 'ai', text: t.chat.welcome }]);
-  }, [rawTalentData, rawFlatProjects, t]);
+  }, [rawTalentData, rawFlatProjects, t, language]);
+
+  useEffect(() => {
+    if (selectedProject) {
+      const refreshedProject = flatProjects.find(p => p.ID === selectedProject.ID);
+      if (refreshedProject && refreshedProject !== selectedProject) {
+        setSelectedProject(refreshedProject);
+      }
+    }
+
+    if (selectedTalent) {
+      const refreshedTalent = talentData.find(talent => talent.ID === selectedTalent.ID);
+      if (refreshedTalent && refreshedTalent !== selectedTalent) {
+        setSelectedTalent(refreshedTalent);
+      }
+    }
+  }, [flatProjects, talentData, selectedProject, selectedTalent]);
 
   const handleSend = async () => {
     if (!input.trim() || isTyping) return;
