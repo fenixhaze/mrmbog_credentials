@@ -22,11 +22,11 @@ const translations = {
     loading: "Cargando Staffing Engine...",
     subtitle: "CREDENCIALES CREATIVAS BOGOTÁ",
     loginBtn: "INICIAR SESIÓN CON MICROSOFT",
-    nav: { chat: "BÚSQUEDA IA", projects: "PROYECTOS", team: "TALENTO" },
+    nav: { chat: "ADVANCE SEARCH", projects: "PROYECTOS", team: "TALENTO" },
     squad: "SQUAD",
     landing: { chat: "CONSULTORÍA IA", projects: "PROYECTOS", team: "TALENTO" },
     chat: {
-      welcome: "Sistema MRM Bogotá activo. Consultoría IA lista con modelo Gemini 2.5 Flash.",
+      welcome: "Sistema MRM Bogotá activo. Advance search listo para ayudarte a encontrar el talento correcto.",
       placeholder: "Describe tu necesidad de staffing...",
       analyzing: "analizando datacenter...",
       viewCredential: "VER CREDENCIAL",
