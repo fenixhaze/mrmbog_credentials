@@ -16,19 +16,19 @@ const authConfig = {
 };
 
 const msalInstance = new PublicClientApplication(authConfig);
-
+ 
 // --- TRADUCCIONES ---
 const translations = {
   es: {
-    loading: "Staffing Engine...",
-    subtitle: "BOGOTÁ CREATIVE CREDENTIALS",
+    loading: "Iniciando Staffing Engine...",
+    subtitle: "CREDENCIALES CREATIVAS BOGOTÁ",
     loginBtn: "INICIAR SESIÓN CON MICROSOFT",
-    nav: { chat: "BÚSQUEDA INTELIGENTE", projects: "PROYECTOS", team: "TALENTO" },
+    nav: { chat: "BÚSQUEDA IA", projects: "PROYECTOS", team: "TALENTO" },
     squad: "SQUAD",
-    landing: { chat: "BÚSQUEDA INTELIGENTE", projects: "PROYECTOS", team: "TALENTO" },
+    landing: { chat: "CONSULTORÍA IA", projects: "PROYECTOS", team: "TALENTO" },
     chat: {
-      welcome: "Bienvenido al agente de credenciales de MRM Bogotá",
-      placeholder: "Describe la necesidad...",
+      welcome: "Sistema MRM Bogotá activo. Consultoría IA lista con modelo Gemini 2.5 Flash.",
+      placeholder: "Describe tu necesidad de staffing...",
       analyzing: "Gemini analizando datacenter...",
       viewCredential: "VER CREDENCIAL",
       error: "⚠️ Error de análisis en Gemini 2.5."
@@ -37,26 +37,28 @@ const translations = {
       filter: "FILTRAR ROL",
       title: "EQUIPO BOGOTÁ",
       inSquad: "EN SQUAD",
-      addSquad: "ADD TO SQUAD",
-      all: "All"
+      addSquad: "AGREGAR AL SQUAD",
+      all: "Todos"
     },
     projectModal: {
+      category: "Categoría",
       loPedido: "LO PEDIDO",
       loHecho: "LO HECHO",
       loLogrado: "LO LOGRADO",
       talentInvolved: "TALENTO INVOLUCRADO",
-      noTalent: "IDs de talento no vinculados.",
+      noTalent: "No se encontró talento asociado.",
       removeSquad: "RETIRAR SQUAD COMPLETO",
       addSquad: "AGREGAR SQUAD COMPLETO",
       viewCredential: "VER CREDENCIAL"
     },
     talentModal: {
-      skills: "HABILIDADES Y EXPERIENCIA",
+      skills: "COMPETENCIAS Y EXPERIENCIA",
       remove: "RETIRAR DEL SQUAD",
       add: "AÑADIR AL SQUAD"
     },
     squadModal: {
-      title: "NOMBRE DEL PROYECTO...",
+      defaultTitle: "NUEVO PROYECTO MRM",
+      titlePlaceholder: "NOMBRE DEL PROYECTO...",
       analysis: "ANÁLISIS DE SISTEMA",
       analysisQuote: '"Squad optimizado para ejecución estratégica en MRM Bogotá."',
       selected: "PARTICIPANTES SELECCIONADOS",
@@ -64,27 +66,27 @@ const translations = {
     }
   },
   en: {
-    loading: "Staffing Engine...",
+    loading: "Starting Staffing Engine...",
     subtitle: "BOGOTÁ CREATIVE CREDENTIALS",
     loginBtn: "SIGN IN WITH MICROSOFT",
-    nav: { chat: "SMART SEARCH", projects: "PROJECTS", team: "TALENT" },
+    nav: { chat: "AI SEARCH", projects: "PROJECTS", team: "TALENT" },
     squad: "SQUAD",
-    landing: { chat: "SMART SEARCH", projects: "PROJECTS", team: "TALENT" },
+    landing: { chat: "AI CONSULTANCY", projects: "PROJECTS", team: "TALENT" },
     chat: {
-      welcome: "Welcome to the MRM Bogotá Credentials Agent",
-      placeholder: "Describe the need...",
+      welcome: "MRM Bogotá system active. AI consultancy ready with Gemini 2.5 Flash model.",
+      placeholder: "Describe your staffing need...",
       analyzing: "Gemini analyzing datacenter...",
       viewCredential: "VIEW CREDENTIAL",
       error: "⚠️ Gemini 2.5 analysis error."
     },
     team: { filter: "FILTER ROLE", title: "BOGOTÁ TEAM", inSquad: "IN SQUAD", addSquad: "ADD TO SQUAD", all: "All" },
-    projectModal: { loPedido: "THE ASK", loHecho: "THE WORK", loLogrado: "THE RESULT", talentInvolved: "INVOLVED TALENT", noTalent: "No linked talent IDs.", removeSquad: "REMOVE FULL SQUAD", addSquad: "ADD FULL SQUAD", viewCredential: "VIEW CREDENTIAL" },
+    projectModal: { category: "Category", loPedido: "THE ASK", loHecho: "THE WORK", loLogrado: "THE RESULT", talentInvolved: "INVOLVED TALENT", noTalent: "No associated talent found.", removeSquad: "REMOVE FULL SQUAD", addSquad: "ADD FULL SQUAD", viewCredential: "VIEW CREDENTIAL" },
     talentModal: { skills: "SKILLS AND EXPERIENCE", remove: "REMOVE FROM SQUAD", add: "ADD TO SQUAD" },
-    squadModal: { title: "PROJECT NAME...", analysis: "SYSTEM ANALYSIS", analysisQuote: '"Squad optimized for strategic execution at MRM Bogotá."', selected: "SELECTED PARTICIPANTS", teamsBtn: "COORDINATE TEAMS MEETING" }
+    squadModal: { defaultTitle: "NEW MRM PROJECT", titlePlaceholder: "PROJECT NAME...", analysis: "SYSTEM ANALYSIS", analysisQuote: '"Squad optimized for strategic execution at MRM Bogotá."', selected: "SELECTED PARTICIPANTS", teamsBtn: "COORDINATE TEAMS MEETING" }
   }
 };
 
-function MainContent({ language, setLanguage, t }) {
+function MainContent({ language, setLanguage, t, translations }) {
   const { instance } = useMsal();
   const [activeTab, setActiveTab] = useState('landing');
   const [talentData, setTalentData] = useState([]);
@@ -100,17 +102,27 @@ function MainContent({ language, setLanguage, t }) {
 
   const [squad, setSquad] = useState([]);
   const [showSquadModal, setShowSquadModal] = useState(false);
-  const [customProjectTitle, setCustomProjectTitle] = useState("NUEVO PROYECTO MRM");
+  const [customProjectTitle, setCustomProjectTitle] = useState(t.squadModal.defaultTitle);
   const [filterRole, setFilterRole] = useState('All');
 
   const chatContainerRef = useRef(null);
   const dataFetchedRef = useRef(false);
+  const prevLanguageRef = useRef(language);
 
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTo({ top: chatContainerRef.current.scrollHeight, behavior: 'smooth' });
     }
   }, [chatHistory, isTyping]);
+
+  // Detect language changes to reset dynamic strings and initial messages
+  useEffect(() => {
+    if (prevLanguageRef.current !== language) {
+      if (chatHistory.length <= 1) setChatHistory([{ type: 'ai', text: t.chat.welcome }]);
+      setCustomProjectTitle(t.squadModal.defaultTitle);
+      prevLanguageRef.current = language;
+    }
+  }, [language, t]);
 
   // --- CARGA DE DATOS ---
   useEffect(() => {
@@ -131,7 +143,7 @@ function MainContent({ language, setLanguage, t }) {
           ...t,
           ID: String(t.ID || "").trim(),
           Name: t.Name || "Staff MRM",
-          Role: t.Role || "Creativo",
+          Role: t.Role || (language === 'es' ? "Creativo" : "Creative"),
           ImageURL: t.ImageURL || `https://ui-avatars.com/api/?name=${t.Name}&background=7D68F6&color=fff`,
           skillsArray: String(t.Tags || t.Skills || t.skills || "").split(',').map(s => s.trim()).filter(Boolean)
         }));
@@ -146,7 +158,7 @@ function MainContent({ language, setLanguage, t }) {
           images: p.ImageURLs ? String(p.ImageURLs).split(',').map(i => i.trim()).filter(Boolean) : ["https://picsum.photos/1200/800"],
           tagsArray: String(p.tags || p.Tags || "").split(',').map(t => t.trim()).filter(Boolean), // TAGS EXTRAÍDOS
           teamArray: String(p.TeamIDs || "").split(/[;,]+/).map(id => id.trim()).filter(id => id.startsWith('T')), // Relational Bridge using T-IDs
-          Description: p.Description || "Información no disponible.",
+          Description: p.Description || (language === 'es' ? "Información no disponible." : "Information not available."),
           LoPedido: p.LoPedido || "N/A", LoHecho: p.LoHecho || "N/A", LoLogrado: p.LoLogrado || "N/A"
         })));
 
@@ -173,20 +185,27 @@ function MainContent({ language, setLanguage, t }) {
       const pBrief = flatProjects.slice(0, 15).map(p => `ID_PROYECTO: ${p.ID} | Título: ${p.Title} | Tags: ${p.tagsArray.join(', ')}`).join("\n");
       const tBrief = talentData.slice(0, 15).map(t => `Nombre: ${t.Name} | Rol: ${t.Role} | Skills: ${t.skillsArray.join(', ')}`).join("\n");
 
-      const prompt = `Eres el Asistente de Staffing de MRM Bogotá.
-        Responde en el idioma: ${language === 'es' ? 'Español' : 'Inglés'}.
-        Distigue estrictamente entre P-IDs (Proyectos) y T-IDs (Talento).
+      const systemPrompt = language === 'es' 
+        ? `Eres el Asistente de Staffing de MRM Bogotá.
+           Distingue estrictamente entre P-IDs (Proyectos) y T-IDs (Talento).
+           REGLAS ESTRICTAS:
+           1. Devuelve MÁXIMO 4 talent_names en un grid de 2 columnas.
+           2. En "match_ids", debes devolver SOLO los códigos exactos de ID_PROYECTO (ej. "P001").
+           3. Responde SOLO en este formato JSON: {"match_ids":["P###"], "talent_names":["NOMBRE"], "reason":"explicación en ESPAÑOL"}`
+        : `You are the Staffing Assistant for MRM Bogotá.
+           Strictly distinguish between P-IDs (Projects) and T-IDs (Talent).
+           STRICT RULES:
+           1. Return MAXIMUM 4 talent_names in a 2-column grid.
+           2. In "match_ids", you must return ONLY the exact PROJECT_IDs (e.g., "P001").
+           3. Respond ONLY in this JSON format: {"match_ids":["P###"], "talent_names":["NAME"], "reason":"explanation in ENGLISH"}`;
+
+      const prompt = `${systemPrompt}
         
         [PROYECTOS DISPONIBLES]
         ${pBrief}
         
         [TALENTO DISPONIBLE]
         ${tBrief}
-        
-        REGLAS ESTRICTAS:
-        1. Devuelve MÁXIMO 4 talent_names en un grid de 2 columnas.
-        2. En "match_ids", debes devolver SOLO los códigos exactos de ID_PROYECTO (ej. "P001", "P002").
-        3. Responde SOLO en este formato JSON: {"match_ids":["P###"], "talent_names":["NOMBRE"], "reason":"explicación en el idioma solicitado"}
         
         USUARIO: "${userMsg}"`;
 
@@ -207,7 +226,7 @@ function MainContent({ language, setLanguage, t }) {
         recommendedTalent: talentData.filter(t => parsed.talent_names?.includes(t.Name)).slice(0, 4)
       }]);
 
-    } catch (err) { setChatHistory(prev => [...prev, { type: 'ai', text: t.chat.error }]); }
+    } catch (err) { setChatHistory(prev => [...prev, { type: 'ai', text: t.chat.error + (err.message || "") }]); }
     finally { setIsTyping(false); }
   };
 
@@ -489,13 +508,18 @@ function MainContent({ language, setLanguage, t }) {
 }
 
 export default function App() {
-  const [language, setLanguage] = useState('es');
+  const [language, setLanguage] = useState(localStorage.getItem('mrm_lang') || 'es');
   const t = translations[language];
+
+  const handleSetLanguage = (lang) => {
+    setLanguage(lang);
+    localStorage.setItem('mrm_lang', lang);
+  };
 
   return (
     <MsalProvider instance={msalInstance}>
       <AuthenticatedTemplate>
-        <MainContent language={language} setLanguage={setLanguage} t={t} />
+        <MainContent language={language} setLanguage={handleSetLanguage} t={t} translations={translations} />
       </AuthenticatedTemplate>
       <UnauthenticatedTemplate>
         <div className="h-screen bg-[#0A0A0A] flex flex-col items-center justify-center text-white relative">
