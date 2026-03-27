@@ -300,6 +300,12 @@ function MainContent({ language, setLanguage, t }) {
   const filteredTalent = useMemo(() => talentData.filter(person => filterRole === 'All' || person.Role === filterRole), [talentData, filterRole]);
   const uniqueRoles = useMemo(() => ['All', ...new Set(talentData.map(person => person.Role))], [talentData]);
 
+  const projectModalTags = selectedProject
+    ? (Array.isArray(selectedProject.tagsArray)
+      ? selectedProject.tagsArray
+      : (selectedProject.Tags ? selectedProject.Tags.split(/[;,]+/).map(tag => tag.trim()).filter(Boolean) : []))
+    : [];
+
   if (loading) return <div className="h-screen bg-[#0A0A0A] flex items-center justify-center text-[#7D68F6] font-black uppercase animate-pulse">{t.loading}</div>;
 
   return (
@@ -511,7 +517,7 @@ function MainContent({ language, setLanguage, t }) {
                     <h2 className="text-7xl font-black uppercase tracking-tighter text-white leading-none">{selectedProject.Title}</h2>
                     <p className="text-xl text-white/60 normal-case leading-relaxed font-normal">{selectedProject.Description}</p>
                     <div className="flex flex-wrap gap-2 pt-4">
-                      {selectedProject.tagsArray.slice(0, 3).map((tag, idx) => (
+                      {projectModalTags.slice(0, 3).map((tag, idx) => (
                         <span key={idx} className="px-5 py-2.5 bg-zinc-900 border border-white/10 rounded-full text-[10px] font-black uppercase text-zinc-400 tracking-widest">{tag}</span>
                       ))}
                     </div>
