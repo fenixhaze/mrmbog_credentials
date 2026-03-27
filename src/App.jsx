@@ -246,6 +246,13 @@ function MainContent({ language, setLanguage, t }) {
     }
   }, [flatProjects, talentData, selectedProject, selectedTalent]);
 
+  useEffect(() => {
+    if (!selectedProject) return;
+    if (!Array.isArray(selectedProject.tagsArray) || selectedProject.tagsArray.length === 0) {
+      setSelectedProject(normalizeProjectTags(selectedProject));
+    }
+  }, [selectedProject]);
+
   const handleSend = async () => {
     if (!input.trim() || isTyping) return;
     const userMsg = input;
@@ -289,6 +296,15 @@ function MainContent({ language, setLanguage, t }) {
       setIsTyping(false);
     }
   };
+
+  const normalizeProjectTags = (project) => ({
+    ...project,
+    tagsArray: Array.isArray(project.tagsArray)
+      ? project.tagsArray
+      : project.Tags
+        ? project.Tags.split(/[;,]+/).map(tag => tag.trim()).filter(Boolean)
+        : []
+  });
 
   const toggleSquad = (item) => setSquad(prev => prev.some(x => x.ID === item.ID) ? prev.filter(x => x.ID !== item.ID) : [...prev, item]);
 
@@ -377,7 +393,7 @@ function MainContent({ language, setLanguage, t }) {
                       {msg.results && msg.results.length > 0 && (
                         <div className="mb-6 flex gap-4 overflow-x-auto hide-scrollbar pb-4 pt-2 px-4 -mx-4">
                           {msg.results.map((p, idx) => (
-                            <div key={idx} onClick={() => setSelectedProject(p)} className="min-w-[280px] bg-black/40 border border-white/10 rounded-3xl overflow-hidden group cursor-pointer hover:ring-2 hover:ring-[#7D68F6] transition-all">
+                            <div key={idx} onClick={() => setSelectedProject(normalizeProjectTags(p))} className="min-w-[280px] bg-black/40 border border-white/10 rounded-3xl overflow-hidden group cursor-pointer hover:ring-2 hover:ring-[#7D68F6] transition-all">
                               <img src={p.images[0]} className="h-28 w-full object-cover grayscale group-hover:grayscale-0 transition-all" alt="" />
                               <div className="p-5 text-left">
                                 <h4 className="text-[12px] font-black uppercase mb-2 truncate text-white">{p.Title}</h4>
@@ -442,7 +458,7 @@ function MainContent({ language, setLanguage, t }) {
           {activeTab === 'projects' && (
             <section className="pt-48 px-12 max-w-7xl mx-auto pb-40 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 p-2 -mx-2">
               {flatProjects.map((project, i) => (
-                <div key={i} onClick={() => setSelectedProject(project)} className="bg-zinc-900/40 border border-white/10 rounded-[2.5rem] overflow-hidden group cursor-pointer hover:ring-2 hover:ring-[#7D68F6] text-left transition-all shadow-xl flex flex-col">
+                <div key={i} onClick={() => setSelectedProject(normalizeProjectTags(project))} className="bg-zinc-900/40 border border-white/10 rounded-[2.5rem] overflow-hidden group cursor-pointer hover:ring-2 hover:ring-[#7D68F6] text-left transition-all shadow-xl flex flex-col">
                   <div className="h-64 bg-black overflow-hidden relative"><img src={project.images[0]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt="" /></div>
                   <div className="p-8 flex-1 flex flex-col">
                     <h4 className="text-xl font-black uppercase text-white mb-4">{project.Title}</h4>
