@@ -275,7 +275,6 @@ function MainContent({ language, setLanguage, t }) {
       const prompt = `${systemPrompt}\n\n[PROYECTOS DISPONIBLES]\n${pBrief}\n\n[TALENTO DISPONIBLE]\n${tBrief}\n\nUSUARIO: "${userMsg}"`;
 
       // If API key missing, skip remote call and use a local fallback matcher
-      const KEY = import.meta.env.VITE_GEMINI_API_KEY;
       const localFallback = (query) => {
         const q = (query || '').toLowerCase();
         const tokens = q.split(/\W+/).filter(Boolean);
