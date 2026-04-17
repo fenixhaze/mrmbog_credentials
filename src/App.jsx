@@ -143,6 +143,13 @@ const contentTranslations = {
     }
   }
 };
+const DEFAULT_PROJECT_IMAGES = [
+  'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1200&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1503602642458-232111445657?w=1200&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1492724441997-5dc865305da7?w=1200&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1503264116251-35a269479413?w=1200&auto=format&fit=crop&q=80'
+];
 
 function MainContent({ language, setLanguage, t }) {
   const [activeTab, setActiveTab] = useState('landing');
@@ -223,7 +230,13 @@ function MainContent({ language, setLanguage, t }) {
 
     const normalizedProjects = rawFlatProjects.map(item => {
       const projectTranslation = contentTranslations.projects[item.ID]?.[language] || {};
-      const imgs = item.ImageURLs ? item.ImageURLs.split(',').map(src => src.trim()).filter(Boolean) : [];
+      const rawImgs = item.ImageURLs ? item.ImageURLs.split(',').map(src => src.trim()).filter(Boolean) : [];
+      let imgs = rawImgs.slice();
+      if (!imgs || imgs.length === 0) {
+        imgs = DEFAULT_PROJECT_IMAGES.slice(0, 3).map((u, idx) => `${u}&sig=${encodeURIComponent(item.ID)}&idx=${idx}`);
+      } else if (imgs.length === 1) {
+        imgs = imgs.concat(DEFAULT_PROJECT_IMAGES.slice(0, 2).map((u, idx) => `${u}&sig=${encodeURIComponent(item.ID)}&idx=${idx}`));
+      }
       shuffleArray(imgs);
       return {
         ...item,
@@ -526,13 +539,13 @@ function MainContent({ language, setLanguage, t }) {
                   </div>
                 ))}
               </div>
-              <div className="flex gap-3 items-end pt-4">
+              <div className="flex gap-3 items-center pt-4">
                 <textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                   placeholder={t.chat.placeholder}
-                  className="flex-1 bg-white/5 border border-white/20 rounded-[2rem] py-3 px-6 outline-none focus:border-[#7D68F6] text-[15px] min-h-[52px] backdrop-blur-md resize-none"
+                  className="flex-1 bg-white/5 border border-white/20 rounded-[2rem] py-3 px-6 outline-none focus:border-[#7D68F6] text-[15px] min-h-[56px] leading-relaxed backdrop-blur-md resize-none"
                 />
                 <button
                   onClick={handleSend}
@@ -638,7 +651,7 @@ function MainContent({ language, setLanguage, t }) {
                     {[{ label: t.projectModal.loPedido, d: selectedProject.LoPedido }, { label: t.projectModal.loHecho, d: selectedProject.LoHecho }, { label: t.projectModal.loLogrado, d: selectedProject.LoLogrado }].map((col, index) => (
                       <div key={index} className="space-y-4">
                         <h4 className="text-[12px] font-black tracking-[0.4em] text-[#7D68F6] uppercase">{col.label}</h4>
-                        <p className="text-sm text-white/50 leading-relaxed font-normal">{col.d}</p>
+                        <p className="text-sm text-white/50 leading-relaxed font-normal">{col.d && String(col.d).trim() ? col.d : (language === 'es' ? (index === 0 ? 'Breve descripción de lo que se solicita: objetivos, alcance y KPIs esperados.' : index === 1 ? 'Resumen del trabajo realizado: actividades, entregables y enfoques metodológicos.' : 'Resultados alcanzados: métricas, aprendizajes y beneficios para el cliente.') : (index === 0 ? 'Brief description of what is requested: objectives, scope and expected KPIs.' : index === 1 ? 'Summary of the work done: activities, deliverables and methodological approaches.' : 'Results achieved: metrics, learnings and client benefits.'))}</p>
                       </div>
                     ))}
                   </div>
