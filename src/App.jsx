@@ -396,8 +396,10 @@ function MainContent({ language, setLanguage, t }) {
               <div ref={chatContainerRef} className="flex-1 overflow-y-auto flex flex-col-reverse gap-4 hide-scrollbar pb-4 px-2 -mx-2">
                 {chatHistory.map((msg, i) => (
                   <div key={i} className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
-                    <div className={`max-w-[95%] rounded-[2rem] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6] py-2.5 px-6' : 'bg-white/5 border-white/10 backdrop-blur-xl py-3 px-6'}`}>
-                      <p className={`whitespace-pre-wrap leading-relaxed opacity-90 normal-case ${msg.type === 'user' ? 'mb-0' : 'mb-4'}`}>{msg.text}</p>
+                    <div className={`max-w-[95%] rounded-[2rem] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6] px-6' : 'bg-white/5 border-white/10 backdrop-blur-xl px-6'}`}>
+                      <div className="min-h-[64px] flex items-center">
+                        <p className={`whitespace-pre-wrap leading-normal opacity-90 normal-case m-0 text-[15px]`}>{msg.text}</p>
+                      </div>
 
                       {msg.results && msg.results.length > 0 && (
                         <div className="mb-6 flex gap-4 overflow-x-auto hide-scrollbar pb-4 pt-2 px-4 -mx-4">
