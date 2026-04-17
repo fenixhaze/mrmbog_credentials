@@ -281,6 +281,11 @@ function MainContent({ language, setLanguage, t }) {
       });
 
       const data = await response.json();
+      
+      if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+        throw new Error('Invalid API response structure');
+      }
+
       const rawRes = data.candidates[0].content.parts[0].text.replace(/```json/gi, '').replace(/```/g, '').trim();
       const parsed = JSON.parse(rawRes);
 
@@ -384,10 +389,10 @@ function MainContent({ language, setLanguage, t }) {
 
           {activeTab === 'chat' && (
             <section className="max-w-4xl mx-auto pt-4 w-full px-6 flex flex-col h-[calc(100vh-120px)] text-left">
-              <div ref={chatContainerRef} className="flex-1 overflow-y-auto flex flex-col gap-4 hide-scrollbar pb-4 px-2 -mx-2">
+              <div ref={chatContainerRef} className="flex-1 overflow-y-auto flex flex-col-reverse gap-4 hide-scrollbar pb-4 px-2 -mx-2">
                 {chatHistory.map((msg, i) => (
                   <div key={i} className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
-                    <div className={`max-w-[95%] rounded-[2rem] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6] pt-3 pb-3 px-6' : 'bg-white/5 border-white/10 backdrop-blur-xl pt-4 pb-4 px-6'}`}>
+                    <div className={`max-w-[95%] rounded-[2rem] border flex flex-col justify-center ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6] pt-3 pb-3 px-6' : 'bg-white/5 border-white/10 backdrop-blur-xl pt-4 pb-4 px-6'}`}>
                       <p className={`whitespace-pre-wrap leading-relaxed opacity-90 normal-case ${msg.type === 'user' ? 'mb-0' : 'mb-4'}`}>{msg.text}</p>
 
                       {msg.results && msg.results.length > 0 && (
