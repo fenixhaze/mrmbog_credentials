@@ -344,9 +344,10 @@ function MainContent({ language, setLanguage, t }) {
         let respText = null;
         try { respText = await response.text(); } catch (e) { respText = null; }
 
-        // On 403/401/429 use local fallback so UX remains functional
-        if ([401, 403, 429].includes(response.status)) {
-          console.warn('Gemini API returned status', response.status, 'body:', respText, '— falling back to local matcher');
+        // On 401, 403, 429, or 503 (high demand) use local fallback so UX remains functional
+        if ([401, 403, 429, 503].includes(response.status)) {
+          console.error(`Gemini API Error ${response.status}:`, respText);
+          console.warn('Key details (prefix):', KEY?.substring(0, 4) + '...', 'length:', KEY?.length);
           const fallback = localFallback(userMsg);
           const detail = respText ? ` Detalle: ${respText}` : '';
           const reason = `${language === 'es' ? 'Gemini 2.5: error' : 'Gemini 2.5 error'} ${response.status}.${detail} ${language === 'es' ? 'Usando motor local de respaldo.' : 'Using local fallback.'}`;
