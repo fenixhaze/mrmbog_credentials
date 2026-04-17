@@ -171,9 +171,10 @@ function MainContent({ language, setLanguage, t }) {
   useEffect(() => {
     const loadRawData = async () => {
       try {
+        const baseUrl = import.meta.env.BASE_URL;
         const [tRes, pRes] = await Promise.all([
-          fetch('/datacenter/Talent_Database.csv'),
-          fetch('/datacenter/Projects_Database.csv')
+          fetch(`${baseUrl}datacenter/Talent_Database.csv`),
+          fetch(`${baseUrl}datacenter/Projects_Database.csv`)
         ]);
 
         if (!tRes.ok || !pRes.ok) throw new Error('Archivos CSV no encontrados');
