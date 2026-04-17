@@ -383,7 +383,7 @@ function MainContent({ language, setLanguage, t }) {
           )}
 
           {activeTab === 'chat' && (
-            <section className="max-w-4xl mx-auto pt-16 w-full px-6 flex flex-col h-[calc(100vh-80px)] text-left">
+            <section className="max-w-4xl mx-auto pt-4 w-full px-6 flex flex-col h-[calc(100vh-120px)] text-left">
               <div ref={chatContainerRef} className="flex-1 overflow-y-auto flex flex-col gap-4 hide-scrollbar pb-4 px-2 -mx-2">
                 {chatHistory.map((msg, i) => (
                   <div key={i} className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
