@@ -161,6 +161,15 @@ function MainContent({ language, setLanguage, t }) {
 
   const chatContainerRef = useRef(null);
 
+  const shuffleArray = (arr) => {
+    if (!Array.isArray(arr)) return arr;
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  };
+
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTo({ top: chatContainerRef.current.scrollHeight, behavior: 'smooth' });
@@ -214,11 +223,13 @@ function MainContent({ language, setLanguage, t }) {
 
     const normalizedProjects = rawFlatProjects.map(item => {
       const projectTranslation = contentTranslations.projects[item.ID]?.[language] || {};
+      const imgs = item.ImageURLs ? item.ImageURLs.split(',').map(src => src.trim()).filter(Boolean) : [];
+      shuffleArray(imgs);
       return {
         ...item,
         Title: language === 'en' ? projectTranslation.Title || item.Title : item.Title,
         Description: language === 'en' ? projectTranslation.Description || item.Description : item.Description,
-        images: item.ImageURLs ? item.ImageURLs.split(',').map(src => src.trim()).filter(Boolean) : [],
+        images: imgs,
         tagsArray: item.Tags ? item.Tags.split(/[;,]+/).map(tag => tag.trim()).filter(Boolean) : [],
         teamArray: item.TeamIDs ? item.TeamIDs.split(/[;,]+/).map(id => id.trim()).filter(Boolean) : [] // Correct TeamIDs bridge
       };
@@ -461,7 +472,7 @@ function MainContent({ language, setLanguage, t }) {
 
           {activeTab === 'chat' && (
             <section className="max-w-4xl mx-auto pt-4 w-full px-6 flex flex-col h-[calc(100vh-120px)] text-left">
-              <div ref={chatContainerRef} className="flex-1 overflow-y-auto flex flex-col-reverse gap-4 hide-scrollbar pb-4 px-2 -mx-2">
+              <div ref={chatContainerRef} className="flex-1 overflow-y-auto flex flex-col gap-4 hide-scrollbar pb-4 px-2 -mx-2">
                 {chatHistory.map((msg, i) => (
                   <div key={i} className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
                     <div className={`max-w-[95%] rounded-[2rem] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6] px-6' : 'bg-white/5 border-white/10 backdrop-blur-xl px-6'}`}>
