@@ -383,12 +383,12 @@ function MainContent({ language, setLanguage, t }) {
           )}
 
           {activeTab === 'chat' && (
-            <section className="max-w-4xl mx-auto pt-24 w-full px-6 flex flex-col h-[calc(100vh-100px)] text-left">
-              <div ref={chatContainerRef} className="flex-1 overflow-y-auto flex flex-col gap-8 hide-scrollbar pb-8 px-2 -mx-2">
+            <section className="max-w-4xl mx-auto pt-16 w-full px-6 flex flex-col h-[calc(100vh-80px)] text-left">
+              <div ref={chatContainerRef} className="flex-1 overflow-y-auto flex flex-col gap-4 hide-scrollbar pb-4 px-2 -mx-2">
                 {chatHistory.map((msg, i) => (
                   <div key={i} className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
-                    <div className={`max-w-[95%] pt-6 pb-3 px-8 rounded-[2rem] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6]' : 'bg-white/5 border-white/10 backdrop-blur-xl'}`}>
-                      <p className="whitespace-pre-wrap leading-relaxed opacity-90 normal-case mb-6">{msg.text}</p>
+                    <div className={`max-w-[95%] rounded-[2rem] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6] pt-3 pb-3 px-6' : 'bg-white/5 border-white/10 backdrop-blur-xl pt-4 pb-4 px-6'}`}>
+                      <p className={`whitespace-pre-wrap leading-relaxed opacity-90 normal-case ${msg.type === 'user' ? 'mb-0' : 'mb-4'}`}>{msg.text}</p>
 
                       {msg.results && msg.results.length > 0 && (
                         <div className="mb-6 flex gap-4 overflow-x-auto hide-scrollbar pb-4 pt-2 px-4 -mx-4">
@@ -436,20 +436,20 @@ function MainContent({ language, setLanguage, t }) {
                   </div>
                 ))}
               </div>
-              <div className="flex gap-4 items-center">
+              <div className="flex gap-3 items-end pt-4">
                 <textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                   placeholder={t.chat.placeholder}
-                  className="flex-1 bg-white/5 border border-white/20 rounded-[2.5rem] py-5 px-8 outline-none focus:border-[#7D68F6] text-[15px] min-h-[64px] backdrop-blur-md resize-none"
+                  className="flex-1 bg-white/5 border border-white/20 rounded-[2rem] py-3 px-6 outline-none focus:border-[#7D68F6] text-[15px] min-h-[52px] backdrop-blur-md resize-none"
                 />
                 <button
                   onClick={handleSend}
                   disabled={isTyping}
-                  className="bg-[#7D68F6] w-[64px] h-[64px] rounded-full flex items-center justify-center shadow-lg hover:scale-105 disabled:opacity-50 transition-all"
+                  className="bg-[#7D68F6] w-[52px] h-[52px] rounded-full flex items-center justify-center shadow-lg hover:scale-105 disabled:opacity-50 transition-all flex-shrink-0"
                 >
-                  <Send size={22} />
+                  <Send size={20} />
                 </button>
               </div>
             </section>
