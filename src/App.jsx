@@ -424,19 +424,19 @@ function MainContent({ language, setLanguage, t }) {
           </div>
         </div>
         <div className="flex gap-4 items-center pointer-events-auto">
-          <div className="flex bg-white/5 backdrop-blur-3xl border border-white/10 rounded-full p-1">
+          <div className="flex items-center bg-white/5 backdrop-blur-3xl border border-white/10 rounded-full p-1">
             {['es', 'en'].map((lang) => (
               <button
                 key={lang}
                 onClick={() => setLanguage(lang)}
-                className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase transition-all ${language === lang ? 'bg-[#7D68F6] text-white shadow-lg' : 'text-white/40 hover:text-white'}`}
+                className={`flex items-center justify-center px-3 py-1.5 rounded-full text-[10px] font-black uppercase transition-all ${language === lang ? 'bg-[#7D68F6] text-white shadow-lg' : 'text-white/40 hover:text-white'}`}
               >
                 {lang}
               </button>
             ))}
           </div>
           {activeTab !== 'landing' && (
-            <nav className="flex gap-2 p-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-full shadow-2xl mr-4">
+            <nav className="flex items-center gap-2 p-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-full shadow-2xl mr-4">
               {[{ id: 'chat', label: t.nav.chat, icon: <MessageSquare size={14} /> }, { id: 'projects', label: t.nav.projects, icon: <Briefcase size={14} /> }, { id: 'team', label: t.nav.team, icon: <Users size={14} /> }].map(tab => (
                 <button
                   key={tab.id}
@@ -489,7 +489,7 @@ function MainContent({ language, setLanguage, t }) {
                                 <h4 className="text-[12px] font-black uppercase mb-2 truncate text-white">{p.Title}</h4>
                                 <div className="flex flex-wrap gap-1.5 mb-3">
                                   {p.tagsArray.slice(0, 2).map((tag, tIdx) => (
-                                    <span key={tIdx} className="px-2 py-1 bg-white/10 rounded text-[8px] font-black uppercase tracking-widest text-zinc-300">{tag}</span>
+                                    <span key={tIdx} className="inline-flex items-center px-2 py-1 bg-white/10 rounded text-[8px] font-black uppercase tracking-widest text-zinc-300">{tag}</span>
                                   ))}
                                 </div>
                                 <p className="text-[10px] text-white/50 line-clamp-2 mb-6 normal-case font-normal leading-relaxed">{p.Description}</p>
@@ -554,7 +554,7 @@ function MainContent({ language, setLanguage, t }) {
                     <h4 className="text-xl font-black uppercase text-white mb-4">{project.Title}</h4>
                     <div className="flex flex-wrap gap-2 mb-6">
                       {project.tagsArray.slice(0, 3).map((tag, tIdx) => (
-                        <span key={tIdx} className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-md text-[10px] font-black uppercase tracking-widest text-zinc-400">{tag}</span>
+                        <span key={tIdx} className="inline-flex items-center px-3 py-1.5 bg-white/5 border border-white/10 rounded-md text-[10px] font-black uppercase tracking-widest text-zinc-400">{tag}</span>
                       ))}
                     </div>
                     <p className="text-[11px] text-white/50 line-clamp-2 mb-8 normal-case font-normal leading-relaxed">{project.Description}</p>
@@ -573,7 +573,7 @@ function MainContent({ language, setLanguage, t }) {
                   <button
                     key={role}
                     onClick={() => setFilterRole(role)}
-                    className={`text-left px-5 py-2.5 rounded-full text-[11px] font-black uppercase transition-all ${filterRole === role ? 'bg-[#7D68F6] text-white shadow-lg' : 'text-white/30 hover:text-white hover:bg-white/5'}`}
+                    className={`flex items-center text-left px-5 py-2.5 rounded-full text-[11px] font-black uppercase transition-all ${filterRole === role ? 'bg-[#7D68F6] text-white shadow-lg' : 'text-white/30 hover:text-white hover:bg-white/5'}`}
                   >
                     {role === 'All' ? t.team.all : role}
                   </button>
@@ -589,12 +589,12 @@ function MainContent({ language, setLanguage, t }) {
                       <p className="text-[10px] text-[#7D68F6] font-black uppercase mb-4 tracking-widest">{person.Role}</p>
                       <div className="flex flex-wrap justify-center gap-1.5 mb-6">
                         {person.skillsArray.slice(0, 2).map((skill, sIdx) => (
-                          <span key={sIdx} className="px-2 py-1 bg-white/5 border border-white/10 rounded text-[10px] font-black uppercase tracking-widest text-zinc-400">{skill}</span>
+                          <span key={sIdx} className="inline-flex items-center px-2 py-1 bg-white/5 border border-white/10 rounded text-[10px] font-black uppercase tracking-widest text-zinc-400">{skill}</span>
                         ))}
                       </div>
                       <button
                         onClick={(e) => { e.stopPropagation(); toggleSquad(person); }}
-                        className={`w-full py-3 rounded-full text-[10px] font-black uppercase border border-[#7D68F6] mt-auto transition-all ${squad.some(p => p.ID === person.ID) ? 'bg-[#7D68F6] text-white shadow-lg' : 'text-[#7D68F6] hover:bg-[#7D68F6]/10'}`}
+                        className={`w-full py-3 rounded-full flex items-center justify-center text-[10px] font-black uppercase border border-[#7D68F6] mt-auto transition-all ${squad.some(p => p.ID === person.ID) ? 'bg-[#7D68F6] text-white shadow-lg' : 'text-[#7D68F6] hover:bg-[#7D68F6]/10'}`}
                       >
                         {squad.some(p => p.ID === person.ID) ? t.team.inSquad : t.team.addSquad}
                       </button>
@@ -610,7 +610,7 @@ function MainContent({ language, setLanguage, t }) {
       <AnimatePresence>
         {selectedProject && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-start justify-center p-6 backdrop-blur-2xl bg-black/95 overflow-y-auto">
-            <button onClick={() => setSelectedProject(null)} className="fixed top-6 right-6 z-[250] p-4 bg-black/50 rounded-full hover:bg-white text-white hover:text-black transition-all border border-white/10 shadow-2xl"><X size={24} /></button>
+            <button onClick={() => setSelectedProject(null)} className="fixed top-6 right-6 z-[250] p-4 bg-black/50 rounded-full flex items-center justify-center hover:bg-white text-white hover:text-black transition-all border border-white/10 shadow-2xl"><X size={24} /></button>
             <div className="w-full max-w-[1600px] mx-auto my-12 flex flex-col lg:flex-row gap-8 pb-20 text-left relative">
 
               <div className="w-full lg:w-[70%] bg-[#0f0f0f] border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl h-fit">
@@ -680,7 +680,7 @@ function MainContent({ language, setLanguage, t }) {
       <AnimatePresence>
         {selectedTalent && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[300] flex items-center justify-center p-6 backdrop-blur-2xl bg-black/95">
-            <button onClick={() => setSelectedTalent(null)} className="fixed top-10 right-10 p-4 bg-white/5 rounded-full text-white border border-white/10 hover:bg-white hover:text-black transition-all shadow-2xl"><X size={32} /></button>
+            <button onClick={() => setSelectedTalent(null)} className="fixed top-10 right-10 p-4 bg-white/5 rounded-full flex items-center justify-center text-white border border-white/10 hover:bg-white hover:text-black transition-all shadow-2xl"><X size={32} /></button>
             <div className="bg-[#0f0f0f] border border-white/10 rounded-[4rem] p-20 max-w-3xl w-full text-center shadow-2xl relative">
               <img src={selectedTalent.ImageURL} className="w-48 h-48 rounded-full mx-auto mb-10 object-cover border-4 border-[#7D68F6] shadow-[0_0_40px_rgba(125,104,246,0.3)]" alt="" />
               <h2 className="text-6xl font-black uppercase tracking-tighter text-white mb-4 leading-none">{selectedTalent.Name}</h2>
