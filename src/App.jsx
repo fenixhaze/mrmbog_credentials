@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { PublicClientApplication } from "@azure/msal-browser";
 import { MsalProvider, useMsal } from "@azure/msal-react";
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, LogOut, Users, Briefcase, MessageSquare, ChevronRight, X, Calendar, UserPlus, UserMinus } from 'lucide-react';
+import { Send, Users, Briefcase, MessageSquare, ChevronRight, X, Calendar, UserPlus, UserMinus } from 'lucide-react';
 import Papa from 'papaparse';
 
 // --- CONFIGURACIÓN AZURE MSAL ---
@@ -145,7 +145,6 @@ const contentTranslations = {
 };
 
 function MainContent({ language, setLanguage, t }) {
-  const { instance } = useMsal();
   const [activeTab, setActiveTab] = useState('landing');
   const [rawTalentData, setRawTalentData] = useState([]);
   const [rawFlatProjects, setRawFlatProjects] = useState([]);
@@ -612,10 +611,6 @@ function MainContent({ language, setLanguage, t }) {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <footer className="fixed bottom-10 right-12 z-[100] flex gap-4 pointer-events-auto">
-        <button onClick={() => instance.logoutRedirect()} className="p-5 bg-white/5 rounded-full border border-white/10 text-white/20 hover:text-red-500 transition-all shadow-xl hover:bg-red-500/10"><LogOut size={22} /></button>
-      </footer>
     </div>
   );
 }
