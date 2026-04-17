@@ -285,12 +285,36 @@ function MainContent({ language, setLanguage, t }) {
       }
 
       const data = await response.json();
-      
-      if (!data.candidates || !Array.isArray(data.candidates) || data.candidates.length === 0 || !data.candidates[0].content || !data.candidates[0].content.parts || data.candidates[0].content.parts.length === 0) {
+
+      // Helper: recursively search the response for a JSON-like string
+      const findJSONString = (obj) => {
+        const seen = new Set();
+        const stack = [obj];
+        while (stack.length) {
+          const cur = stack.pop();
+          if (!cur || seen.has(cur)) continue;
+          seen.add(cur);
+
+          if (typeof cur === 'string') {
+            const candidate = cur.replace(/```json/gi, '').replace(/```/g, '').trim();
+            if (candidate.startsWith('{') && candidate.includes('match_ids')) return candidate;
+          } else if (Array.isArray(cur)) {
+            for (const item of cur) stack.push(item);
+          } else if (typeof cur === 'object') {
+            for (const k of Object.keys(cur)) stack.push(cur[k]);
+          }
+        }
+        return null;
+      };
+
+      // Common path used by the API
+      let rawRes = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!rawRes) rawRes = findJSONString(data);
+      if (!rawRes) {
         throw new Error('Invalid API response structure');
       }
 
-      const rawRes = data.candidates[0].content.parts[0].text.replace(/```json/gi, '').replace(/```/g, '').trim();
+      rawRes = rawRes.replace(/```json/gi, '').replace(/```/g, '').trim();
       const parsed = JSON.parse(rawRes);
 
       setChatHistory(prev => [...prev, {
