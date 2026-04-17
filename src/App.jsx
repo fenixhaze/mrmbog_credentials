@@ -340,16 +340,21 @@ function MainContent({ language, setLanguage, t }) {
       });
 
       if (!response.ok) {
+        // capture response body for better diagnostics
+        let respText = null;
+        try { respText = await response.text(); } catch (e) { respText = null; }
+
         // On 403/401/429 use local fallback so UX remains functional
         if ([401, 403, 429].includes(response.status)) {
-          console.warn('Gemini API returned status', response.status, '— falling back to local matcher');
+          console.warn('Gemini API returned status', response.status, 'body:', respText, '— falling back to local matcher');
           const fallback = localFallback(userMsg);
-          const reason = `${language === 'es' ? 'Gemini 2.5: error' : 'Gemini 2.5 error'} ${response.status}. ${language === 'es' ? 'Usando motor local de respaldo.' : 'Using local fallback.'}`;
+          const detail = respText ? ` Detalle: ${respText}` : '';
+          const reason = `${language === 'es' ? 'Gemini 2.5: error' : 'Gemini 2.5 error'} ${response.status}.${detail} ${language === 'es' ? 'Usando motor local de respaldo.' : 'Using local fallback.'}`;
           setChatHistory(prev => [...prev, { type: 'ai', text: reason, results: fallback.results, recommendedTalent: fallback.recommendedTalent }]);
           setIsTyping(false);
           return;
         }
-        throw new Error(`API request failed with status ${response.status}`);
+        throw new Error(`API request failed with status ${response.status} ${respText || ''}`);
       }
 
       const data = await response.json();
