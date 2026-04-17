@@ -298,7 +298,7 @@ function MainContent({ language, setLanguage, t }) {
 
       const prompt = `${systemPrompt}\n\n[PROYECTOS DISPONIBLES]\n${pBrief}\n\n[TALENTO DISPONIBLE]\n${tBrief}\n\nUSUARIO: "${userMsg}"`;
 
-      // If API key missing or invalid placeholder, skip remote call and use a local fallback matcher
+      // If API key missing, skip remote call and use a local fallback matcher
       const localFallback = (query) => {
         const q = (query || '').toLowerCase();
         const tokens = q.split(/\W+/).filter(Boolean);
@@ -325,8 +325,8 @@ function MainContent({ language, setLanguage, t }) {
         };
       };
 
-      if (!KEY || typeof KEY !== 'string' || KEY.trim() === '' || KEY === 'undefined' || KEY === 'YOUR_API_KEY') {
-        console.warn('Gemini API key missing or invalid. Using local fallback. Key length:', KEY?.length || 0);
+      if (!KEY || typeof KEY !== 'string' || KEY.trim() === '') {
+        console.warn('Gemini API key missing. Using local fallback.');
         const fallback = localFallback(userMsg);
         setChatHistory(prev => [...prev, { type: 'ai', text: fallback.reason, results: fallback.results, recommendedTalent: fallback.recommendedTalent }]);
         setIsTyping(false);
@@ -346,8 +346,7 @@ function MainContent({ language, setLanguage, t }) {
 
         // On 403/401/429 use local fallback so UX remains functional
         if ([401, 403, 429].includes(response.status)) {
-          console.error(`Gemini API Error ${response.status}:`, respText);
-          console.warn('Key details (prefix):', KEY.substring(0, 4) + '...', 'length:', KEY.length);
+          console.warn('Gemini API returned status', response.status, 'body:', respText, '— falling back to local matcher');
           const fallback = localFallback(userMsg);
           const detail = respText ? ` Detalle: ${respText}` : '';
           const reason = `${language === 'es' ? 'Gemini 2.5: error' : 'Gemini 2.5 error'} ${response.status}.${detail} ${language === 'es' ? 'Usando motor local de respaldo.' : 'Using local fallback.'}`;
