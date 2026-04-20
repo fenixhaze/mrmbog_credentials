@@ -59,9 +59,9 @@ const translations = {
       defaultTitle: "NUEVO PROYECTO MRM",
       titlePlaceholder: "NOMBRE DEL PROYECTO...",
       analysis: "ANÁLISIS DE SISTEMA",
-      analysisQuote: '"Squad optimizado para ejecución estratégica en MRM Bogotá."',
+      analysisQuote: "Tu talento seleccionado.",
       selected: "PARTICIPANTES SELECCIONADOS",
-      teamsBtn: "COORDINAR REUNIÓN TEAMS",
+      teamsBtn: "REGISTRAR CONTACTO",
       contacto: "CONTACTO"
     }
   },
@@ -86,9 +86,9 @@ const translations = {
       defaultTitle: "NEW MRM PROJECT",
       titlePlaceholder: "PROJECT NAME...",
       analysis: "SYSTEM ANALYSIS",
-      analysisQuote: '"Squad optimized for strategic execution at MRM Bogotá."',
+      analysisQuote: "Your selected talent.",
       selected: "SELECTED PARTICIPANTS",
-      teamsBtn: "COORDINATE TEAMS MEETING",
+      teamsBtn: "REGISTER CONTACT",
       contacto: "CONTACT"
     }
   }
@@ -652,9 +652,9 @@ function MainContent({ language, setLanguage, t }) {
 
       <AnimatePresence>
         {selectedProject && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-start justify-center p-6 backdrop-blur-2xl bg-black/95 overflow-y-auto">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedProject(null)} className="fixed inset-0 z-[200] flex items-start justify-center p-6 backdrop-blur-2xl bg-black/95 overflow-y-auto">
             <button onClick={() => setSelectedProject(null)} className="fixed top-6 right-6 z-[250] p-4 bg-black/50 rounded-full flex items-center justify-center hover:bg-white text-white hover:text-black transition-all border border-white/10 shadow-2xl"><X size={24} /></button>
-            <div className="w-full max-w-[1600px] mx-auto my-12 flex flex-col lg:flex-row gap-8 pb-20 text-left relative">
+            <div onClick={(e) => e.stopPropagation()} className="w-full max-w-[1600px] mx-auto my-12 flex flex-col lg:flex-row gap-8 pb-20 text-left relative">
 
               <div className="w-full lg:w-[70%] bg-[#0f0f0f] border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl h-fit">
                 <div className="relative h-[450px] w-full bg-zinc-950 overflow-hidden">
@@ -739,9 +739,9 @@ function MainContent({ language, setLanguage, t }) {
 
       <AnimatePresence>
         {selectedTalent && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[300] flex items-center justify-center p-6 backdrop-blur-2xl bg-black/95">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedTalent(null)} className="fixed inset-0 z-[300] flex items-center justify-center p-6 backdrop-blur-2xl bg-black/95">
             <button onClick={() => setSelectedTalent(null)} className="fixed top-10 right-10 p-4 bg-white/5 rounded-full flex items-center justify-center text-white border border-white/10 hover:bg-white hover:text-black transition-all shadow-2xl"><X size={32} /></button>
-            <div className="bg-[#0f0f0f] border border-white/10 rounded-[4rem] p-20 max-w-3xl w-full text-center shadow-2xl relative">
+            <div onClick={(e) => e.stopPropagation()} className="bg-[#0f0f0f] border border-white/10 rounded-[4rem] p-20 max-w-3xl w-full text-center shadow-2xl relative">
               <img src={selectedTalent.ImageURL} className="w-48 h-48 rounded-full mx-auto mb-10 object-cover border-4 border-[#7D68F6] shadow-[0_0_40px_rgba(125,104,246,0.3)]" alt="" />
               <h2 className="text-6xl font-black uppercase tracking-tighter text-white mb-4 leading-none">{selectedTalent.Name}</h2>
               <p className="text-[#7D68F6] font-black uppercase tracking-[0.4em] text-xs mb-16">{selectedTalent.Role}</p>
@@ -764,9 +764,9 @@ function MainContent({ language, setLanguage, t }) {
 
       <AnimatePresence>
         {showSquadModal && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[400] flex items-center justify-center p-6 backdrop-blur-2xl bg-black/95">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowSquadModal(false)} className="fixed inset-0 z-[400] flex items-center justify-center p-6 backdrop-blur-2xl bg-black/95">
             <button onClick={() => setShowSquadModal(false)} className="fixed top-10 right-10 p-4 bg-white/5 rounded-full flex items-center justify-center text-white border border-white/10 hover:bg-white hover:text-black transition-all shadow-2xl z-[450]"><X size={32} /></button>
-            <div className="bg-[#0f0f0f] border border-white/10 rounded-[4rem] p-16 max-w-4xl w-full max-h-[90vh] overflow-y-auto hide-scrollbar shadow-2xl relative text-left">
+            <div onClick={(e) => e.stopPropagation()} className="bg-[#0f0f0f] border border-white/10 rounded-[4rem] p-16 max-w-4xl w-full max-h-[90vh] overflow-y-auto hide-scrollbar shadow-2xl relative text-left">
               <div className="flex justify-between items-start mb-12">
                 <div>
                   <h4 className="text-[#7D68F6] font-black uppercase tracking-[0.4em] text-[10px] mb-4">{t.squadModal.analysis}</h4>
