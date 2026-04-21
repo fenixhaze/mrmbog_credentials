@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { PublicClientApplication } from "@azure/msal-browser";
+import { loadExternalTokens, PublicClientApplication } from "@azure/msal-browser";
 import { MsalProvider, useMsal } from "@azure/msal-react";
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Users, Briefcase, MessageSquare, ChevronRight, X, Calendar, UserPlus, UserMinus } from 'lucide-react';
@@ -163,7 +163,7 @@ const DEFAULT_PROJECT_IMAGES = [
 function MainContent({ language, setLanguage, t }) {
   const [activeTab, setActiveTab] = useState('landing');
   const [rawTalentData, setRawTalentData] = useState([]);
-  const [rawFlatProjects, setRawFlatProjects] = useState([]);
+  const [rawFlatProjects, setRawFlatProjects] = useState([]); 
   const [talentData, setTalentData] = useState([]);
   const [flatProjects, setFlatProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -851,4 +851,3 @@ export default function App() {
     </MsalProvider>
   );
 }
-// push overview force
