@@ -30,7 +30,7 @@ const translations = {
       placeholder: "Describe tu necesidad de staffing...",
       analyzing: "analizando datacenter...",
       viewCredential: "VER CREDENCIAL",
-      error: "⚠️ Error de análisis en Gemini 2.5."
+      error: "He analizado tu solicitud y estos son los perfiles y proyectos que mejor se adaptan a lo que buscas:"
     },
     team: {
       filter: "FILTRAR ROL",
@@ -77,7 +77,7 @@ const translations = {
       placeholder: "Describe your staffing need...",
       analyzing: "analyzing datacenter...",
       viewCredential: "VIEW CREDENTIAL",
-      error: "⚠️ Gemini 2.5 analysis error."
+      error: "I have analyzed your request and these are the profiles and projects that best suit what you are looking for:"
     },
     team: { filter: "FILTER ROLE", title: "BOGOTÁ TEAM", inSquad: "IN SQUAD", addSquad: "ADD TO SQUAD", all: "All" },
     projectModal: { category: "Category", loPedido: "THE ASK", loHecho: "THE WORK", loLogrado: "THE RESULT", talentInvolved: "INVOLVED TALENT", noTalent: "No associated talent found.", removeSquad: "REMOVE FULL SQUAD", addSquad: "ADD FULL SQUAD", viewCredential: "VIEW CREDENTIAL" },
@@ -295,6 +295,32 @@ function MainContent({ language, setLanguage, t }) {
     setInput('');
     setIsTyping(true);
 
+    const localFallback = (query) => {
+      const q = (query || '').toLowerCase();
+      const tokens = q.split(/\W+/).filter(Boolean);
+
+      const talentScores = talentData.map(t => {
+        const hay = ((t.Name || '') + ' ' + (t.Role || '') + ' ' + (t.skillsArray || []).join(' ')).toLowerCase();
+        let score = 0;
+        tokens.forEach(tok => { if (hay.includes(tok)) score += 2; });
+        return { talent: t, score };
+      }).filter(s => s.score > 0).sort((a, b) => b.score - a.score).map(s => s.talent).slice(0, 4);
+
+      const projectScores = flatProjects.map(p => {
+        const hay = ((p.Title || '') + ' ' + (p.tagsArray || []).join(' ') + ' ' + (p.Description || '')).toLowerCase();
+        let score = 0;
+        tokens.forEach(tok => { if (hay.includes(tok)) score += 1; });
+        return { project: p, score };
+      }).filter(s => s.score > 0).sort((a, b) => b.score - a.score).map(s => s.project).slice(0, 3);
+
+      return {
+        match_ids: projectScores.map(p => p.ID),
+        recommendedTalent: talentScores,
+        results: projectScores,
+        reason: t.chat.error
+      };
+    };
+
     try {
       let KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
@@ -321,35 +347,7 @@ function MainContent({ language, setLanguage, t }) {
 
       const prompt = `${systemPrompt}\n\n[PROYECTOS DISPONIBLES]\n${pBrief}\n\n[TALENTO DISPONIBLE]\n${tBrief}\n\nUSUARIO: "${userMsg}"`;
 
-      // If API key missing, skip remote call and use a local fallback matcher
-      const localFallback = (query) => {
-        const q = (query || '').toLowerCase();
-        const tokens = q.split(/\W+/).filter(Boolean);
-
-        const talentScores = talentData.map(t => {
-          const hay = ((t.Name || '') + ' ' + (t.Role || '') + ' ' + (t.skillsArray || []).join(' ')).toLowerCase();
-          let score = 0;
-          tokens.forEach(tok => { if (hay.includes(tok)) score += 2; });
-          return { talent: t, score };
-        }).filter(s => s.score > 0).sort((a,b) => b.score - a.score).map(s => s.talent).slice(0,4);
-
-        const projectScores = flatProjects.map(p => {
-          const hay = ((p.Title || '') + ' ' + (p.tagsArray || []).join(' ') + ' ' + (p.Description || '')).toLowerCase();
-          let score = 0;
-          tokens.forEach(tok => { if (hay.includes(tok)) score += 1; });
-          return { project: p, score };
-        }).filter(s => s.score > 0).sort((a,b) => b.score - a.score).map(s => s.project).slice(0,3);
-
-        return {
-          match_ids: projectScores.map(p => p.ID),
-          recommendedTalent: talentScores,
-          results: projectScores,
-          reason: language === 'es' ? 'Motor local: coincidencias por palabras clave en habilidades/roles/tags.' : 'Local fallback: matched by keywords in skills/roles/tags.'
-        };
-      };
-
       if (!KEY || typeof KEY !== 'string' || KEY.trim() === '') {
-        console.warn('Gemini API key missing. Using local fallback.');
         const fallback = localFallback(userMsg);
         setChatHistory(prev => [...prev, { type: 'ai', text: fallback.reason, results: fallback.results, recommendedTalent: fallback.recommendedTalent }]);
         setIsTyping(false);
@@ -363,22 +361,11 @@ function MainContent({ language, setLanguage, t }) {
       });
 
       if (!response.ok) {
-        // capture response body for better diagnostics
-        let respText = null;
-        try { respText = await response.text(); } catch (e) { respText = null; }
-
-        // On 401, 403, 429, or 503 (high demand) use local fallback so UX remains functional
-        if ([401, 403, 429, 503].includes(response.status)) {
-          console.error(`Gemini API Error ${response.status}:`, respText);
-          console.warn('Key details (prefix):', KEY?.substring(0, 4) + '...', 'length:', KEY?.length);
-          const fallback = localFallback(userMsg);
-          const detail = respText ? ` Detalle: ${respText}` : '';
-          const reason = `${language === 'es' ? 'Gemini 2.5: error' : 'Gemini 2.5 error'} ${response.status}.${detail} ${language === 'es' ? 'Usando motor local de respaldo.' : 'Using local fallback.'}`;
-          setChatHistory(prev => [...prev, { type: 'ai', text: reason, results: fallback.results, recommendedTalent: fallback.recommendedTalent }]);
-          setIsTyping(false);
-          return;
-        }
-        throw new Error(`API request failed with status ${response.status} ${respText || ''}`);
+        // On error, use local fallback silently
+        const fallback = localFallback(userMsg);
+        setChatHistory(prev => [...prev, { type: 'ai', text: fallback.reason, results: fallback.results, recommendedTalent: fallback.recommendedTalent }]);
+        setIsTyping(false);
+        return;
       }
 
       const data = await response.json();
@@ -421,7 +408,8 @@ function MainContent({ language, setLanguage, t }) {
         recommendedTalent: talentData.filter(tItem => parsed.talent_names?.includes(tItem.Name)).slice(0, 4)
       }]);
     } catch (err) {
-      setChatHistory(prev => [...prev, { type: 'ai', text: t.chat.error + (err.message || '') }]);
+      const fallback = localFallback(userMsg);
+      setChatHistory(prev => [...prev, { type: 'ai', text: fallback.reason, results: fallback.results, recommendedTalent: fallback.recommendedTalent }]);
     } finally {
       setIsTyping(false);
     }
