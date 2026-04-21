@@ -99,55 +99,91 @@ const contentTranslations = {
     P01: {
       en: {
         Title: "Nike Refresh 2024",
-        Description: "Complete redesign of the user experience for the e-commerce platform across Latam."
+        Description: "Complete redesign of the user experience for the e-commerce platform across Latam.",
+        LoPedido: "Redesign the user experience to increase the conversion rate on mobile devices.",
+        LoHecho: "Complete UX audit, high-fidelity prototyping, and usability testing with real users.",
+        LoLogrado: "25% increase in mobile sales and 15% reduction in cart abandonment."
       }
     },
     P02: {
       en: {
         Title: "Coca-Cola Summer",
-        Description: "Animated content campaign for giant screens and social media during the summer."
+        Description: "Animated content campaign for giant screens and social media during the summer.",
+        LoPedido: "Create a vibrant visual campaign to attract the young audience during the summer season.",
+        LoHecho: "Production of 3D motion graphics and dynamic pieces for giant screens and social media.",
+        LoLogrado: "Millions of social media impressions and a high level of engagement with the target audience."
       }
     },
     P03: {
       en: {
         Title: "Mastercard Security",
-        Description: "Case study-style video production showcasing new biometric security layers."
+        Description: "Case study-style video production showcasing new biometric security layers.",
+        LoPedido: "Effectively communicate new biometric security layers to cardholders.",
+        LoHecho: "Production of a narrative case study video explaining the benefits of biometric technology.",
+        LoLogrado: "Improved brand security perception and reduction in fraud-related support queries."
       }
     },
     P04: {
       en: {
         Title: "Lego Builder Ads",
-        Description: "Interactive rich media banner set for the Technic line launch."
+        Description: "Interactive rich media banner set for the Technic line launch.",
+        LoPedido: "Generate anticipation and engagement for the launch of the new Technic line.",
+        LoHecho: "Development of a set of interactive rich media banners that allow users to virtually build.",
+        LoLogrado: "CTR 3 times higher than the industry average and significant increase in pre-sale site traffic."
       }
     },
     P05: {
       en: {
         Title: "Spotify Wrapped Local",
-        Description: "Adaptation of the Wrapped campaign for digital billboards in Bogotá and Medellín."
+        Description: "Adaptation of the Wrapped campaign for digital billboards in Bogotá and Medellín.",
+        LoPedido: "Adapt the successful global Wrapped campaign to the cultural context of Bogotá and Medellín.",
+        LoHecho: "Curation of local data and design of dynamic digital billboards reflecting city musical tastes.",
+        LoLogrado: "Wide organic social media visibility and consolidation of brand presence in the local market."
       }
     },
     P06: {
       en: {
         Title: "Nestlé Smart Data",
-        Description: "Interactive dashboard and consumer data visualization for decision making."
+        Description: "Interactive dashboard and consumer data visualization for decision making.",
+        LoPedido: "Transform complex consumer data into actionable insights for the marketing team.",
+        LoHecho: "Design and development of an interactive dashboard with real-time custom data visualizations.",
+        LoLogrado: "Strategic decision-making time reduction and advertising budget optimization."
       }
     },
     P07: {
       en: {
         Title: "IKEA Welcome Home",
-        Description: "Automated loyalty strategy with dynamic email design."
+        Description: "Automated loyalty strategy with dynamic email design.",
+        LoPedido: "Automate communication with new customers to foster brand loyalty.",
+        LoHecho: "Implementation of a CRM strategy with dynamic emails based on purchasing behavior.",
+        LoLogrado: "45% email open rate and increase in purchase frequency from new club members."
       }
     },
     P08: {
       en: {
         Title: "P&G Global Pitch",
-        Description: "Visual narrative design and decks for the global pitch of personal care accounts."
+        Description: "Visual narrative design and decks for the global pitch of personal care accounts.",
+        LoPedido: "Develop an impactful visual narrative for the global personal care accounts pitch.",
+        LoHecho: "Comprehensive design of presentation decks and strategic storytelling to communicate agency value.",
+        LoLogrado: "Successful awarding of the global account and recognition for creative presentation excellence."
       }
     },
     P09: {
       en: {
         Title: "AI Workflow 1.0",
-        Description: "Implementation of generative AI tools for campaign asset creation."
+        Description: "Implementation of generative AI tools for campaign asset creation.",
+        LoPedido: "Optimize internal creative production processes through the use of artificial intelligence.",
+        LoHecho: "Integration of generative AI tools into the workflow for fast creation of advertising assets.",
+        LoLogrado: "40% reduction in production times and greater agility in delivering large-scale campaigns."
+      }
+    },
+    P10: {
+      en: {
+        Title: "Netflix Premiere",
+        Description: "Subscription flow optimization for original series launches in the region.",
+        LoPedido: "Facilitate the subscription process for users in regions with limited connectivity.",
+        LoHecho: "Technical optimization of the payment flow and design of a minimalist interface focused on speed.",
+        LoLogrado: "20% increase in new subscriptions in target markets and improved user satisfaction."
       }
     }
   }
@@ -252,6 +288,9 @@ function MainContent({ language, setLanguage, t }) {
         ...item,
         Title: language === 'en' ? projectTranslation.Title || item.Title : item.Title,
         Description: language === 'en' ? projectTranslation.Description || item.Description : item.Description,
+        LoPedido: language === 'en' ? projectTranslation.LoPedido || item.LoPedido : item.LoPedido,
+        LoHecho: language === 'en' ? projectTranslation.LoHecho || item.LoHecho : item.LoHecho,
+        LoLogrado: language === 'en' ? projectTranslation.LoLogrado || item.LoLogrado : item.LoLogrado,
         images: imgs,
         tagsArray: item.Tags ? item.Tags.split(/[;,]+/).map(tag => tag.trim()).filter(Boolean) : [],
         teamArray: item.TeamIDs ? item.TeamIDs.split(/[;,]+/).map(id => id.trim()).filter(Boolean) : [] // Correct TeamIDs bridge
