@@ -196,6 +196,26 @@ const DEFAULT_PROJECT_IMAGES = [
   'https://images.unsplash.com/photo-1503264116251-35a269479413?w=1200&auto=format&fit=crop&q=80'
 ];
 
+const FlyingAvatar = ({ img, start, end, onComplete }) => {
+  return (
+    <motion.div
+      initial={{ x: start.x, y: start.y, scale: 1, opacity: 1, zIndex: 1000 }}
+      animate={{ 
+        x: end.x, 
+        y: end.y, 
+        scale: 0.3, 
+        opacity: 0.5,
+        transition: { duration: 0.8, ease: [0.4, 0, 0.2, 1] }
+      }}
+      onAnimationComplete={onComplete}
+      className="fixed top-0 left-0 pointer-events-none"
+      style={{ width: 80, height: 80 }}
+    >
+      <img src={img} className="w-full h-full rounded-full object-cover border-2 border-[#7D68F6] shadow-2xl" alt="" />
+    </motion.div>
+  );
+};
+
 function MainContent({ language, setLanguage, t }) {
   const [activeTab, setActiveTab] = useState('landing');
   const [rawTalentData, setRawTalentData] = useState([]);
@@ -212,8 +232,11 @@ function MainContent({ language, setLanguage, t }) {
   const [squad, setSquad] = useState([]);
   const [filterRole, setFilterRole] = useState('All');
   const [showSquadModal, setShowSquadModal] = useState(false);
+  const [flyingAvatars, setFlyingAvatars] = useState([]);
 
   const chatContainerRef = useRef(null);
+  const headerSquadRef = useRef(null);
+  const modalSquadRef = useRef(null);
 
   const shuffleArray = (arr) => {
     if (!Array.isArray(arr)) return arr;
@@ -463,7 +486,39 @@ function MainContent({ language, setLanguage, t }) {
         : []
   });
 
-  const toggleSquad = (item) => setSquad(prev => prev.some(x => x.ID === item.ID) ? prev.filter(x => x.ID !== item.ID) : [...prev, item]);
+  const toggleSquad = (item, event = null) => {
+    const isAdding = !squad.some(x => x.ID === item.ID);
+    
+    if (isAdding) {
+      let startRect = null;
+      if (event && event.currentTarget) {
+        const container = event.currentTarget.closest('div');
+        const img = container?.querySelector('img');
+        if (img) {
+          startRect = img.getBoundingClientRect();
+        } else {
+          startRect = event.currentTarget.getBoundingClientRect();
+        }
+      }
+
+      if (startRect) {
+        const targetRef = selectedTalent ? modalSquadRef : headerSquadRef;
+        const endRect = targetRef.current?.getBoundingClientRect();
+
+        if (endRect) {
+          const id = Date.now() + Math.random();
+          setFlyingAvatars(prev => [...prev, {
+            id,
+            img: item.ImageURL,
+            start: { x: startRect.left, y: startRect.top },
+            end: { x: endRect.left + endRect.width / 2 - 40, y: endRect.top + endRect.height / 2 - 40 }
+          }]);
+        }
+      }
+    }
+    
+    setSquad(prev => isAdding ? [...prev, item] : prev.filter(x => x.ID !== item.ID));
+  };
 
   const activeTeamTalent = useMemo(() => {
     if (!selectedProject) return [];
@@ -519,6 +574,7 @@ function MainContent({ language, setLanguage, t }) {
             </nav>
           )}
           <div 
+            ref={headerSquadRef}
             className="bg-[#7D68F6] px-6 py-4 rounded-full flex items-center gap-4 cursor-pointer shadow-lg uppercase text-[10px] font-black hover:scale-105 transition-all pointer-events-auto" 
             onClick={(e) => { 
               e.preventDefault();
@@ -587,7 +643,7 @@ function MainContent({ language, setLanguage, t }) {
                                 </div>
                               </div>
                               <button
-                                onClick={(e) => { e.stopPropagation(); toggleSquad(talent); }}
+                                onClick={(e) => { e.stopPropagation(); toggleSquad(talent, e); }}
                                 title={squad.some(s => s.ID === talent.ID) ? t.talentModal.remove : t.talentModal.add}
                                 className={`p-2 rounded-full border transition-all ${squad.some(s => s.ID === talent.ID) ? 'bg-[#7D68F6] border-[#7D68F6] text-white shadow-lg' : 'border-white/10 text-white/40 hover:text-white'}`}
                               >
@@ -669,7 +725,7 @@ function MainContent({ language, setLanguage, t }) {
                           ))}
                         </div>
                         <button
-                          onClick={(e) => { e.stopPropagation(); toggleSquad(person); }}
+                          onClick={(e) => { e.stopPropagation(); toggleSquad(person, e); }}
                           className={`w-full py-2.5 rounded-full flex items-center justify-center text-[9px] font-black uppercase border border-[#7D68F6] transition-all ${squad.some(p => p.ID === person.ID) ? 'bg-[#7D68F6] text-white shadow-lg' : 'text-[#7D68F6] hover:bg-[#7D68F6]/10'}`}
                         >
                           {squad.some(p => p.ID === person.ID) ? t.team.inSquad : t.team.addSquad}
@@ -755,7 +811,7 @@ function MainContent({ language, setLanguage, t }) {
                           </div>
                         </div>
                         <button
-                          onClick={(e) => { e.stopPropagation(); toggleSquad(member); }}
+                          onClick={(e) => { e.stopPropagation(); toggleSquad(member, e); }}
                           title={squad.some(s => s.ID === member.ID) ? t.talentModal.remove : t.talentModal.add}
                           className={`p-3 rounded-full border transition-all ${squad.some(s => s.ID === member.ID) ? 'text-red-400 border-red-500/30 bg-red-500/10' : 'text-white/30 border-white/10 hover:text-white hover:border-[#7D68F6]'}`}
                         >
@@ -786,11 +842,22 @@ function MainContent({ language, setLanguage, t }) {
                 ))}
               </div>
               <button
-                onClick={() => { toggleSquad(selectedTalent); setSelectedTalent(null); }}
+                onClick={(e) => { toggleSquad(selectedTalent, e); setSelectedTalent(null); }}
                 className={`w-full py-7 rounded-full font-black uppercase tracking-[0.3em] text-[12px] transition-all shadow-xl ${squad.some(s => s.ID === selectedTalent.ID) ? 'bg-red-500/10 text-red-400 border border-red-500/30' : 'bg-[#7D68F6] text-white hover:scale-105 shadow-[#7D68F6]/20'}`}
               >
                 {squad.some(s => s.ID === selectedTalent.ID) ? t.talentModal.remove : t.talentModal.add}
               </button>
+
+              <div 
+                ref={modalSquadRef}
+                className="absolute bottom-8 right-8 bg-[#7D68F6] px-6 py-4 rounded-[20px] flex items-center gap-4 cursor-pointer shadow-2xl uppercase text-[10px] font-black hover:scale-105 transition-all z-10"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowSquadModal(true);
+                }}
+              >
+                {t.squad} ({squad.length})
+              </div>
             </div>
           </motion.div>
         )}
@@ -859,6 +926,18 @@ function MainContent({ language, setLanguage, t }) {
             </div>
           </motion.div>
         )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {flyingAvatars.map(avatar => (
+          <FlyingAvatar
+            key={avatar.id}
+            img={avatar.img}
+            start={avatar.start}
+            end={avatar.end}
+            onComplete={() => setFlyingAvatars(prev => prev.filter(a => a.id !== avatar.id))}
+          />
+        ))}
       </AnimatePresence>
     </div>
   );
