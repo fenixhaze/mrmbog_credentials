@@ -742,8 +742,21 @@ function MainContent({ language, setLanguage, t }) {
 
       <AnimatePresence>
         {selectedProject && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedProject(null)} className="fixed inset-0 z-[200] flex items-start justify-center p-6 backdrop-blur-2xl bg-black/95 overflow-y-auto">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedProject(null)} className="fixed inset-0 z-[200] flex items-start justify-center p-6 pt-0 top-[10%] backdrop-blur-2xl bg-black/95 overflow-y-auto">
             <button onClick={() => setSelectedProject(null)} className="fixed top-6 right-6 z-[250] p-4 bg-black/50 rounded-full flex items-center justify-center hover:bg-white text-white hover:text-black transition-all border border-white/10 shadow-2xl"><X size={24} /></button>
+            
+            {/* Sticky Squad CTA for Project Modal */}
+            <div 
+              ref={modalSquadRef}
+              className="fixed bottom-12 right-12 bg-[#7D68F6] px-6 py-4 rounded-[20px] flex items-center gap-4 cursor-pointer shadow-2xl uppercase text-[10px] font-black hover:scale-105 transition-all z-[260]"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowSquadModal(true);
+              }}
+            >
+              {t.squad} ({squad.length})
+            </div>
+
             <div onClick={(e) => e.stopPropagation()} className="w-full max-w-[1600px] mx-auto my-12 flex flex-col lg:flex-row gap-8 pb-20 text-left relative">
 
               <div className="w-full lg:w-[70%] bg-[#0f0f0f] border border-white/10 rounded-[20px] overflow-hidden shadow-2xl h-fit">
@@ -847,17 +860,18 @@ function MainContent({ language, setLanguage, t }) {
               >
                 {squad.some(s => s.ID === selectedTalent.ID) ? t.talentModal.remove : t.talentModal.add}
               </button>
+            </div>
 
-              <div 
-                ref={modalSquadRef}
-                className="absolute bottom-8 right-8 bg-[#7D68F6] px-6 py-4 rounded-[20px] flex items-center gap-4 cursor-pointer shadow-2xl uppercase text-[10px] font-black hover:scale-105 transition-all z-10"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowSquadModal(true);
-                }}
-              >
-                {t.squad} ({squad.length})
-              </div>
+            {/* Sticky Squad CTA for Talent Modal */}
+            <div 
+              ref={modalSquadRef}
+              className="fixed bottom-12 right-12 bg-[#7D68F6] px-6 py-4 rounded-[20px] flex items-center gap-4 cursor-pointer shadow-2xl uppercase text-[10px] font-black hover:scale-105 transition-all z-[310]"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowSquadModal(true);
+              }}
+            >
+              {t.squad} ({squad.length})
             </div>
           </motion.div>
         )}
