@@ -548,8 +548,7 @@ function MainContent({ language, setLanguage, t }) {
 
           {activeTab === 'chat' && (
             <section className="max-w-4xl mx-auto pt-24 w-full px-6 flex flex-col h-[calc(100vh-100px)] text-left">
-              <div ref={chatContainerRef} className="flex-1 overflow-y-auto flex flex-col gap-8 hide-scrollbar pt-[8%] pb-8 px-2 -mx-2 chat-history-mask"> //downside fist bubble for better distribution of content
-                {chatHistory.map((msg, i) => (
+              <div ref={chatContainerRef} className="flex-1 overflow-y-auto flex flex-col gap-8 hide-scrollbar pt-[8%] pb-8 px-2 -mx-2 chat-history-mask">                {chatHistory.map((msg, i) => (
                   <div key={i} className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
                     <div className={`max-w-[95%] rounded-[2rem] border ${msg.type === 'user' ? 'bg-[#7D68F6] border-[#7D68F6] px-6' : 'bg-white/5 border-white/10 backdrop-blur-xl px-6'}`}>
                       <div className="min-h-[64px] flex items-center">
@@ -559,7 +558,7 @@ function MainContent({ language, setLanguage, t }) {
                       {msg.results && msg.results.length > 0 && (
                         <div className="mb-6 flex gap-4 overflow-x-auto hide-scrollbar pb-4 pt-2 px-4 -mx-4">
                           {msg.results.map((p, idx) => (
-                            <div key={idx} onClick={() => setSelectedProject(normalizeProjectTags(p))} className="min-w-[280px] bg-black/40 border border-white/10 rounded-3xl overflow-hidden group cursor-pointer hover:ring-2 hover:ring-[#7D68F6] transition-all">
+                            <div key={idx} onClick={() => setSelectedProject(normalizeProjectTags(p))} className="min-w-[280px] bg-black/40 border border-white/10 rounded-[20px] overflow-hidden group cursor-pointer hover:ring-2 hover:ring-[#7D68F6] transition-all">
                               <img src={p.images[0]} className="h-28 w-full object-cover grayscale group-hover:grayscale-0 transition-all" alt="" />
                               <div className="p-5 text-left">
                                 <h4 className="text-[12px] font-black uppercase mb-2 truncate text-white">{p.Title}</h4>
@@ -657,23 +656,25 @@ function MainContent({ language, setLanguage, t }) {
               </aside>
               <div className="flex-1">
                 <h2 className="text-7xl font-black uppercase tracking-tighter mb-12 text-white leading-none">{t.team.title}</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-2 -mx-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-2 -mx-2">
                   {filteredTalent.map((person, i) => (
-                    <div key={i} onClick={() => setSelectedTalent(person)} className="bg-zinc-900/40 border border-white/5 p-8 rounded-[3.5rem] text-center flex flex-col group cursor-pointer transition-all hover:ring-2 hover:ring-[#7D68F6]">
-                      <img src={person.ImageURL} className="w-24 h-24 rounded-full mx-auto mb-6 object-cover grayscale transition-all border-4 border-transparent group-hover:border-[#7D68F6] bg-black shadow-lg" alt="" />
-                      <h4 className="text-[18px] font-black uppercase truncate w-full text-white">{person.Name}</h4>
-                      <p className="text-[10px] text-[#7D68F6] font-black uppercase mb-4 tracking-widest">{person.Role}</p>
-                      <div className="flex flex-wrap justify-center gap-1.5 mb-6">
-                        {person.skillsArray.slice(0, 2).map((skill, sIdx) => (
-                          <span key={sIdx} className="inline-flex items-center px-2 py-1 bg-white/5 border border-white/10 rounded text-[10px] font-black uppercase tracking-widest text-zinc-400">{skill}</span>
-                        ))}
+                    <div key={i} onClick={() => setSelectedTalent(person)} className="bg-zinc-900/40 border border-white/5 p-6 rounded-[20px] flex items-center gap-6 group cursor-pointer transition-all hover:ring-2 hover:ring-[#7D68F6] text-left">
+                      <img src={person.ImageURL} className="w-24 h-24 rounded-full object-cover grayscale transition-all border-4 border-transparent group-hover:border-[#7D68F6] bg-black shadow-lg flex-shrink-0" alt="" />
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-[18px] font-black uppercase truncate text-white mb-1">{person.Name}</h4>
+                        <p className="text-[10px] text-[#7D68F6] font-black uppercase mb-3 tracking-widest">{person.Role}</p>
+                        <div className="flex flex-wrap gap-1.5 mb-4">
+                          {person.skillsArray.slice(0, 2).map((skill, sIdx) => (
+                            <span key={sIdx} className="inline-flex items-center px-2 py-1 bg-white/5 border border-white/10 rounded text-[9px] font-black uppercase tracking-widest text-zinc-400">{skill}</span>
+                          ))}
+                        </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); toggleSquad(person); }}
+                          className={`w-full py-2.5 rounded-full flex items-center justify-center text-[9px] font-black uppercase border border-[#7D68F6] transition-all ${squad.some(p => p.ID === person.ID) ? 'bg-[#7D68F6] text-white shadow-lg' : 'text-[#7D68F6] hover:bg-[#7D68F6]/10'}`}
+                        >
+                          {squad.some(p => p.ID === person.ID) ? t.team.inSquad : t.team.addSquad}
+                        </button>
                       </div>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); toggleSquad(person); }}
-                        className={`w-full py-3 rounded-full flex items-center justify-center text-[10px] font-black uppercase border border-[#7D68F6] mt-auto transition-all ${squad.some(p => p.ID === person.ID) ? 'bg-[#7D68F6] text-white shadow-lg' : 'text-[#7D68F6] hover:bg-[#7D68F6]/10'}`}
-                      >
-                        {squad.some(p => p.ID === person.ID) ? t.team.inSquad : t.team.addSquad}
-                      </button>
                     </div>
                   ))}
                 </div>
@@ -689,7 +690,7 @@ function MainContent({ language, setLanguage, t }) {
             <button onClick={() => setSelectedProject(null)} className="fixed top-6 right-6 z-[250] p-4 bg-black/50 rounded-full flex items-center justify-center hover:bg-white text-white hover:text-black transition-all border border-white/10 shadow-2xl"><X size={24} /></button>
             <div onClick={(e) => e.stopPropagation()} className="w-full max-w-[1600px] mx-auto my-12 flex flex-col lg:flex-row gap-8 pb-20 text-left relative">
 
-              <div className="w-full lg:w-[70%] bg-[#0f0f0f] border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl h-fit">
+              <div className="w-full lg:w-[70%] bg-[#0f0f0f] border border-white/10 rounded-[20px] overflow-hidden shadow-2xl h-fit">
                 <div className="relative h-[450px] w-full bg-zinc-950 overflow-hidden">
                   <AnimatePresence mode="wait">
                     <motion.img
@@ -738,14 +739,14 @@ function MainContent({ language, setLanguage, t }) {
                 </div>
               </div>
 
-              <div className="w-full lg:w-[30%] bg-[#0f0f0f] border border-white/10 rounded-[3rem] p-10 shadow-2xl h-fit lg:sticky top-12 flex flex-col">
+              <div className="w-full lg:w-[30%] bg-[#0f0f0f] border border-white/10 rounded-[20px] p-10 shadow-2xl h-fit lg:sticky top-12 flex flex-col">
                 <h4 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#7D68F6] mb-8">{t.projectModal.talentInvolved}</h4>
                 <div className="flex flex-col gap-4 max-h-[50vh] overflow-y-auto hide-scrollbar p-2 -mx-2">
                   {activeTeamTalent.length === 0 ? (
                     <p className="text-white/20 text-xs italic">{t.projectModal.noTalent}</p>
                   ) : (
                     activeTeamTalent.map(member => (
-                      <div key={member.ID} onClick={() => setSelectedTalent(member)} className="flex items-center justify-between bg-black/40 p-5 rounded-3xl border border-white/5 group cursor-pointer transition-all hover:ring-2 hover:ring-[#7D68F6]">
+                      <div key={member.ID} onClick={() => setSelectedTalent(member)} className="flex items-center justify-between bg-black/40 p-5 rounded-[20px] border border-white/5 group cursor-pointer transition-all hover:ring-2 hover:ring-[#7D68F6]">
                         <div className="flex items-center gap-4 text-left">
                           <img src={member.ImageURL} className="w-12 h-12 rounded-full object-cover border border-white/10 grayscale group-hover:grayscale-0 transition-all" alt="" />
                           <div>
@@ -806,7 +807,7 @@ function MainContent({ language, setLanguage, t }) {
                   <h2 className="text-6xl font-black uppercase tracking-tighter text-white leading-none mb-4">{t.squadModal.contacto}</h2>
                   <p className="text-white/40 italic text-sm normal-case">{t.squadModal.analysisQuote}</p>
                 </div>
-                <div className="bg-[#7D68F6]/10 border border-[#7D68F6]/30 px-6 py-4 rounded-3xl">
+                <div className="bg-[#7D68F6]/10 border border-[#7D68F6]/30 px-6 py-4 rounded-[20px]">
                   <span className="text-[#7D68F6] font-black text-2xl">{squad.length}</span>
                   <span className="text-[#7D68F6]/50 font-black text-[10px] ml-2 uppercase">PAX</span>
                 </div>
@@ -816,12 +817,12 @@ function MainContent({ language, setLanguage, t }) {
                 <h4 className="text-[10px] font-black uppercase text-white/40 mb-6 tracking-widest">{t.squadModal.selected}</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {squad.length === 0 ? (
-                    <div className="col-span-2 py-20 text-center border-2 border-dashed border-white/5 rounded-[3rem]">
+                    <div className="col-span-2 py-20 text-center border-2 border-dashed border-white/5 rounded-[20px]">
                       <p className="text-white/20 uppercase font-black text-xs tracking-widest">No hay talento seleccionado</p>
                     </div>
                   ) : (
                     squad.map((member) => (
-                      <div key={member.ID} className="flex items-center justify-between bg-black/40 p-5 rounded-3xl border border-white/5 group transition-all hover:border-[#7D68F6]/30">
+                      <div key={member.ID} className="flex items-center justify-between bg-black/40 p-5 rounded-[20px] border border-white/5 group transition-all hover:border-[#7D68F6]/30">
                         <div className="flex items-center gap-4">
                           <img src={member.ImageURL} className="w-12 h-12 rounded-full object-cover border border-white/10 grayscale group-hover:grayscale-0 transition-all" alt="" />
                           <div>
