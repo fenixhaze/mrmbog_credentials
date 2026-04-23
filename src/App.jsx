@@ -502,9 +502,8 @@ function MainContent({ language, setLanguage, t }) {
       }
 
       if (startRect) {
-        const targetRef = selectedTalent ? modalSquadRef : headerSquadRef;
+        const targetRef = (selectedTalent || selectedProject) ? modalSquadRef : headerSquadRef;
         const endRect = targetRef.current?.getBoundingClientRect();
-
         if (endRect) {
           const id = Date.now() + Math.random();
           setFlyingAvatars(prev => [...prev, {
