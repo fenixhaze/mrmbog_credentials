@@ -587,34 +587,22 @@ function MainContent({ language, setLanguage, t }) {
               key="landing" 
               initial={{ opacity: 0 }} 
               animate={{ opacity: 1 }} 
-              className="flex flex-col md:flex-row flex-1 items-stretch relative"
-              onMouseLeave={() => setHoveredPillar(null)}
+              className="absolute inset-0 flex flex-col md:flex-row items-stretch z-0"
             >
-              {theme === 'mrm' && [{ id: 'chat', img: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200' }, { id: 'projects', img: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1200' }, { id: 'team', img: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200' }].map(card => (
-                <div 
-                  key={`bg-${card.id}`} 
-                  className={`fixed inset-0 bg-black z-0 pointer-events-none transition-opacity duration-700 ${hoveredPillar === card.id ? 'opacity-100' : 'opacity-0'}`}
-                >
-                  <img src={card.img} className={`w-full h-full object-cover transition-transform duration-1000 ${hoveredPillar === card.id ? 'scale-100' : 'scale-105'}`} alt="" />
-                  <div className="absolute inset-0 bg-black/50"></div>
-                </div>
-              ))}
-
               {[{ id: 'chat', title: t.landing.chat, img: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200' }, { id: 'projects', title: t.landing.projects, img: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1200' }, { id: 'team', title: t.landing.team, img: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200' }].map((card, idx) => (
                 <div 
                   key={card.id} 
                   onClick={() => setActiveTab(card.id)} 
-                  onMouseEnter={() => setHoveredPillar(card.id)}
                   className={`relative flex-1 group cursor-pointer overflow-hidden ${theme === 'mrm' ? 'border-b md:border-b-0 md:border-r border-white/5 last:border-b-0 md:last:border-r-0' : idx === 1 ? DESIGN_TOKENS.themes.blue.bg : DESIGN_TOKENS.themes.orange.bg}`}
                 >
                   {theme === 'mrm' && (
-                    <div className={`absolute inset-0 bg-black transition-opacity duration-500 z-0 ${hoveredPillar ? 'opacity-0' : 'opacity-100'}`}>
-                      <img src={card.img} className="w-full h-full object-cover grayscale brightness-50" alt="" />
+                    <div className="absolute inset-0 bg-black">
+                      <img src={card.img} className="w-full h-full object-cover grayscale brightness-50 group-hover:grayscale-0 transition-all duration-500" alt="" />
                     </div>
                   )}
                   
-                  <div className={`relative z-10 h-full flex flex-col justify-end p-8 md:p-16 pb-12 md:pb-32 text-left ${theme === 'mrm' ? '' : 'justify-center items-center hover:scale-105 transition-transform duration-500'}`}>
-                    <h2 className={theme === 'mrm' ? `text-3xl md:text-5xl font-black uppercase tracking-tighter leading-none transition-colors duration-300 ${hoveredPillar === card.id ? 'text-[#7D68F6]' : 'text-white'}` : "text-5xl md:text-[6vw] font-black uppercase tracking-tighter leading-[0.9] text-white text-center after:content-['.'] after:text-white"}>{card.title}</h2>
+                  <div className={`relative z-10 h-full flex flex-col justify-end p-8 md:p-16 pb-12 md:pb-24 text-left ${theme === 'mrm' ? '' : 'justify-center items-center hover:scale-105 transition-transform duration-500'}`}>
+                    <h2 className={theme === 'mrm' ? "text-3xl md:text-5xl font-black uppercase tracking-tighter leading-none group-hover:text-[#7D68F6] transition-colors duration-300 text-white" : "text-5xl md:text-[6vw] font-black uppercase tracking-tighter leading-[0.9] text-white text-center after:content-['.'] after:text-white"}>{card.title}</h2>
                   </div>
                 </div>
               ))}
