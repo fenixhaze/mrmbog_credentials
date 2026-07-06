@@ -214,6 +214,8 @@ function MainContent({ language, setLanguage, t }) {
   const [theme, setTheme] = useState('mrm'); // 'mrm' | 'cmlatam'
 
   const chatContainerRef = useRef(null);
+  const headerSquadRef = useRef(null);
+  const modalSquadRef = useRef(null);
 
   const shuffleArray = (arr) => {
     if (!Array.isArray(arr)) return arr;
@@ -456,7 +458,38 @@ function MainContent({ language, setLanguage, t }) {
         : []
   });
 
-  const toggleSquad = (item) => setSquad(prev => prev.some(x => x.ID === item.ID) ? prev.filter(x => x.ID !== item.ID) : [...prev, item]);
+  const toggleSquad = (item, event = null) => {
+    const isAdding = !squad.some(x => x.ID === item.ID);
+    
+    if (isAdding) {
+      let startRect = null;
+      if (event && event.currentTarget) {
+        const container = event.currentTarget.closest('div');
+        const img = container?.querySelector('img');
+        if (img) {
+          startRect = img.getBoundingClientRect();
+        } else {
+          startRect = event.currentTarget.getBoundingClientRect();
+        }
+      }
+
+      if (startRect) {
+        const targetRef = (selectedTalent || selectedProject) ? modalSquadRef : headerSquadRef;
+        const endRect = targetRef.current?.getBoundingClientRect();
+        if (endRect) {
+          const id = Date.now() + Math.random();
+          setFlyingAvatars(prev => [...prev, {
+            id,
+            img: item.ImageURL,
+            start: { x: startRect.left, y: startRect.top },
+            end: { x: endRect.left + endRect.width / 2 - 40, y: endRect.top + endRect.height / 2 - 40 }
+          }]);
+        }
+      }
+    }
+    
+    setSquad(prev => isAdding ? [...prev, item] : prev.filter(x => x.ID !== item.ID));
+  };
 
   const activeTeamTalent = useMemo(() => {
     if (!selectedProject) return [];
@@ -619,7 +652,7 @@ function MainContent({ language, setLanguage, t }) {
                                 </div>
                               </div>
                               <button
-                                onClick={(e) => { e.stopPropagation(); toggleSquad(talent); }}
+                                onClick={(e) => { e.stopPropagation(); toggleSquad(talent, e); }}
                                 title={squad.some(s => s.ID === talent.ID) ? t.talentModal.remove : t.talentModal.add}
                                 className={`p-2 rounded-full border transition-all flex-shrink-0 ml-2 ${theme === 'mrm' ? (squad.some(s => s.ID === talent.ID) ? 'bg-[#7D68F6] border-[#7D68F6] text-white shadow-lg' : 'border-white/10 text-white/40 hover:text-white') : (squad.some(s => s.ID === talent.ID) ? 'bg-black text-white border-black' : 'border-black/20 text-black hover:bg-black/10')}`}
                               >
@@ -752,8 +785,21 @@ function MainContent({ language, setLanguage, t }) {
 
       <AnimatePresence>
         {selectedProject && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedProject(null)} className="fixed inset-0 z-[200] flex items-start justify-center p-6 backdrop-blur-2xl bg-black/95 overflow-y-auto">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedProject(null)} className="fixed inset-0 z-[200] flex items-start justify-center p-6 pt-0 top-[10%] backdrop-blur-2xl bg-black/95 overflow-y-auto">
             <button onClick={() => setSelectedProject(null)} className="fixed top-6 right-6 z-[250] p-4 bg-black/50 rounded-full flex items-center justify-center hover:bg-white text-white hover:text-black transition-all border border-white/10 shadow-2xl"><X size={24} /></button>
+            
+            {/* Sticky Squad CTA for Project Modal */}
+            <div 
+              ref={modalSquadRef}
+              className="fixed bottom-12 right-12 bg-[#7D68F6] px-6 py-4 rounded-[20px] flex items-center gap-4 cursor-pointer shadow-2xl uppercase text-[10px] font-black hover:scale-105 transition-all z-[260]"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowSquadModal(true);
+              }}
+            >
+              {t.squad} ({squad.length})
+            </div>
+
             <div onClick={(e) => e.stopPropagation()} className="w-full max-w-[1600px] mx-auto my-12 flex flex-col lg:flex-row gap-8 pb-20 text-left relative">
 
               <div className={`w-full lg:w-[70%] overflow-hidden h-fit ${theme === 'mrm' ? 'bg-[#0f0f0f] border border-white/10 rounded-[3rem] shadow-2xl' : 'bg-[#F8F9F4] rounded-none shadow-none'}`}>
@@ -827,7 +873,7 @@ function MainContent({ language, setLanguage, t }) {
                           </div>
                         </div>
                         <button
-                          onClick={(e) => { e.stopPropagation(); toggleSquad(member); }}
+                          onClick={(e) => { e.stopPropagation(); toggleSquad(member, e); }}
                           title={squad.some(s => s.ID === member.ID) ? t.talentModal.remove : t.talentModal.add}
                           className={`p-3 rounded-full border transition-all ${theme === 'mrm' ? (squad.some(s => s.ID === member.ID) ? 'text-red-400 border-red-500/30 bg-red-500/10' : 'text-white/30 border-white/10 hover:text-white hover:border-[#7D68F6]') : (squad.some(s => s.ID === member.ID) ? 'text-black bg-black/5 border-black' : 'text-black border-black')}`}
                         >
@@ -871,6 +917,18 @@ function MainContent({ language, setLanguage, t }) {
               >
                 {squad.some(s => s.ID === selectedTalent.ID) ? t.talentModal.remove : t.talentModal.add}
               </button>
+            </div>
+
+            {/* Sticky Squad CTA for Talent Modal */}
+            <div 
+              ref={modalSquadRef}
+              className="fixed bottom-12 right-12 bg-[#7D68F6] px-6 py-4 rounded-[20px] flex items-center gap-4 cursor-pointer shadow-2xl uppercase text-[10px] font-black hover:scale-105 transition-all z-[310]"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowSquadModal(true);
+              }}
+            >
+              {t.squad} ({squad.length})
             </div>
           </motion.div>
         )}
@@ -939,6 +997,18 @@ function MainContent({ language, setLanguage, t }) {
             </div>
           </motion.div>
         )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {flyingAvatars.map(avatar => (
+          <FlyingAvatar
+            key={avatar.id}
+            img={avatar.img}
+            start={avatar.start}
+            end={avatar.end}
+            onComplete={() => setFlyingAvatars(prev => prev.filter(a => a.id !== avatar.id))}
+          />
+        ))}
       </AnimatePresence>
     </div>
   );
