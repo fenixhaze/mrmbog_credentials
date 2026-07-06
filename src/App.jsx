@@ -587,7 +587,7 @@ function MainContent({ language, setLanguage, t }) {
               key="landing" 
               initial={{ opacity: 0 }} 
               animate={{ opacity: 1 }} 
-              className="absolute inset-0 flex flex-col md:flex-row items-stretch z-0"
+              className="fixed inset-0 flex flex-col md:flex-row items-stretch z-0"
             >
               {[{ id: 'chat', title: t.landing.chat, img: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200' }, { id: 'projects', title: t.landing.projects, img: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1200' }, { id: 'team', title: t.landing.team, img: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200' }].map((card, idx) => (
                 <div 
