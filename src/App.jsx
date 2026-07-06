@@ -602,7 +602,7 @@ function MainContent({ language, setLanguage, t }) {
                   )}
                   
                   <div className={`relative z-10 h-full flex flex-col justify-end p-8 md:p-16 pb-12 md:pb-24 text-left ${theme === 'mrm' ? '' : 'justify-center items-center hover:scale-105 transition-transform duration-500'}`}>
-                    <h2 className={theme === 'mrm' ? "text-3xl md:text-5xl font-black uppercase tracking-tighter leading-none group-hover:text-[#7D68F6] transition-colors duration-300 text-white" : "text-5xl md:text-[6vw] font-black uppercase tracking-tighter leading-[0.9] text-white text-center after:content-['.'] after:text-white"}>{card.title}</h2>
+                    <h2 className={theme === 'mrm' ? "text-3xl md:text-5xl font-black uppercase tracking-tighter leading-none group-hover:text-[#7D68F6] transition-colors duration-300 text-white" : "text-5xl md:text-[6vw] font-compacta font-normal uppercase tracking-tight leading-[0.9] text-white text-center after:content-['.'] after:text-white"}>{card.title}</h2>
                   </div>
                 </div>
               ))}
@@ -755,7 +755,7 @@ function MainContent({ language, setLanguage, t }) {
                 ))}
               </aside>
               <div className="flex-1">
-                <h2 className={theme === 'mrm' ? "text-4xl md:text-7xl font-black uppercase tracking-tighter mb-8 md:mb-12 text-white leading-none" : "text-5xl md:text-[6vw] font-black uppercase tracking-tighter mb-8 md:mb-12 text-black leading-[0.9] after:content-['.'] after:text-black"}>{t.team.title}</h2>
+                <h2 className={theme === 'mrm' ? "text-4xl md:text-7xl font-black uppercase tracking-tighter mb-8 md:mb-12 text-white leading-none" : "text-5xl md:text-[6vw] font-compacta font-normal uppercase tracking-tight mb-8 md:mb-12 text-black leading-[0.9] after:content-['.'] after:text-black"}>{t.team.title}</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-2 -mx-2">
                   {filteredTalent.map((person, i) => (
                     <div key={i} onClick={() => setSelectedTalent(person)} className={`group cursor-pointer transition-all flex flex-col ${theme === 'mrm' ? 'bg-zinc-900/40 border border-white/5 p-8 rounded-[3.5rem] text-center hover:ring-2 hover:ring-[#7D68F6]' : 'text-left hover:opacity-80'}`}>
@@ -835,7 +835,7 @@ function MainContent({ language, setLanguage, t }) {
                 </div>
                 <div className={`p-8 md:p-16 space-y-12 ${theme === 'mrm' ? '' : 'text-black'}`}>
                   <div className="space-y-6">
-                    <h2 className={theme === 'mrm' ? "text-7xl font-black uppercase tracking-tighter text-white leading-none" : "text-5xl md:text-7xl font-extrabold text-black font-sans tracking-tight after:content-['.'] after:text-black leading-none"}>{selectedProject.Title}</h2>
+                    <h2 className={theme === 'mrm' ? "text-7xl font-black uppercase tracking-tighter text-white leading-none" : "text-5xl md:text-7xl font-bold text-black font-object-sans tracking-tight after:content-['.'] after:text-black leading-none"}>{selectedProject.Title}</h2>
                     <p className={`text-xl normal-case leading-relaxed font-normal ${theme === 'mrm' ? 'text-white/60' : 'text-black'}`}>{selectedProject.Description}</p>
                     <div className="flex flex-wrap gap-2 pt-4">
                       {theme === 'mrm' ? (
@@ -911,7 +911,7 @@ function MainContent({ language, setLanguage, t }) {
             <button onClick={() => setSelectedTalent(null)} className={`fixed top-10 right-10 p-4 rounded-full flex items-center justify-center transition-all shadow-2xl ${theme === 'mrm' ? 'bg-white/5 text-white border border-white/10 hover:bg-white hover:text-black' : 'bg-black/5 text-black border border-black/10 hover:bg-[#104FE6] hover:text-white hover:border-[#104FE6] rounded-[75px]'}`}><X size={32} /></button>
             <div onClick={(e) => e.stopPropagation()} className={`p-20 max-w-3xl w-full text-center relative ${theme === 'mrm' ? 'bg-[#0f0f0f] border border-white/10 rounded-[4rem] shadow-2xl' : 'bg-[#F8F9F4] rounded-none shadow-none'}`}>
               <img src={selectedTalent.ImageURL} className={`mx-auto mb-10 object-cover ${theme === 'mrm' ? 'w-48 h-48 rounded-full border-4 border-[#7D68F6] shadow-[0_0_40px_rgba(125,104,246,0.3)]' : 'w-full aspect-square rounded-none border-none'}`} alt="" />
-              <h2 className={theme === 'mrm' ? "text-6xl font-black uppercase tracking-tighter text-white mb-4 leading-none" : "text-6xl font-extrabold uppercase font-sans tracking-tight text-black mb-4 leading-none after:content-['.'] after:text-black"}>{selectedTalent.Name}</h2>
+              <h2 className={theme === 'mrm' ? "text-6xl font-black uppercase tracking-tighter text-white mb-4 leading-none" : "text-6xl font-bold uppercase font-object-sans tracking-tight text-black mb-4 leading-none after:content-['.'] after:text-black"}>{selectedTalent.Name}</h2>
               <p className={`font-black uppercase tracking-[0.4em] text-xs mb-16 ${theme === 'mrm' ? 'text-[#7D68F6]' : 'text-gray-500'}`}>{selectedTalent.Role}</p>
               {theme === 'mrm' ? (
                 <>
@@ -958,7 +958,7 @@ function MainContent({ language, setLanguage, t }) {
               <div className="flex justify-between items-start mb-12">
                 <div>
                   <h4 className={`font-black uppercase tracking-[0.4em] text-[10px] mb-4 ${theme === 'mrm' ? 'text-[#7D68F6]' : 'text-[#FA4B14]'}`}>{t.squadModal.analysis}</h4>
-                  <h2 className={theme === 'mrm' ? "text-6xl font-black uppercase tracking-tighter text-white leading-none mb-4" : "text-6xl font-extrabold uppercase font-sans tracking-tight text-black leading-none mb-4 after:content-['.'] after:text-black"}>{t.squadModal.contacto}</h2>
+                  <h2 className={theme === 'mrm' ? "text-6xl font-black uppercase tracking-tighter text-white leading-none mb-4" : "text-6xl font-bold uppercase font-object-sans tracking-tight text-black leading-none mb-4 after:content-['.'] after:text-black"}>{t.squadModal.contacto}</h2>
                   <p className={`italic text-sm normal-case ${theme === 'mrm' ? 'text-white/40' : 'text-gray-500'}`}>{t.squadModal.analysisQuote}</p>
                 </div>
                 <div className={`px-6 py-4 rounded-3xl ${theme === 'mrm' ? 'bg-[#7D68F6]/10 border border-[#7D68F6]/30' : 'bg-black'}`}>

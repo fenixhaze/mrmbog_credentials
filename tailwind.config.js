@@ -4,7 +4,12 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        'compacta': ['CompactaStd', 'sans-serif'],
+        'object-sans': ['PPObjectSans', 'sans-serif'],
+      }
+    },
   },
   plugins: [],
 }
