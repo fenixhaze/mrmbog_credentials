@@ -2,9 +2,9 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Users, Briefcase, MessageSquare, ChevronRight, X, Calendar, UserPlus, UserMinus, Menu as MenuIcon } from 'lucide-react';
 import Papa from 'papaparse';
-import talentCSVStr from '../public/datacenter/Talent_Database.csv?raw';
-import projectsCSVStr from '../public/datacenter/Projects_Database.csv?raw';
-import loopIngestedJSON from '../public/datacenter/loop_ingested.json';
+import talentCSVStr from './datacenter/Talent_Database.csv?raw';
+import projectsCSVStr from './datacenter/Projects_Database.csv?raw';
+import loopIngestedJSON from './datacenter/loop_ingested.json';
 
 const translations = {
   es: {
@@ -212,6 +212,7 @@ function MainContent({ language, setLanguage, t }) {
   const [showSquadModal, setShowSquadModal] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [theme, setTheme] = useState('mrm'); // 'mrm' | 'cmlatam'
+  const [flyingAvatars, setFlyingAvatars] = useState([]);
 
   const chatContainerRef = useRef(null);
   const headerSquadRef = useRef(null);
