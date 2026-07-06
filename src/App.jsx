@@ -529,7 +529,7 @@ function MainContent({ language, setLanguage, t }) {
         <div className="flex gap-2 md:gap-4 items-center pointer-events-auto flex-wrap sm:flex-nowrap justify-end w-full sm:w-auto">
           <button
             onClick={() => setTheme(theme === 'mrm' ? 'cmlatam' : 'mrm')}
-            className={`flex items-center justify-center px-4 py-2 rounded-full text-[10px] font-black uppercase transition-all shadow-lg ${theme === 'cmlatam' ? 'bg-black text-white' : 'bg-[#FA4B14] text-white'}`}
+            className={`flex items-center justify-center px-4 py-2 rounded-full text-[10px] font-black uppercase transition-all shadow-lg ${theme === 'cmlatam' ? 'bg-black text-white hover:bg-[#104FE6] rounded-[75px]' : 'bg-[#FA4B14] text-white'}`}
           >
             {theme === 'mrm' ? 'CM LATAM' : 'MRM'}
           </button>
@@ -538,7 +538,7 @@ function MainContent({ language, setLanguage, t }) {
               <button
                 key={lang}
                 onClick={() => setLanguage(lang)}
-                className={`flex items-center justify-center px-3 py-1.5 rounded-full text-[10px] font-black uppercase transition-all ${language === lang ? (theme === 'mrm' ? 'bg-[#7D68F6] text-white shadow-lg' : 'bg-black text-white shadow-lg') : (theme === 'mrm' ? 'text-white/40 hover:text-white' : 'text-black/40 hover:text-black')}`}
+                className={`flex items-center justify-center px-3 py-1.5 rounded-full text-[10px] font-black uppercase transition-all ${language === lang ? (theme === 'mrm' ? 'bg-[#7D68F6] text-white shadow-lg' : 'bg-[#104FE6] text-white shadow-lg rounded-[75px]') : (theme === 'mrm' ? 'text-white/40 hover:text-white' : 'text-black/40 hover:text-[#104FE6]')}`}
               >
                 {lang}
               </button>
@@ -558,7 +558,7 @@ function MainContent({ language, setLanguage, t }) {
                   <button
                     key={tab.id}
                     onClick={() => { setActiveTab(tab.id); setIsMobileMenuOpen(false); }}
-                    className={`flex items-center gap-2 px-4 md:px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all w-full md:w-auto text-left ${activeTab === tab.id ? (theme === 'mrm' ? 'bg-[#7D68F6] text-white shadow-lg' : 'bg-black text-white shadow-lg') : (theme === 'mrm' ? 'text-white/40 hover:text-white hover:bg-white/5' : 'text-black/40 hover:text-black hover:bg-black/5')}`}
+                    className={`flex items-center gap-2 px-4 md:px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all w-full md:w-auto text-left ${activeTab === tab.id ? (theme === 'mrm' ? 'bg-[#7D68F6] text-white shadow-lg' : 'bg-[#104FE6] text-white shadow-lg rounded-[75px]') : (theme === 'mrm' ? 'text-white/40 hover:text-white hover:bg-white/5' : 'text-black/40 hover:text-[#104FE6] hover:bg-black/5')}`}
                   >
                     {tab.icon}
                     {tab.label}
@@ -568,7 +568,7 @@ function MainContent({ language, setLanguage, t }) {
             </div>
           )}
           <div 
-            className={`px-6 py-4 rounded-full flex items-center gap-4 cursor-pointer shadow-lg uppercase text-[10px] font-black hover:scale-105 transition-all pointer-events-auto ${theme === 'mrm' ? 'bg-[#7D68F6] text-white' : 'bg-transparent border border-black text-black'}`} 
+            className={`px-6 py-4 rounded-full flex items-center gap-4 cursor-pointer shadow-lg uppercase text-[10px] font-black hover:scale-105 transition-all pointer-events-auto ${theme === 'mrm' ? 'bg-[#7D68F6] text-white' : 'bg-transparent border border-black text-black hover:bg-[#104FE6] hover:text-white hover:border-[#104FE6] rounded-[75px]'}`} 
             onClick={(e) => { 
               e.preventDefault();
               e.stopPropagation();
@@ -748,7 +748,7 @@ function MainContent({ language, setLanguage, t }) {
                   <button
                     key={role}
                     onClick={() => setFilterRole(role)}
-                    className={`flex items-center text-left px-5 py-2.5 rounded-full text-[11px] font-black uppercase transition-all ${filterRole === role ? (theme === 'mrm' ? 'bg-[#7D68F6] text-white shadow-lg' : 'bg-black text-white shadow-lg') : (theme === 'mrm' ? 'text-white/30 hover:text-white hover:bg-white/5' : 'text-black/50 hover:text-black hover:bg-black/5')}`}
+                    className={`flex items-center text-left px-5 py-2.5 rounded-full text-[11px] font-black uppercase transition-all ${filterRole === role ? (theme === 'mrm' ? 'bg-[#7D68F6] text-white shadow-lg' : 'bg-[#104FE6] text-white shadow-lg rounded-[75px]') : (theme === 'mrm' ? 'text-white/30 hover:text-white hover:bg-white/5' : 'text-black/50 hover:text-black hover:bg-black/5')}`}
                   >
                     {role === 'All' ? t.team.all : role}
                   </button>
@@ -908,7 +908,7 @@ function MainContent({ language, setLanguage, t }) {
       <AnimatePresence>
         {selectedTalent && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedTalent(null)} className={`fixed inset-0 z-[300] flex items-center justify-center p-6 backdrop-blur-2xl ${theme === 'mrm' ? 'bg-black/95' : 'bg-white/95'}`}>
-            <button onClick={() => setSelectedTalent(null)} className={`fixed top-10 right-10 p-4 rounded-full flex items-center justify-center transition-all shadow-2xl ${theme === 'mrm' ? 'bg-white/5 text-white border border-white/10 hover:bg-white hover:text-black' : 'bg-black/5 text-black border border-black/10 hover:bg-black hover:text-white'}`}><X size={32} /></button>
+            <button onClick={() => setSelectedTalent(null)} className={`fixed top-10 right-10 p-4 rounded-full flex items-center justify-center transition-all shadow-2xl ${theme === 'mrm' ? 'bg-white/5 text-white border border-white/10 hover:bg-white hover:text-black' : 'bg-black/5 text-black border border-black/10 hover:bg-[#104FE6] hover:text-white hover:border-[#104FE6] rounded-[75px]'}`}><X size={32} /></button>
             <div onClick={(e) => e.stopPropagation()} className={`p-20 max-w-3xl w-full text-center relative ${theme === 'mrm' ? 'bg-[#0f0f0f] border border-white/10 rounded-[4rem] shadow-2xl' : 'bg-[#F8F9F4] rounded-none shadow-none'}`}>
               <img src={selectedTalent.ImageURL} className={`mx-auto mb-10 object-cover ${theme === 'mrm' ? 'w-48 h-48 rounded-full border-4 border-[#7D68F6] shadow-[0_0_40px_rgba(125,104,246,0.3)]' : 'w-full aspect-square rounded-none border-none'}`} alt="" />
               <h2 className={theme === 'mrm' ? "text-6xl font-black uppercase tracking-tighter text-white mb-4 leading-none" : "text-6xl font-extrabold uppercase font-sans tracking-tight text-black mb-4 leading-none after:content-['.'] after:text-black"}>{selectedTalent.Name}</h2>
@@ -953,7 +953,7 @@ function MainContent({ language, setLanguage, t }) {
       <AnimatePresence>
         {showSquadModal && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowSquadModal(false)} className={`fixed inset-0 z-[400] flex items-center justify-center p-6 backdrop-blur-2xl ${theme === 'mrm' ? 'bg-black/95' : 'bg-white/95'}`}>
-            <button onClick={() => setShowSquadModal(false)} className={`fixed top-10 right-10 p-4 rounded-full flex items-center justify-center transition-all shadow-2xl z-[450] ${theme === 'mrm' ? 'bg-white/5 text-white border border-white/10 hover:bg-white hover:text-black' : 'bg-black/5 text-black border border-black/10 hover:bg-black hover:text-white'}`}><X size={32} /></button>
+            <button onClick={() => setShowSquadModal(false)} className={`fixed top-10 right-10 p-4 rounded-full flex items-center justify-center transition-all shadow-2xl z-[450] ${theme === 'mrm' ? 'bg-white/5 text-white border border-white/10 hover:bg-white hover:text-black' : 'bg-black/5 text-black border border-black/10 hover:bg-[#104FE6] hover:text-white hover:border-[#104FE6] rounded-[75px]'}`}><X size={32} /></button>
             <div onClick={(e) => e.stopPropagation()} className={`p-16 max-w-4xl w-full max-h-[90vh] overflow-y-auto hide-scrollbar relative text-left ${theme === 'mrm' ? 'bg-[#0f0f0f] border border-white/10 rounded-[4rem] shadow-2xl' : 'bg-[#F8F9F4] rounded-none shadow-none'}`}>
               <div className="flex justify-between items-start mb-12">
                 <div>
@@ -986,7 +986,7 @@ function MainContent({ language, setLanguage, t }) {
                         </div>
                         <button
                           onClick={() => toggleSquad(member)}
-                          className={`p-3 rounded-full border transition-all ${theme === 'mrm' ? 'border-red-500/10 text-red-500/30 hover:text-red-400 hover:bg-red-500/10' : 'border-black text-black hover:bg-black/5'}`}
+                          className={`p-3 rounded-full border transition-all ${theme === 'mrm' ? 'border-red-500/10 text-red-500/30 hover:text-red-400 hover:bg-red-500/10' : 'border-black text-black hover:bg-[#104FE6] hover:text-white hover:border-[#104FE6] rounded-[75px]'}`}
                         >
                           <UserMinus size={16} />
                         </button>
@@ -1003,7 +1003,7 @@ function MainContent({ language, setLanguage, t }) {
                       const emails = squad.map(m => m.Email).filter(Boolean).join(';');
                       if (emails) window.location.href = `mailto:${emails}?subject=MRM Project: ${t.squadModal.defaultTitle}`;
                     }}
-                    className={`flex-1 py-6 rounded-full font-black uppercase tracking-[0.2em] text-[11px] flex items-center justify-center gap-3 transition-all ${theme === 'mrm' ? 'bg-[#7D68F6] text-white hover:scale-[1.02] shadow-xl shadow-[#7D68F6]/20' : 'bg-black text-white hover:opacity-80'}`}
+                    className={`flex-1 py-6 rounded-full font-black uppercase tracking-[0.2em] text-[11px] flex items-center justify-center gap-3 transition-all ${theme === 'mrm' ? 'bg-[#7D68F6] text-white hover:scale-[1.02] shadow-xl shadow-[#7D68F6]/20' : 'bg-black text-white hover:bg-[#104FE6] rounded-[75px]'}`}
                   >
                     <Send size={16} />
                     {t.squadModal.teamsBtn}
