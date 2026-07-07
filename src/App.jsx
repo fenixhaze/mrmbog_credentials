@@ -801,7 +801,7 @@ function MainContent({ language, setLanguage, t }) {
 
       <AnimatePresence>
         {selectedProject && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedProject(null)} className={`fixed inset-0 z-[200] flex items-start justify-center p-6 pt-0 top-[10%] backdrop-blur-3xl overflow-y-auto ${theme === 'mrm' ? 'bg-black/95' : 'bg-black/20'}`}>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedProject(null)} className={`fixed inset-0 z-[200] flex items-start justify-center p-6 pt-12 md:pt-24 backdrop-blur-3xl overflow-y-auto ${theme === 'mrm' ? 'bg-black/95' : 'bg-black/20'}`}>
             <button onClick={() => setSelectedProject(null)} className={`fixed top-6 right-6 z-[250] p-4 flex items-center justify-center transition-all shadow-2xl ${theme === 'mrm' ? 'bg-black/50 rounded-full hover:bg-white text-white hover:text-black border border-white/10' : 'bg-black/5 text-black border border-black/10 hover:bg-[#104FE6] hover:text-white hover:border-[#104FE6] rounded-[75px]'}`}><X size={24} /></button>
             
             {/* Sticky Squad CTA for Project Modal */}
@@ -816,7 +816,7 @@ function MainContent({ language, setLanguage, t }) {
               {t.squad} ({squad.length})
             </div>
 
-            <div onClick={(e) => e.stopPropagation()} className="w-full max-w-[1600px] mx-auto my-12 flex flex-col lg:flex-row gap-8 pb-20 text-left relative">
+            <div onClick={(e) => e.stopPropagation()} className="w-full max-w-[1200px] mx-auto my-12 flex flex-col lg:flex-row gap-6 pb-20 text-left relative">
 
               <div className={`w-full lg:w-[70%] overflow-hidden h-fit ${theme === 'mrm' ? 'bg-[#0f0f0f] border border-white/10 rounded-[3rem] shadow-2xl' : 'bg-[#F8F9F4] rounded-none shadow-none'}`}>
                 <div className={`relative h-[450px] w-full overflow-hidden ${theme === 'mrm' ? 'bg-zinc-950' : 'bg-zinc-200'}`}>
@@ -909,7 +909,7 @@ function MainContent({ language, setLanguage, t }) {
         {selectedTalent && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedTalent(null)} className={`fixed inset-0 z-[300] flex items-center justify-center p-6 backdrop-blur-3xl ${theme === 'mrm' ? 'bg-black/95' : 'bg-black/20'}`}>
             <button onClick={() => setSelectedTalent(null)} className={`fixed top-10 right-10 p-4 rounded-full flex items-center justify-center transition-all shadow-2xl ${theme === 'mrm' ? 'bg-white/5 text-white border border-white/10 hover:bg-white hover:text-black' : 'bg-black/5 text-black border border-black/10 hover:bg-[#104FE6] hover:text-white hover:border-[#104FE6] rounded-[75px]'}`}><X size={32} /></button>
-            <div onClick={(e) => e.stopPropagation()} className={`p-20 max-w-3xl w-full text-center relative ${theme === 'mrm' ? 'bg-[#0f0f0f] border border-white/10 rounded-[4rem] shadow-2xl' : 'bg-[#F8F9F4] rounded-none shadow-none'}`}>
+            <div onClick={(e) => e.stopPropagation()} className={`p-8 md:p-10 max-w-md w-full text-center relative ${theme === 'mrm' ? 'bg-[#0f0f0f] border border-white/10 rounded-[2rem] shadow-2xl' : 'bg-[#F8F9F4] rounded-none shadow-none'}`}>
               <img src={selectedTalent.ImageURL} className={`mx-auto mb-10 object-cover ${theme === 'mrm' ? 'w-48 h-48 rounded-full border-4 border-[#7D68F6] shadow-[0_0_40px_rgba(125,104,246,0.3)]' : 'w-full aspect-square rounded-none border-none'}`} alt="" />
               <h2 className={theme === 'mrm' ? "text-6xl font-black uppercase tracking-tighter text-white mb-4 leading-none" : "text-6xl font-bold uppercase font-object-sans tracking-tight text-black mb-4 leading-none after:content-['.'] after:text-black"}>{selectedTalent.Name}</h2>
               <p className={`font-black uppercase tracking-[0.4em] text-xs mb-16 ${theme === 'mrm' ? 'text-[#7D68F6]' : 'text-gray-500'}`}>{selectedTalent.Role}</p>
@@ -954,7 +954,7 @@ function MainContent({ language, setLanguage, t }) {
         {showSquadModal && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowSquadModal(false)} className={`fixed inset-0 z-[400] flex items-center justify-center p-6 backdrop-blur-3xl ${theme === 'mrm' ? 'bg-black/95' : 'bg-black/20'}`}>
             <button onClick={() => setShowSquadModal(false)} className={`fixed top-10 right-10 p-4 rounded-full flex items-center justify-center transition-all shadow-2xl z-[450] ${theme === 'mrm' ? 'bg-white/5 text-white border border-white/10 hover:bg-white hover:text-black' : 'bg-black/5 text-black border border-black/10 hover:bg-[#104FE6] hover:text-white hover:border-[#104FE6] rounded-[75px]'}`}><X size={32} /></button>
-            <div onClick={(e) => e.stopPropagation()} className={`p-16 max-w-4xl w-full max-h-[90vh] overflow-y-auto hide-scrollbar relative text-left ${theme === 'mrm' ? 'bg-[#0f0f0f] border border-white/10 rounded-[4rem] shadow-2xl' : 'bg-[#F8F9F4] rounded-none shadow-none'}`}>
+            <div onClick={(e) => e.stopPropagation()} className={`p-10 md:p-12 max-w-3xl w-full max-h-[90vh] overflow-y-auto hide-scrollbar relative text-left ${theme === 'mrm' ? 'bg-[#0f0f0f] border border-white/10 rounded-[3rem] shadow-2xl' : 'bg-[#F8F9F4] rounded-none shadow-none'}`}>
               <div className="flex justify-between items-start mb-12">
                 <div>
                   <h4 className={`font-black uppercase tracking-[0.4em] text-[10px] mb-4 ${theme === 'mrm' ? 'text-[#7D68F6]' : 'text-[#FA4B14]'}`}>{t.squadModal.analysis}</h4>
