@@ -801,13 +801,13 @@ function MainContent({ language, setLanguage, t }) {
 
       <AnimatePresence>
         {selectedProject && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedProject(null)} className="fixed inset-0 z-[200] flex items-start justify-center p-6 pt-0 top-[10%] backdrop-blur-2xl bg-black/95 overflow-y-auto">
-            <button onClick={() => setSelectedProject(null)} className="fixed top-6 right-6 z-[250] p-4 bg-black/50 rounded-full flex items-center justify-center hover:bg-white text-white hover:text-black transition-all border border-white/10 shadow-2xl"><X size={24} /></button>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedProject(null)} className={`fixed inset-0 z-[200] flex items-start justify-center p-6 pt-0 top-[10%] backdrop-blur-3xl overflow-y-auto ${theme === 'mrm' ? 'bg-black/95' : 'bg-black/20'}`}>
+            <button onClick={() => setSelectedProject(null)} className={`fixed top-6 right-6 z-[250] p-4 flex items-center justify-center transition-all shadow-2xl ${theme === 'mrm' ? 'bg-black/50 rounded-full hover:bg-white text-white hover:text-black border border-white/10' : 'bg-black/5 text-black border border-black/10 hover:bg-[#104FE6] hover:text-white hover:border-[#104FE6] rounded-[75px]'}`}><X size={24} /></button>
             
             {/* Sticky Squad CTA for Project Modal */}
             <div 
               ref={modalSquadRef}
-              className="fixed bottom-12 right-12 bg-[#7D68F6] px-6 py-4 rounded-[20px] flex items-center gap-4 cursor-pointer shadow-2xl uppercase text-[10px] font-black hover:scale-105 transition-all z-[260]"
+              className={`fixed bottom-12 right-12 px-6 py-4 flex items-center gap-4 cursor-pointer shadow-2xl uppercase text-[10px] font-black transition-all z-[260] ${theme === 'mrm' ? 'bg-[#7D68F6] text-white rounded-[20px] hover:scale-105' : 'bg-black text-white hover:bg-[#104FE6] rounded-[75px]'}`}
               onClick={(e) => {
                 e.stopPropagation();
                 setShowSquadModal(true);
@@ -907,7 +907,7 @@ function MainContent({ language, setLanguage, t }) {
 
       <AnimatePresence>
         {selectedTalent && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedTalent(null)} className={`fixed inset-0 z-[300] flex items-center justify-center p-6 backdrop-blur-2xl ${theme === 'mrm' ? 'bg-black/95' : 'bg-white/95'}`}>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedTalent(null)} className={`fixed inset-0 z-[300] flex items-center justify-center p-6 backdrop-blur-3xl ${theme === 'mrm' ? 'bg-black/95' : 'bg-black/20'}`}>
             <button onClick={() => setSelectedTalent(null)} className={`fixed top-10 right-10 p-4 rounded-full flex items-center justify-center transition-all shadow-2xl ${theme === 'mrm' ? 'bg-white/5 text-white border border-white/10 hover:bg-white hover:text-black' : 'bg-black/5 text-black border border-black/10 hover:bg-[#104FE6] hover:text-white hover:border-[#104FE6] rounded-[75px]'}`}><X size={32} /></button>
             <div onClick={(e) => e.stopPropagation()} className={`p-20 max-w-3xl w-full text-center relative ${theme === 'mrm' ? 'bg-[#0f0f0f] border border-white/10 rounded-[4rem] shadow-2xl' : 'bg-[#F8F9F4] rounded-none shadow-none'}`}>
               <img src={selectedTalent.ImageURL} className={`mx-auto mb-10 object-cover ${theme === 'mrm' ? 'w-48 h-48 rounded-full border-4 border-[#7D68F6] shadow-[0_0_40px_rgba(125,104,246,0.3)]' : 'w-full aspect-square rounded-none border-none'}`} alt="" />
@@ -952,7 +952,7 @@ function MainContent({ language, setLanguage, t }) {
 
       <AnimatePresence>
         {showSquadModal && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowSquadModal(false)} className={`fixed inset-0 z-[400] flex items-center justify-center p-6 backdrop-blur-2xl ${theme === 'mrm' ? 'bg-black/95' : 'bg-white/95'}`}>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowSquadModal(false)} className={`fixed inset-0 z-[400] flex items-center justify-center p-6 backdrop-blur-3xl ${theme === 'mrm' ? 'bg-black/95' : 'bg-black/20'}`}>
             <button onClick={() => setShowSquadModal(false)} className={`fixed top-10 right-10 p-4 rounded-full flex items-center justify-center transition-all shadow-2xl z-[450] ${theme === 'mrm' ? 'bg-white/5 text-white border border-white/10 hover:bg-white hover:text-black' : 'bg-black/5 text-black border border-black/10 hover:bg-[#104FE6] hover:text-white hover:border-[#104FE6] rounded-[75px]'}`}><X size={32} /></button>
             <div onClick={(e) => e.stopPropagation()} className={`p-16 max-w-4xl w-full max-h-[90vh] overflow-y-auto hide-scrollbar relative text-left ${theme === 'mrm' ? 'bg-[#0f0f0f] border border-white/10 rounded-[4rem] shadow-2xl' : 'bg-[#F8F9F4] rounded-none shadow-none'}`}>
               <div className="flex justify-between items-start mb-12">
