@@ -5,6 +5,7 @@ import Papa from 'papaparse';
 import talentCSVStr from './datacenter/Talent_Database.csv?raw';
 import projectsCSVStr from './datacenter/Projects_Database.csv?raw';
 import loopIngestedJSON from './datacenter/loop_ingested.json';
+import cmLatamLogo from './assets/cm-latam-logo.svg';
 
 const translations = {
   es: {
@@ -516,7 +517,12 @@ function MainContent({ language, setLanguage, t }) {
       <header className={`relative w-full p-6 md:p-10 px-6 md:px-12 z-[100] flex flex-col sm:flex-row justify-between items-start sm:items-start pointer-events-none gap-4 sm:gap-0 flex-shrink-0 ${theme === 'cmlatam' ? 'text-black' : 'text-white'}`}>
         <div className="flex flex-col items-start cursor-pointer pointer-events-auto" onClick={() => setActiveTab('landing')}>
           {theme === 'cmlatam' ? (
-            <img src="/cmlatam.png" alt="CM Latam" className="h-10 md:h-14 object-contain" />
+            <>
+              <img src={cmLatamLogo} alt="CM Latam" className={`h-[18px] md:h-[25px] object-contain ${activeTab === 'landing' ? 'brightness-0 invert' : ''}`} />
+              <div className={`text-[8px] md:text-[10px] mt-[12px] ml-1 border-l-2 pl-3 flex flex-col uppercase font-bold tracking-widest ${activeTab === 'landing' ? 'text-white border-white' : 'text-black/60 border-black/60'}`}>
+                <span>BOGOTÁ</span><span>CREATIVE</span><span>CREDENTIALS</span>
+              </div>
+            </>
           ) : (
             <>
               <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-none m-0">MRM</h1>
